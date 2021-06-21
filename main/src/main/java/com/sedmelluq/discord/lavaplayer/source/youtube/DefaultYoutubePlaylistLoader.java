@@ -103,7 +103,7 @@ public class DefaultYoutubePlaylistLoader implements YoutubePlaylistLoader {
       }
     }
 
-    return new BasicAudioPlaylist(playlistName, tracks, findSelectedTrack(tracks, selectedVideoId), false);
+    return new BasicAudioPlaylist(playlistName, "playlist", tracks, findSelectedTrack(tracks, selectedVideoId), false);
   }
 
   private String findErrorAlert(JsonBrowser jsonResponse) {

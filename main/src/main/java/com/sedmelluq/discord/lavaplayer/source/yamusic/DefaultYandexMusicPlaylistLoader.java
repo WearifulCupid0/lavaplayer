@@ -66,13 +66,18 @@ public class DefaultYandexMusicPlaylistLoader extends DefaultYandexMusicTrackLoa
       }
 
       String name;
+      String type;
+
       if (trackProperty.equals("volumes") || trackProperty.equals("tracks")) {
         name = result.get("title").text();
+        if(trackProperty.equals("volumes")) type = "album";
+        else type = "playlist";
       } else {
         name = result.get("artist").get("name").text();
+        type = "artist";
       }
 
-      return new BasicAudioPlaylist(name, tracks, null, false);
+      return new BasicAudioPlaylist(name, type, tracks, null, false);
     });
   }
 

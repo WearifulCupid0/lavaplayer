@@ -71,7 +71,7 @@ public class YoutubeMixProvider implements YoutubeMixLoader {
     }
 
     AudioTrack selectedTrack = findSelectedTrack(tracks, selectedVideoId);
-    return new BasicAudioPlaylist(playlistTitle, tracks, selectedTrack, false);
+    return new BasicAudioPlaylist(playlistTitle, "mix", tracks, selectedTrack, false);
   }
 
   private void extractPlaylistTracks(
