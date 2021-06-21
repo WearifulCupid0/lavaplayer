@@ -252,7 +252,7 @@ public class DefaultAudioPlayerManager implements AudioPlayerManager {
     output.writeUTF(trackInfo.identifier);
     output.writeBoolean(trackInfo.isStream);
     DataFormatTools.writeNullableText(output, trackInfo.uri);
-    DataFormatTools.writeNullableText(output, trackInfo.artworkUrl);
+    DataFormatTools.writeNullableText(output, trackInfo.artwork);
 
     encodeTrackDetails(track, output);
     output.writeLong(track.getPosition());

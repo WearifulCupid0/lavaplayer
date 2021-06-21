@@ -287,8 +287,8 @@ public class StreamAudioPlayer implements AudioPlayer {
     }
 
     @Override
-    public void onTrackStuck(AudioPlayer player, AudioTrack track, long thresholdMs) {
-      dispatchEvent(new TrackStuckEvent(StreamAudioPlayer.this, track, thresholdMs));
+    public void onTrackStuck(AudioPlayer player, AudioTrack track, long thresholdMs, StackTraceElement[] traceElement) {
+      dispatchEvent(new TrackStuckEvent(StreamAudioPlayer.this, track, thresholdMs, traceElement));
     }
   }
 }
