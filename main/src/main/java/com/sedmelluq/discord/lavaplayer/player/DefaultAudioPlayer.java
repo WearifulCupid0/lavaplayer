@@ -16,7 +16,6 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 import com.sedmelluq.discord.lavaplayer.track.InternalAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.TrackStateListener;
 import com.sedmelluq.discord.lavaplayer.track.playback.AudioFrame;
-import com.sedmelluq.discord.lavaplayer.track.playback.AudioFrameProvider;
 import com.sedmelluq.discord.lavaplayer.track.playback.AudioFrameProviderTools;
 import com.sedmelluq.discord.lavaplayer.track.playback.AudioTrackExecutor;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;

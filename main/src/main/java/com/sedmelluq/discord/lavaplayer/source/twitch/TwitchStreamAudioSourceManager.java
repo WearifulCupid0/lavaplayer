@@ -23,8 +23,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Collections;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;

@@ -4,7 +4,6 @@ import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 
-import java.util.Collections;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
