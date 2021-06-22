@@ -102,25 +102,25 @@ public class JamendoAudioSourceManager implements AudioSourceManager, HttpConfig
     public AudioItem loadItem(DefaultAudioPlayerManager manager, AudioReference reference) {
         if (trackPattern.matcher(reference.identifier).matches() || shortTrackPattern.matcher(reference.identifier).matches()) {
             Matcher trackMatcher = trackPattern.matcher(reference.identifier);
-            if (trackMatcher.matches()) trackMatcher = shortTrackPattern.matcher(reference.identifier);
+            if (!trackMatcher.matches()) trackMatcher = shortTrackPattern.matcher(reference.identifier);
             String id = trackMatcher.group(1);
             return trackLoader.loadTrack(id, CLIENT_ID, this::getTrack);
         }
         if (albumPattern.matcher(reference.identifier).matches() || shortAlbumPattern.matcher(reference.identifier).matches()) {
             Matcher albumMatcher = albumPattern.matcher(reference.identifier);
-            if (albumMatcher.matches()) albumMatcher = shortAlbumPattern.matcher(reference.identifier);
+            if (!albumMatcher.matches()) albumMatcher = shortAlbumPattern.matcher(reference.identifier);
             String id = albumMatcher.group(1);
             return playlistLoader.loadPlaylist(id, "album", CLIENT_ID, this::getTrack);
         }
         if (artistPattern.matcher(reference.identifier).matches() || shortArtistPattern.matcher(reference.identifier).matches()) {
             Matcher artistMatcher = artistPattern.matcher(reference.identifier);
-            if (artistMatcher.matches()) artistMatcher = shortArtistPattern.matcher(reference.identifier);
+            if (!artistMatcher.matches()) artistMatcher = shortArtistPattern.matcher(reference.identifier);
             String id = artistMatcher.group(1);
             return playlistLoader.loadPlaylist(id, "artist", CLIENT_ID, this::getTrack);
         }
         if (playlistPattern.matcher(reference.identifier).matches() || shortPlaylistPattern.matcher(reference.identifier).matches()) {
             Matcher playlistMatcher = playlistPattern.matcher(reference.identifier);
-            if (playlistMatcher.matches()) playlistMatcher = shortPlaylistPattern.matcher(reference.identifier);
+            if (!playlistMatcher.matches()) playlistMatcher = shortPlaylistPattern.matcher(reference.identifier);
             String id = playlistMatcher.group(1);
             return playlistLoader.loadPlaylist(id, "playlist", CLIENT_ID, this::getTrack);
         }
