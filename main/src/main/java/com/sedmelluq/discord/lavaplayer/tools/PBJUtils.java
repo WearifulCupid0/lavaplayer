@@ -14,8 +14,8 @@ public class PBJUtils {
 
     public static String getSoundCloudThumbnail(JsonBrowser trackData) {
         JsonBrowser thumbnail = trackData.get("artwork_url");
-        if (!thumbnail.isNull()) return thumbnail.text().replace("large.jpg", "original.jpg");
+        if (!thumbnail.isNull()) return thumbnail.text().replace("large", "t500x500");
         JsonBrowser avatar = trackData.get("user").get("avatar_url");
-        return avatar.text().replace("large.jpg", "original.jpg");
+        return avatar.text().replace("large", "t500x500");
     }
 }

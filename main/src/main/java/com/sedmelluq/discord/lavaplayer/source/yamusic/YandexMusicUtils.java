@@ -24,22 +24,22 @@ public class YandexMusicUtils {
 
     String albumId = album.get("id").text();
 
-    String artworkUrl = null;
+    String artwork = null;
     JsonBrowser cover = trackInfo.get("coverUri");
     if (!cover.isNull()) {
-      artworkUrl = "https://" + cover.text().replace("%%", "1000x1000");
+      artwork = "https://" + cover.text().replace("%%", "1000x1000");
     }
-    if (artworkUrl == null) {
+    if (artwork == null) {
       JsonBrowser ogImage = trackInfo.get("ogImage");
       if (!ogImage.isNull()) {
-        artworkUrl = "https://" + ogImage.text().replace("%%", "1000x1000");
+        artwork = "https://" + ogImage.text().replace("%%", "1000x1000");
       }
     }
 
-    if (artworkUrl == null) {
+    if (artwork == null) {
       cover = album.get("coverUri");
       if (!cover.isNull()) {
-        artworkUrl = "https://" + cover.text().replace("%%", "1000x1000");
+        artwork = "https://" + cover.text().replace("%%", "1000x1000");
       }
     }
 
@@ -50,7 +50,7 @@ public class YandexMusicUtils {
         trackInfo.get("id").text(),
         false,
         String.format(TRACK_URL_FORMAT, albumId, trackId),
-        artworkUrl
+        artwork
     ));
   }
 }
