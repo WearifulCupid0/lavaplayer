@@ -21,7 +21,7 @@ public class DefaultJamendoSearchProvider extends AbstractJamendoApiLoader imple
         if (query == null || !query.startsWith(SEARCH_PREFIX)) return null;
         Matcher matcher = SEARCH_PATTERN.matcher(query);
         if (!matcher.find()) return null;
-        String text = matcher.group(5);
+        String text = matcher.group(3);
         try {
             return extractFromApi(String.format(TRACKS_INFO_FORMAT, URLEncoder.encode(text, "UTF-8")), clientId, (httpClient, results) -> {
                 if(results.index(0).isNull() || !results.isList()) return null;
