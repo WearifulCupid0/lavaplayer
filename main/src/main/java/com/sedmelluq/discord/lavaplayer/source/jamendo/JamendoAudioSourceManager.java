@@ -29,15 +29,15 @@ import java.util.regex.Pattern;
  * Audio source manager that implements finding Jamendo tracks based on URL.
  */
 public class JamendoAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-    private static final String TRACK_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/track/([0-9-_]+)(?:\\?.*|)$";
-    private static final String ALBUM_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/album/([0-9-_]+)(?:\\?.*|)$";
-    private static final String ARTIST_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/artist/([0-9-_]+)(?:\\?.*|)$";
-    private static final String PLAYLIST_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/playlist/([0-9-_]+)(?:\\?.*|)$";
+    private static final String TRACK_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/track/([0-9-_]+)(?:/|/([^/]+)|)$";
+    private static final String ALBUM_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/album/([0-9-_]+)(?:/|/([^/]+)|)$";
+    private static final String ARTIST_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/artist/([0-9-_]+)(?:/|/([^/]+)|)$";
+    private static final String PLAYLIST_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/playlist/([0-9-_]+)(?:/|/([^/]+)|)$";
 
-    private static final String SHORT_TRACK_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/t/([0-9-_]+)(?:\\?.*|)$";
-    private static final String SHORT_ALBUM_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/a/([0-9-_]+)(?:\\?.*|)$";
-    private static final String SHORT_ARTIST_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/l/([0-9-_]+)(?:\\?.*|)$";
-    private static final String SHORT_PLAYLIST_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/l/p([0-9-_]+)(?:\\?.*|)$";
+    private static final String SHORT_TRACK_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/t/([0-9-_]+)$";
+    private static final String SHORT_ALBUM_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/a/([0-9-_]+)$";
+    private static final String SHORT_ARTIST_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/l/([0-9-_]+)$";
+    private static final String SHORT_PLAYLIST_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/l/p([0-9-_]+)$";
 
     private static final String CLIENT_ID = "c7b47146";
 
