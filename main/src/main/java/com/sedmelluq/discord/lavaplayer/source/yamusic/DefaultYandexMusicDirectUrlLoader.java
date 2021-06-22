@@ -55,7 +55,6 @@ public class DefaultYandexMusicDirectUrlLoader extends AbstractYandexMusicApiLoa
       info.host = DataFormatTools.extractBetween(responseText, "<host>", "</host>");
       info.path = DataFormatTools.extractBetween(responseText, "<path>", "</path>");
       info.ts = DataFormatTools.extractBetween(responseText, "<ts>", "</ts>");
-      info.region = DataFormatTools.extractBetween(responseText, "<region>", "</region>");
       info.s = DataFormatTools.extractBetween(responseText, "<s>", "</s>");
       return info;
     } catch (Exception e) {
@@ -67,7 +66,6 @@ public class DefaultYandexMusicDirectUrlLoader extends AbstractYandexMusicApiLoa
     String host;
     String path;
     String ts;
-    String region;
     String s;
   }
 }

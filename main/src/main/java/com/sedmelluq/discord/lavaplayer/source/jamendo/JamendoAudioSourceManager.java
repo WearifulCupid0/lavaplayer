@@ -29,8 +29,8 @@ import java.util.regex.Pattern;
  * Audio source manager that implements finding Jamendo tracks based on URL.
  */
 public class JamendoAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-    private static final String URL_REGEX = "^https?://www\\.jamendo\\.com/(track|album|artist|playlist)/([0-9]+)$";
-    private static final String SHORT_URL_REGEX = "^https?://www\\.jamen\\.do/(t|l|a)/(p|)([0-9]+)$";
+    private static final String URL_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/([a-zA-Z0-9-_]+)/([0-9]+)$";
+    private static final String SHORT_URL_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/([a-zA-Z0-9-_]+)/(p|)([0-9]+)$";
 
     private static final String CLIENT_ID = "c7b47146";
 
