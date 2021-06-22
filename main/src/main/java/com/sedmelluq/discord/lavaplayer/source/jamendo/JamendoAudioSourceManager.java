@@ -122,7 +122,7 @@ public class JamendoAudioSourceManager implements AudioSourceManager, HttpConfig
             Matcher playlistMatcher = playlistPattern.matcher(reference.identifier);
             if (playlistMatcher.matches()) playlistMatcher = shortPlaylistPattern.matcher(reference.identifier);
             String id = playlistMatcher.group(1);
-            return playlistLoader.loadPlaylist(id, "playlist", CLIENT_ID, this::getTrack)
+            return playlistLoader.loadPlaylist(id, "playlist", CLIENT_ID, this::getTrack);
         }
         if (allowSearch) {
             return searchResultLoader.loadSearchResult(reference.identifier, CLIENT_ID, this::getTrack);
