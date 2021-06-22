@@ -29,13 +29,27 @@ import java.util.regex.Pattern;
  * Audio source manager that implements finding Jamendo tracks based on URL.
  */
 public class JamendoAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-    private static final String URL_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/([^:]+)/([0-9]+)$";
-    private static final String SHORT_URL_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/([^:]+)/(p|)([0-9]+)$";
+    private static final String TRACK_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/track/([0-9]+)(?:\\?.*|)$";
+    private static final String ALBUM_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/album/([0-9]+)(?:\\?.*|)$";
+    private static final String ARTIST_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/artist/([0-9]+)(?:\\?.*|)$";
+    private static final String PLAYLIST_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/playlist/([0-9]+)(?:\\?.*|)$";
+
+    private static final String SHORT_TRACK_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/t/([0-9]+)(?:\\?.*|)$";
+    private static final String SHORT_ALBUM_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/a/([0-9]+)(?:\\?.*|)$";
+    private static final String SHORT_ARTIST_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/l/([0-9]+)(?:\\?.*|)$";
+    private static final String SHORT_PLAYLIST_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/l/p([0-9]+)(?:\\?.*|)$";
 
     private static final String CLIENT_ID = "c7b47146";
 
-    private static final Pattern urlPattern = Pattern.compile(URL_REGEX);
-    private static final Pattern shortUrlPattern = Pattern.compile(SHORT_URL_REGEX);
+    private static final Pattern trackPattern = Pattern.compile(TRACK_REGEX);
+    private static final Pattern albumPattern = Pattern.compile(ALBUM_REGEX);
+    private static final Pattern artistPattern = Pattern.compile(ARTIST_REGEX);
+    private static final Pattern playlistPattern = Pattern.compile(PLAYLIST_REGEX);
+
+    private static final Pattern shortTrackPattern = Pattern.compile(SHORT_TRACK_REGEX);
+    private static final Pattern shortAlbumPattern = Pattern.compile(SHORT_ALBUM_REGEX);
+    private static final Pattern shortArtistPattern = Pattern.compile(SHORT_ARTIST_REGEX);
+    private static final Pattern shortPlaylistPattern = Pattern.compile(SHORT_PLAYLIST_REGEX);
 
     private final boolean allowSearch;
 
@@ -86,24 +100,30 @@ public class JamendoAudioSourceManager implements AudioSourceManager, HttpConfig
 
     @Override
     public AudioItem loadItem(DefaultAudioPlayerManager manager, AudioReference reference) {
-        Matcher urlMatcher = urlPattern.matcher(reference.identifier);
-        if(urlMatcher.matches()) {
-            String type = urlMatcher.group(1);
-            String id = urlMatcher.group(2);
-            if (type == "track") return trackLoader.loadTrack(id, CLIENT_ID, this::getTrack);
-            if (type == "album") return playlistLoader.loadPlaylist(id, type, CLIENT_ID, this::getTrack);
-            if (type == "artist") return playlistLoader.loadPlaylist(id, type, CLIENT_ID, this::getTrack);
-            if (type == "playlist") return playlistLoader.loadPlaylist(id, type, CLIENT_ID, this::getTrack);
-        };
-        Matcher shortUrlMatcher = shortUrlPattern.matcher(reference.identifier);
-        if(shortUrlMatcher.matches()) {
-            String type = urlMatcher.group(1);
-            String id = urlMatcher.group(2);
-            if (type == "t") return trackLoader.loadTrack(id, CLIENT_ID, this::getTrack);
-            if (type == "a") return playlistLoader.loadPlaylist(id, "album", CLIENT_ID, this::getTrack);
-            if (type == "l" && id.startsWith("p")) return playlistLoader.loadPlaylist(id.replace("p", ""), "playlist", CLIENT_ID, this::getTrack);
-            else if (type == "l") return playlistLoader.loadPlaylist(id, "artist", CLIENT_ID, this::getTrack);
-        };
+        if (trackPattern.matcher(reference.identifier).matches() || shortTrackPattern.matcher(reference.identifier).matches()) {
+            Matcher trackMatcher = trackPattern.matcher(reference.identifier);
+            if (trackMatcher.matches()) trackMatcher = shortTrackPattern.matcher(reference.identifier);
+            String id = trackMatcher.group(1);
+            return trackLoader.loadTrack(id, CLIENT_ID, this::getTrack);
+        }
+        if (albumPattern.matcher(reference.identifier).matches() || shortAlbumPattern.matcher(reference.identifier).matches()) {
+            Matcher albumMatcher = albumPattern.matcher(reference.identifier);
+            if (albumMatcher.matches()) albumMatcher = shortAlbumPattern.matcher(reference.identifier);
+            String id = albumMatcher.group(1);
+            return playlistLoader.loadPlaylist(id, "album", CLIENT_ID, this::getTrack);
+        }
+        if (artistPattern.matcher(reference.identifier).matches() || shortArtistPattern.matcher(reference.identifier).matches()) {
+            Matcher artistMatcher = artistPattern.matcher(reference.identifier);
+            if (artistMatcher.matches()) artistMatcher = shortArtistPattern.matcher(reference.identifier);
+            String id = artistMatcher.group(1);
+            return playlistLoader.loadPlaylist(id, "artist", CLIENT_ID, this::getTrack);
+        }
+        if (playlistPattern.matcher(reference.identifier).matches() || shortPlaylistPattern.matcher(reference.identifier).matches()) {
+            Matcher playlistMatcher = playlistPattern.matcher(reference.identifier);
+            if (playlistMatcher.matches()) playlistMatcher = shortPlaylistPattern.matcher(reference.identifier);
+            String id = playlistMatcher.group(1);
+            return playlistLoader.loadPlaylist(id, "playlist", CLIENT_ID, this::getTrack);
+        }
         if (allowSearch) {
             return searchResultLoader.loadSearchResult(reference.identifier, CLIENT_ID, this::getTrack);
         }
