@@ -31,7 +31,7 @@ public abstract class AbstractMixcloudApiLoader implements MixcloudApiLoader {
     try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
       String responseText;
       HttpPost post = new HttpPost(MIXCLOUD_API_URL);
-      post.setEntity(new StringEntity(payload));
+      post.setEntity(new StringEntity(payload, "UTF-8"));
       try (CloseableHttpResponse response = httpInterface.execute(post)) {
         int statusCode = response.getStatusLine().getStatusCode();
         if (statusCode != 200) {
@@ -44,7 +44,7 @@ public abstract class AbstractMixcloudApiLoader implements MixcloudApiLoader {
         throw new FriendlyException("Couldn't get API response.", SUSPICIOUS, null);
       }
       response = response.get("data");
-      if (response.isNull() && !response.isList()) {
+      if (response.isNull()) {
         throw new FriendlyException("Couldn't get API response result.", SUSPICIOUS, null);
       }
       return extractor.extract(httpInterface, response);

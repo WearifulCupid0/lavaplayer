@@ -91,8 +91,8 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
             return dataLoader.getArtist(matcher.group(1), this::getTrack);
         }
         if (allowSearch && reference.identifier.startsWith(SEARCH_PREFIX)) {
-            Matcher searchMatcher = searchPattern.matcher(reference.identifier);
-            return dataLoader.getSearchResults(searchMatcher.group(1), this::getTrack);
+            matcher = searchPattern.matcher(reference.identifier);
+            return dataLoader.getSearchResults(matcher.group(1), this::getTrack);
         }
         return null;
     }
