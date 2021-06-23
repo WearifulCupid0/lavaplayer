@@ -32,6 +32,7 @@ public abstract class AbstractMixcloudApiLoader implements MixcloudApiLoader {
       String responseText;
       HttpPost post = new HttpPost(MIXCLOUD_API_URL);
       StringEntity entity = new StringEntity(payload, "UTF-8");
+      post.setHeader("Content-Type", "application/json");
       post.setEntity(entity);
       try (CloseableHttpResponse response = httpInterface.execute(post)) {
         int statusCode = response.getStatusLine().getStatusCode();
