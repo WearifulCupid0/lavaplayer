@@ -111,7 +111,7 @@ public class YoutubeSearchProvider implements YoutubeSearchResultLoader {
     List<JsonBrowser> thumbnails = json.get("thumbnail").get("thumbnails").values();
     if (json.get("lengthText").isNull()) {
       info = new AudioTrackInfo(title, author, DURATION_MS_UNKNOWN, videoId, true,
-      WATCH_URL_PREFIX + videoId, thumbnails.get(thumbnails.size() - 1).get("url").text())
+      WATCH_URL_PREFIX + videoId, thumbnails.get(thumbnails.size() - 1).get("url").text());
     } else {
       long duration = DataFormatTools.durationTextToMillis(json.get("lengthText").get("runs").index(0).get("text").text());
 
