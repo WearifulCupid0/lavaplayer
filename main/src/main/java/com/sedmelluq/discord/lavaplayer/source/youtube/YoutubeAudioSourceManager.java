@@ -42,6 +42,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
   private final YoutubeSignatureResolver signatureResolver;
   private final HttpInterfaceManager httpInterfaceManager;
   private final ExtendedHttpConfigurable combinedHttpConfiguration;
+  private final YoutubeChannelLoader channelLoader;
   private final YoutubeMixLoader mixLoader;
   private final boolean allowSearch;
   private final YoutubeTrackDetailsLoader trackDetailsLoader;
@@ -71,7 +72,8 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
         new YoutubeSignatureCipherManager(),
         new DefaultYoutubePlaylistLoader(),
         new DefaultYoutubeLinkRouter(),
-        new YoutubeMixProvider()
+        new YoutubeMixProvider(),
+        new DefaultYoutubeChannelLoader()
     );
   }
 
@@ -83,12 +85,14 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
       YoutubeSignatureResolver signatureResolver,
       YoutubePlaylistLoader playlistLoader,
       YoutubeLinkRouter linkRouter,
-      YoutubeMixLoader mixLoader
+      YoutubeMixLoader mixLoader,
+      YoutubeChannelLoader channelLoader
   ) {
     httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
     httpInterfaceManager.setHttpContextFilter(new YoutubeHttpContextFilter());
 
     this.allowSearch = allowSearch;
+    this.channelLoader = channelLoader;
     this.trackDetailsLoader = trackDetailsLoader;
     this.signatureResolver = signatureResolver;
     this.searchResultLoader = searchResultLoader;
@@ -111,13 +115,6 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
 
   public YoutubeSignatureResolver getSignatureResolver() {
     return signatureResolver;
-  }
-
-  /**
-   * @param playlistPageCount Maximum number of pages loaded from one playlist. There are 100 tracks per page.
-   */
-  public void setPlaylistPageCount(int playlistPageCount) {
-    playlistLoader.setPlaylistPageCount(playlistPageCount);
   }
 
   @Override
@@ -230,6 +227,15 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
     @Override
     public AudioItem track(String videoId) {
       return loadTrackWithVideoId(videoId, false);
+    }
+
+    @Override
+    public AudioItem channel(String channelId) {
+      try (HttpInterface httpInterface = getHttpInterface()) {
+        return channelLoader.load(httpInterface, channelId, YoutubeAudioSourceManager.this::buildTrackFromInfo);
+      } catch (Exception e) {
+        throw ExceptionTools.wrapUnfriendlyExceptions(e);
+      }
     }
 
     @Override

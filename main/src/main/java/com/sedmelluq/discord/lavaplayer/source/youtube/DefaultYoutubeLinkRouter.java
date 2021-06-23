@@ -19,8 +19,10 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
   private static final String SHORT_DOMAIN_REGEX = "(?:www\\.|)youtu\\.be";
   private static final String VIDEO_ID_REGEX = "(?<v>[a-zA-Z0-9_-]{11})";
   private static final String PLAYLIST_ID_REGEX = "(?<list>(PL|LL|FL|UU)[a-zA-Z0-9_-]+)";
+  private static final String CHANNEL_ID_REGEX = "/channel/([a-zA-Z0-9-_]+)";
 
   private static final Pattern directVideoIdPattern = Pattern.compile("^" + VIDEO_ID_REGEX + "$");
+  private static final Pattern channelIdPattern = Pattern.compile(CHANNEL_ID_REGEX);
 
   private final Extractor[] extractors = new Extractor[] {
       new Extractor(directVideoIdPattern, Routes::track),
@@ -73,8 +75,10 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
       String videoIds = urlInfo.parameters.get("video_ids");
       if (videoIds != null) {
         return routes.anonymous(videoIds);
-      }
-    }
+      } 
+    } else if (channelIdPattern.matcher(urlInfo.path).find()) {
+      return routes.channel(channelIdPattern.matcher(urlInfo.path).group(1));
+    }    
 
     return null;
   }

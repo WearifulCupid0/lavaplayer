@@ -2,7 +2,6 @@ package com.sedmelluq.discord.lavaplayer.source.youtube;
 
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
-import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
 import com.sedmelluq.discord.lavaplayer.tools.Units;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -27,13 +26,6 @@ import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.B
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.COMMON;
 
 public class DefaultYoutubePlaylistLoader implements YoutubePlaylistLoader {
-  private volatile int playlistPageCount = 6;
-
-  @Override
-  public void setPlaylistPageCount(int playlistPageCount) {
-    this.playlistPageCount = playlistPageCount;
-  }
-
   @Override
   public AudioPlaylist load(HttpInterface httpInterface, String playlistId, String selectedVideoId,
                             Function<AudioTrackInfo, AudioTrack> trackFactory) {
@@ -83,11 +75,9 @@ public class DefaultYoutubePlaylistLoader implements YoutubePlaylistLoader {
 
     List<AudioTrack> tracks = new ArrayList<>();
     String continuationsToken = extractPlaylistTracks(playlistVideoList, tracks, trackFactory);
-    int loadCount = 0;
-    int pageCount = playlistPageCount;
 
     // Also load the next pages, each result gives us a JSON with separate values for list html and next page loader html
-    while (continuationsToken != null && ++loadCount < pageCount) {
+    while (continuationsToken != null) {
       HttpPost post = new HttpPost(BROWSE_URL);
       StringEntity payload = new StringEntity(String.format(BROWSE_CONTINUATION_PAYLOAD, continuationsToken), "UTF-8");
       post.setEntity(payload);
@@ -168,8 +158,11 @@ public class DefaultYoutubePlaylistLoader implements YoutubePlaylistLoader {
         JsonBrowser lengthSeconds = item.get("lengthSeconds");
         long duration = Units.secondsToMillis(lengthSeconds.asLong(Units.DURATION_SEC_UNKNOWN));
 
+        List<JsonBrowser> artworks = item.get("thumbnail").get("thumbnails").values();
+        String artwork = artworks.get(artworks.size() - 1).get("url").text();
+
         AudioTrackInfo info = new AudioTrackInfo(title, author, duration, videoId, false,
-            "https://www.youtube.com/watch?v=" + videoId, PBJUtils.getYouTubeThumbnail(videoId));
+            "https://www.youtube.com/watch?v=" + videoId, artwork);
 
         tracks.add(trackFactory.apply(info));
       }

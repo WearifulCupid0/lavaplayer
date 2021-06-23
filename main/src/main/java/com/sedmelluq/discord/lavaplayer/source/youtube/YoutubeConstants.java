@@ -19,6 +19,7 @@ public class YoutubeConstants {
     static final String BROWSE_URL = BASE_URL + "/browse?key=" + INNERTUBE_API_KEY;
     static final String BROWSE_CONTINUATION_PAYLOAD = BASE_PAYLOAD + "\"continuation\":\"%s\"}";
     static final String BROWSE_PLAYLIST_PAYLOAD = BASE_PAYLOAD + "\"browseId\":\"VL%s\"}";
+    static final String BROWSE_CHANNEL_PAYLOAD = BASE_PAYLOAD + "\"params\":\"EgZ2aWRlb3M=\",\"browseId\":\"%s\"}";
     static final String NEXT_URL = BASE_URL + "/next?key=" + INNERTUBE_API_KEY;
     static final String NEXT_PAYLOAD = BASE_PAYLOAD + "\"videoId\":\"%s\",\"playlistId\":\"%s\"}";
 

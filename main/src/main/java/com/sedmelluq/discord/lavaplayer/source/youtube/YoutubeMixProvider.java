@@ -3,7 +3,6 @@ package com.sedmelluq.discord.lavaplayer.source.youtube;
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
-import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
@@ -87,10 +86,10 @@ public class YoutubeMixProvider implements YoutubeMixLoader {
       long duration = DataFormatTools.durationTextToMillis(durationStr);
       String identifier = renderer.get("videoId").text();
       String uri = "https://youtube.com/watch?v=" + identifier;
-      List<JsonBrowser> thumbnails = renderer.get("thumbnail").get("thumbnails").values();
+      List<JsonBrowser> artworks = renderer.get("thumbnail").get("thumbnails").values();
+      String artwork = artworks.get(artworks.size() - 1).get("url").text();
 
-      AudioTrackInfo trackInfo = new AudioTrackInfo(title, author, duration, identifier, false, uri,
-              thumbnails.get(thumbnails.size() - 1).get("url").text());
+      AudioTrackInfo trackInfo = new AudioTrackInfo(title, author, duration, identifier, false, uri, artwork);
       tracks.add(trackFactory.apply(trackInfo));
     }
   }
