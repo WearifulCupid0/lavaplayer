@@ -45,6 +45,7 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
     private final ExtendedHttpConfigurable combinedHttpConfiguration;
 
     private final MixcloudDirectUrlLoader directUrlLoader;
+    private final MixcloudSearchProvider searchProvider;
     private final MixcloudDataLoader dataLoader;
 
     public MixcloudAudioSourceManager() {
@@ -52,17 +53,19 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
     }
 
     public MixcloudAudioSourceManager(boolean allowSearch) {
-        this(allowSearch, new DefaultMixcloudDirectUrlLoader(), new DefaultMixcloudDataLoader());
+        this(allowSearch, new DefaultMixcloudDirectUrlLoader(), new DefaultMixcloudDataLoader(), new DefaultMixcloudSearchResultLoader());
     }
 
     public MixcloudAudioSourceManager(
             boolean allowSearch,
             MixcloudDirectUrlLoader directUrlLoader,
-            MixcloudDataLoader dataLoader) {
+            MixcloudDataLoader dataLoader,
+            MixcloudSearchProvider searchProvider) {
         this.allowSearch = allowSearch;
 
         this.directUrlLoader = directUrlLoader;
         this.dataLoader = dataLoader;
+        this.searchProvider = searchProvider;
 
         httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
 
@@ -89,7 +92,7 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
             return dataLoader.getArtist(matcher.group(1), this::getTrack);
         }
         if (allowSearch && reference.identifier.startsWith(SEARCH_PREFIX)) {
-            return dataLoader.getSearchResults(reference.identifier.substring(SEARCH_PREFIX.length()).trim(), this::getTrack);
+            return searchProvider.loadSearchResults(reference.identifier.substring(SEARCH_PREFIX.length()).trim(), this::getTrack);
         }
         return null;
     }

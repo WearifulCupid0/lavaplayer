@@ -4,7 +4,6 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
@@ -20,10 +19,8 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
   private static final String SHORT_DOMAIN_REGEX = "(?:www\\.|)youtu\\.be";
   private static final String VIDEO_ID_REGEX = "(?<v>[a-zA-Z0-9_-]{11})";
   private static final String PLAYLIST_ID_REGEX = "(?<list>(PL|LL|FL|UU)[a-zA-Z0-9_-]+)";
-  private static final String CHANNEL_ID_REGEX = "/channel/([a-zA-Z0-9-_]+)";
 
   private static final Pattern directVideoIdPattern = Pattern.compile("^" + VIDEO_ID_REGEX + "$");
-  private static final Pattern channelIdPattern = Pattern.compile(CHANNEL_ID_REGEX);
 
   private final Extractor[] extractors = new Extractor[] {
       new Extractor(directVideoIdPattern, Routes::track),
@@ -59,7 +56,6 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
 
   protected <T> T routeFromMainDomain(Routes<T> routes, String url) {
     UrlInfo urlInfo = getUrlInfo(url, true);
-    Matcher matcher =  null;
     if ("/watch".equals(urlInfo.path)) {
       String videoId = urlInfo.parameters.get("v");
 
@@ -77,8 +73,12 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
       if (videoIds != null) {
         return routes.anonymous(videoIds);
       } 
-    } else if ((matcher = channelIdPattern.matcher(urlInfo.path)).find()) {
-      return routes.channel(matcher.group(1));
+    } else if (urlInfo.path.startsWith("/channel/")) {
+      String channelId = urlInfo.path.replace("/channel/", "");
+      if(channelId.contains("?")) {
+        channelId = channelId.substring(0, channelId.indexOf("?"));
+      }
+      return routes.channel(channelId);
     }    
 
     return null;
@@ -92,7 +92,7 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
     
     if (!directVideoIdPattern.matcher(videoId).matches()) {
       return routes.none();
-    } else if (urlInfo.parameters.get("list") != null) {
+    } else if (urlInfo.parameters.containsValue("list")) {
       String playlistId = urlInfo.parameters.get("list");
 
       if (playlistId.startsWith("RD")) {

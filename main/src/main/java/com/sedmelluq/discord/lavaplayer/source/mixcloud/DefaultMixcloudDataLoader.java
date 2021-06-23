@@ -10,7 +10,6 @@ import java.util.function.Function;
 
 import static com.sedmelluq.discord.lavaplayer.source.mixcloud.MixcloudConstants.PLAYLIST_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.mixcloud.MixcloudConstants.ARTIST_PAYLOAD;
-import static com.sedmelluq.discord.lavaplayer.source.mixcloud.MixcloudConstants.SEARCH_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.mixcloud.MixcloudConstants.TRACK_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.mixcloud.MixcloudUtils.extractTrack;
 
@@ -42,18 +41,6 @@ public class DefaultMixcloudDataLoader extends AbstractMixcloudApiLoader impleme
             });
 
             return new BasicAudioPlaylist(data.get("playlist").get("name").text(), "playlist", tracks, null, false);
-        });
-    }
-
-    public AudioItem getSearchResults(String query, Function<AudioTrackInfo, AudioTrack> trackFactory) {
-        return extractFromApi(String.format(SEARCH_PAYLOAD, query.replace("\"", "\\\"")), (httpClient, data) -> {
-            ArrayList<AudioTrack> tracks = new ArrayList<>();
-            data.get("viewer").get("search").get("searchQuery").get("cloudcasts").get("edged").values()
-            .forEach(track -> {
-                tracks.add(extractTrack(track, trackFactory));
-            });
-
-            return new BasicAudioPlaylist("Search results for: " + query, "search", tracks, null, true);
         });
     }
 }

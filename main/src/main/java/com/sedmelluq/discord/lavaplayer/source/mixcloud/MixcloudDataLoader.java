@@ -9,5 +9,4 @@ public interface MixcloudDataLoader extends MixcloudApiLoader {
     public AudioItem getTrack(String slug, String username, Function<AudioTrackInfo, AudioTrack> trackFactory);
     public AudioItem getArtist(String username, Function<AudioTrackInfo, AudioTrack> trackFactory);
     public AudioItem getPlaylist(String slug, String username, Function<AudioTrackInfo, AudioTrack> trackFactory);
-    public AudioItem getSearchResults(String query, Function<AudioTrackInfo, AudioTrack> trackFactory);
 }
