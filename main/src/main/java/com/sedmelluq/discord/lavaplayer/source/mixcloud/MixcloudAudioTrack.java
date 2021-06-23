@@ -1,6 +1,6 @@
 package com.sedmelluq.discord.lavaplayer.source.mixcloud;
 
-import com.sedmelluq.discord.lavaplayer.container.mp3.Mp3AudioTrack;
+import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.PersistentHttpStream;
@@ -36,7 +36,7 @@ public class MixcloudAudioTrack extends DelegatedAudioTrack {
             String trackMediaUrl = sourceManager.getDirectUrlLoader().getStreamUrl(trackInfo.identifier);
             log.debug("Starting Mixcloud track from URL: {}", trackMediaUrl);
             try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(trackMediaUrl), null)) {
-                processDelegate(new Mp3AudioTrack(trackInfo, stream), localExecutor);
+                processDelegate(new MpegAudioTrack(trackInfo, stream), localExecutor);
             }
         }
     }
