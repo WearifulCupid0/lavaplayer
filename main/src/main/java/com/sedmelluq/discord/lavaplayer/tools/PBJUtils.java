@@ -9,7 +9,7 @@ public class PBJUtils {
     }
 
     public static String getYouTubeThumbnail(String videoId) {
-        return String.format("https://i.ytimg.com/vi_webp/%s/maxresdefault.webp", videoId);
+        return String.format("https://i.ytimg.com/vi_webp/%s/mqdefault.jpg", videoId);
     }
 
     public static String getSoundCloudThumbnail(JsonBrowser trackData) {

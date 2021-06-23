@@ -33,7 +33,7 @@ public class DefaultMixcloudDirectUrlLoader implements MixcloudDirectUrlLoader {
              * This URL is from a random mixcloud downloader...
              */
             HttpPost post = new HttpPost("https://www.dlmixcloud.com/ajax.php");
-            post.setEntity(new StringEntity(String.format("{\"url\":\"%s\"}", url)));
+            post.setEntity(new StringEntity(String.format("{\"url\":\"%s\"}", url), "UTF-8"));
             try (CloseableHttpResponse response = httpInterface.execute(post)) {
                 HttpClientTools.assertSuccessWithContent(response, "track response");
 

@@ -98,8 +98,8 @@ public class DefaultYoutubeTrackDetails implements YoutubeTrackDetails {
         videoDetails.get("isLiveContent").asBoolean(false),
         videoDetails.get("lengthSeconds")
     );
-
-    return buildTrackInfo(videoId, videoDetails.get("title").text(), videoDetails.get("author").text(), temporalInfo, PBJUtils.getYouTubeThumbnail(videoId));
+    List<JsonBrowser> thumbnails = videoDetails.get("thumbnail").get("thumbnails").values();
+    return buildTrackInfo(videoId, videoDetails.get("title").text(), videoDetails.get("author").text(), temporalInfo, thumbnails.get(thumbnails.size() - 1).get("url").text());
   }
 
   private AudioTrackInfo loadLegacyTrackInfo() {

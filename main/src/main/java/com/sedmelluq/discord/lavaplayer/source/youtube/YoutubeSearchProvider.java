@@ -24,6 +24,7 @@ import java.util.function.Function;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.SEARCH_URL;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.SEARCH_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.WATCH_URL_PREFIX;
+import static com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -103,18 +104,20 @@ public class YoutubeSearchProvider implements YoutubeSearchResultLoader {
   private AudioTrack extractPolymerData(JsonBrowser json, Function<AudioTrackInfo, AudioTrack> trackFactory) {
     json = json.get("compactVideoRenderer");
     if (json.isNull()) return null; // Ignore everything which is not a track
-
+    AudioTrackInfo info = null;
     String title = json.get("title").get("runs").index(0).get("text").text();
     String author = json.get("longBylineText").get("runs").index(0).get("text").text();
-    if (json.get("lengthText").isNull()) {
-      return null; // Ignore if the video is a live stream
-    }
-    long duration = DataFormatTools.durationTextToMillis(json.get("lengthText").get("runs").index(0).get("text").text());
     String videoId = json.get("videoId").text();
+    List<JsonBrowser> thumbnails = json.get("thumbnail").get("thumbnails").values();
+    if (json.get("lengthText").isNull()) {
+      info = new AudioTrackInfo(title, author, DURATION_MS_UNKNOWN, videoId, true,
+      WATCH_URL_PREFIX + videoId, thumbnails.get(thumbnails.size() - 1).get("url").text())
+    } else {
+      long duration = DataFormatTools.durationTextToMillis(json.get("lengthText").get("runs").index(0).get("text").text());
 
-    AudioTrackInfo info = new AudioTrackInfo(title, author, duration, videoId, false,
-        WATCH_URL_PREFIX + videoId, PBJUtils.getYouTubeThumbnail(videoId));
-
+      info = new AudioTrackInfo(title, author, duration, videoId, false,
+        WATCH_URL_PREFIX + videoId, thumbnails.get(thumbnails.size() - 1).get("url").text());
+    }
     return trackFactory.apply(info);
   }
 }
