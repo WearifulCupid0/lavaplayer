@@ -34,7 +34,7 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
     private final String ARTIST_REGEX = "(?:http://|https://|)?(?:(?:www|beta|m)\\.)?mixcloud\\.com/([^/]+)";
     
     private final String SEARCH_PREFIX = "mxsearch";
-    private final String SEARCH_REGEX = SEARCH_PREFIX + ":([^:]+)";
+    private final String SEARCH_REGEX = "mxsearch:([^:]+)";
 
     private final Pattern trackPattern = Pattern.compile(TRACK_REGEX);
     private final Pattern playlistPattern = Pattern.compile(PLAYLIST_REGEX);
@@ -80,19 +80,17 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
 
     @Override
     public AudioItem loadItem(DefaultAudioPlayerManager manager, AudioReference reference) {
-        if (playlistPattern.matcher(reference.identifier).matches()) {
-            Matcher playlistMatcher = playlistPattern.matcher(reference.identifier);
-            return dataLoader.getPlaylist(playlistMatcher.group(2), playlistMatcher.group(1), this::getTrack);
+        Matcher matcher;
+        if (( matcher = playlistPattern.matcher(reference.identifier) ).find()) {
+            return dataLoader.getPlaylist(matcher.group(2), matcher.group(1), this::getTrack);
         }
-        if (trackPattern.matcher(reference.identifier).matches()) {
-            Matcher trackMatcher = trackPattern.matcher(reference.identifier);
-            return dataLoader.getTrack(trackMatcher.group(2), trackMatcher.group(1), this::getTrack);
+        if (( matcher = trackPattern.matcher(reference.identifier) ).find()) {
+            return dataLoader.getTrack(matcher.group(2), matcher.group(1), this::getTrack);
         }
-        if (artistPattern.matcher(reference.identifier).matches()) {
-            Matcher artistMatcher = artistPattern.matcher(reference.identifier);
-            return dataLoader.getArtist(artistMatcher.group(1), this::getTrack);
+        if (( matcher = artistPattern.matcher(reference.identifier) ).find()) {
+            return dataLoader.getArtist(matcher.group(1), this::getTrack);
         }
-        if (allowSearch && searchPattern.matcher(reference.identifier).matches()) {
+        if (allowSearch && reference.identifier.startsWith(SEARCH_PREFIX)) {
             Matcher searchMatcher = searchPattern.matcher(reference.identifier);
             return dataLoader.getSearchResults(searchMatcher.group(1), this::getTrack);
         }
