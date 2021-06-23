@@ -182,7 +182,7 @@ public class JamendoAudioSourceManager implements AudioSourceManager, HttpConfig
         return httpInterfaceManager;
     }
 
-    public ExtendedHttpConfigurable getTrackLHttpConfiguration() {
+    public ExtendedHttpConfigurable getTrackHttpConfiguration() {
         return trackLoader.getHttpConfiguration();
     }
 
