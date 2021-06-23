@@ -33,13 +33,11 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
     private final String PLAYLIST_REGEX = "(?:http://|https://|)?(?:(?:www|beta|m)\\.)?mixcloud\\.com/([^/]+)/playlists/([^/]+)";
     private final String ARTIST_REGEX = "(?:http://|https://|)?(?:(?:www|beta|m)\\.)?mixcloud\\.com/([^/]+)";
     
-    private final String SEARCH_PREFIX = "mxsearch";
-    private final String SEARCH_REGEX = "mxsearch:([^:]+)";
+    private final String SEARCH_PREFIX = "mxsearch:";
 
     private final Pattern trackPattern = Pattern.compile(TRACK_REGEX);
     private final Pattern playlistPattern = Pattern.compile(PLAYLIST_REGEX);
     private final Pattern artistPattern = Pattern.compile(ARTIST_REGEX);
-    private final Pattern searchPattern = Pattern.compile(SEARCH_REGEX);
 
     private final boolean allowSearch;
 
@@ -91,8 +89,7 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
             return dataLoader.getArtist(matcher.group(1), this::getTrack);
         }
         if (allowSearch && reference.identifier.startsWith(SEARCH_PREFIX)) {
-            matcher = searchPattern.matcher(reference.identifier);
-            return dataLoader.getSearchResults(matcher.group(1), this::getTrack);
+            return dataLoader.getSearchResults(reference.identifier.substring(SEARCH_PREFIX.length()).trim(), this::getTrack);
         }
         return null;
     }
