@@ -27,7 +27,7 @@ public class DefaultBandlabDataReader implements BandlabDataReader {
                 trackData.get("revision").get("mixdown").get("id").safeText(),
                 false,
                 getUri(authorData.get("username").text(), trackData.get("slug").isNull() ? trackData.get("revision").get("song").get("slug").text() : trackData.get("slug").text()),
-                getArtwork(trackData.get("picture"))
+                getArtwork(trackData.get("picture").isNull() ? trackData.get("revision").get("song").get("picture") : trackData.get("picture"))
             );
         }
     }
