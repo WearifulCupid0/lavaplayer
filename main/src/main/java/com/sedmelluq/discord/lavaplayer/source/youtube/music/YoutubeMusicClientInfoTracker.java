@@ -1,6 +1,7 @@
 package com.sedmelluq.discord.lavaplayer.source.youtube.music;
 
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
+import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -19,8 +20,8 @@ public class YoutubeMusicClientInfoTracker {
 
     private static final long REFRESH_INTERVAL = TimeUnit.HOURS.toMillis(1);
     private static final String INNERTUBE_API_KEY_REGEX = ",\"INNERTUBE_API_KEY\":\"([a-zA-Z0-9-_]+)\"";
-    private static final String INNERTUBE_CLIENT_NAME_REGEX = ",\"INNERTUBE_CLIENT_NAME\":\"([a-zA-Z0-9-_]+)\"";
-    private static final String INNERTUBE_CLIENT_VERSION_REGEX = ",\"INNERTUBE_CLIENT_VERSION\":\"([a-zA-Z0-9-_]+)\"";
+    private static final String INNERTUBE_CLIENT_NAME_REGEX = ",\"INNERTUBE_CLIENT_NAME\":\"(.*)\"";
+    private static final String INNERTUBE_CLIENT_VERSION_REGEX = ",\"INNERTUBE_CLIENT_VERSION\":\"(.*)\"";
 
     private static final Pattern innertubeApiKey = Pattern.compile(INNERTUBE_API_KEY_REGEX);
     private static final Pattern innertubeClientName = Pattern.compile(INNERTUBE_CLIENT_NAME_REGEX);
@@ -54,13 +55,15 @@ public class YoutubeMusicClientInfoTracker {
             HttpInterface httpInterface = httpInterfaceManager.getInterface();
             CloseableHttpResponse response = httpInterface.execute(new HttpGet(MUSIC_ORIGIN))
         ) {
+            HttpClientTools.assertSuccessWithContent(response, "music response");
+
             String page = EntityUtils.toString(response.getEntity());
             Matcher apiKeyMatcher = innertubeApiKey.matcher(page);
             Matcher clientNameMatcher = innertubeClientName.matcher(page);
             Matcher clientVersionMatcher = innertubeClientVersion.matcher(page);
 
-            if(!apiKeyMatcher.matches() || !clientNameMatcher.matches() || !clientVersionMatcher.matches()) {
-                throw new IllegalStateException("Failed to match client info from main page.");
+            if(!apiKeyMatcher.find() || !clientNameMatcher.find() || !clientVersionMatcher.find()) {
+                throw new IllegalStateException("Failed to find client info from main page.");
             }
 
             this.apiKey = apiKeyMatcher.group(1);
