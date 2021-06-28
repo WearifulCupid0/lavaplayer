@@ -19,8 +19,8 @@ public class YoutubeMusicClientInfoTracker {
     private static final Logger log = LoggerFactory.getLogger(YoutubeMusicClientInfoTracker.class);
 
     private static final long REFRESH_INTERVAL = TimeUnit.HOURS.toMillis(1);
-    private static final String INNERTUBE_API_KEY_REGEX = "INNERTUBE_API_KEY\":\"([a-zA-Z0-9-_]+)\",";
-    private static final String INNERTUBE_CLIENT_NAME_REGEX = "INNERTUBE_CLIENT_NAME\":\"([a-zA-Z0-9-_]+)\",";
+    private static final String INNERTUBE_API_KEY_REGEX = "INNERTUBE_API_KEY\":\"(.*)\",";
+    private static final String INNERTUBE_CLIENT_NAME_REGEX = "INNERTUBE_CLIENT_NAME\":\"(.*)\",";
     private static final String INNERTUBE_CLIENT_VERSION_REGEX = "INNERTUBE_CLIENT_VERSION\":\"(.*)\",";
 
     private static final Pattern innertubeApiKey = Pattern.compile(INNERTUBE_API_KEY_REGEX);
