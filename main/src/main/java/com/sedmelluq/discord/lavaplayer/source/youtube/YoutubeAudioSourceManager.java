@@ -237,11 +237,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
     public AudioItem channel(String channelId) {
       log.debug("Starting to load channel with ID {}", channelId);
 
-      try (HttpInterface httpInterface = getHttpInterface()) {
-        return channelLoader.load(httpInterface, channelId, YoutubeAudioSourceManager.this::buildTrackFromInfo);
-      } catch (Exception e) {
-        throw ExceptionTools.wrapUnfriendlyExceptions(e);
-      }
+      return channelLoader.load(channelId, YoutubeAudioSourceManager.this::buildTrackFromInfo);
     }
 
     @Override
@@ -294,11 +290,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
     public AudioItem similar(String videoId) {
       log.debug("Starting to load similar videos from ID {}", videoId);
 
-      try (HttpInterface httpInterface = getHttpInterface()) {
-        return similarLoader.load(httpInterface, videoId, YoutubeAudioSourceManager.this::buildTrackFromInfo);
-      } catch (Exception e) {
-        throw ExceptionTools.wrapUnfriendlyExceptions(e);
-      }
+      return similarLoader.load(videoId, YoutubeAudioSourceManager.this::buildTrackFromInfo);
     }
 
     @Override

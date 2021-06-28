@@ -1,9 +1,12 @@
 package com.sedmelluq.discord.lavaplayer.source.youtube;
 
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
+import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.http.ExtendedHttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
+import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
 import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -13,7 +16,6 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -23,19 +25,31 @@ import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.W
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.BROWSE_URL;
 
 public class DefaultYoutubeChannelLoader implements YoutubeChannelLoader {
-    @Override
-    public AudioItem load(HttpInterface httpInterface, String channelId, Function<AudioTrackInfo, AudioTrack> trackFactory) {
-        HttpPost post = new HttpPost(BROWSE_URL);
-        StringEntity payload = new StringEntity(String.format(BROWSE_CHANNEL_PAYLOAD, channelId), "UTF-8");
-        post.setEntity(payload);
-        try (CloseableHttpResponse response = httpInterface.execute(post)) {
-            HttpClientTools.assertSuccessWithContent(response, "channel response");
-            HttpClientTools.assertJsonContentType(response);
+    private final HttpInterfaceManager httpInterfaceManager;
 
-            JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
-            return buildChannel(json, trackFactory);
-        } catch(IOException e) {
-            throw new RuntimeException(e);
+    public DefaultYoutubeChannelLoader() {
+        this.httpInterfaceManager = HttpClientTools.createCookielessThreadLocalManager();
+    }
+
+    public ExtendedHttpConfigurable getHttpConfiguration() {
+        return httpInterfaceManager;
+    }
+
+    @Override
+    public AudioItem load(String channelId, Function<AudioTrackInfo, AudioTrack> trackFactory) {
+        try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
+            HttpPost post = new HttpPost(BROWSE_URL);
+            StringEntity payload = new StringEntity(String.format(BROWSE_CHANNEL_PAYLOAD, channelId), "UTF-8");
+            post.setEntity(payload);
+            try (CloseableHttpResponse response = httpInterface.execute(post)) {
+                HttpClientTools.assertSuccessWithContent(response, "channel response");
+                HttpClientTools.assertJsonContentType(response);
+
+                JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
+                return buildChannel(json, trackFactory);
+            }
+        } catch (Exception e) {
+            throw ExceptionTools.wrapUnfriendlyExceptions(e);
         }
     }
     private AudioItem buildChannel(JsonBrowser json, Function<AudioTrackInfo, AudioTrack> trackFactory) {
