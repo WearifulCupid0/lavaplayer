@@ -17,9 +17,9 @@ public class YoutubeMusicClientInfoTracker {
     private static final Logger log = LoggerFactory.getLogger(YoutubeMusicClientInfoTracker.class);
 
     private static final long REFRESH_INTERVAL = TimeUnit.HOURS.toMillis(1);
-    private static final String INNERTUBE_API_KEY_REGEX = "INNERTUBE_API_KEY\":\"([a-zA-Z0-9-_]+)\",";
-    private static final String INNERTUBE_CLIENT_NAME_REGEX = "INNERTUBE_CLIENT_NAME\":\"([a-zA-Z0-9-_]+)\",";
-    private static final String INNERTUBE_CLIENT_VERSION_REGEX = "INNERTUBE_CLIENT_VERSION\":\"([0-9\\.]+?)\",";
+    private static final String INNERTUBE_API_KEY_REGEX = "INNERTUBE_API_KEY\":\"([a-zA-Z0-9-_]+)\"";
+    private static final String INNERTUBE_CLIENT_NAME_REGEX = "INNERTUBE_CLIENT_NAME\":\"([a-zA-Z0-9-_]+)\"";
+    private static final String INNERTUBE_CLIENT_VERSION_REGEX = "INNERTUBE_CLIENT_VERSION\":\"([0-9\\.]+?)\"";
 
     private static final Pattern innertubeApiKey = Pattern.compile(INNERTUBE_API_KEY_REGEX);
     private static final Pattern innertubeClientName = Pattern.compile(INNERTUBE_CLIENT_NAME_REGEX);
@@ -62,7 +62,7 @@ public class YoutubeMusicClientInfoTracker {
             Matcher apiKeyMatcher = innertubeApiKey.matcher(page);
             Matcher clientNameMatcher = innertubeClientName.matcher(page);
             Matcher clientVersionMatcher = innertubeClientVersion.matcher(page);
-            
+            log.info("THIS IS ONLY A INFO LOG!!! apiKey: {} clientName: {} clientVersion: {}", apiKeyMatcher.find(), clientNameMatcher.find(), clientVersionMatcher.find());
             if (apiKeyMatcher.find()) {
                 apiKey = apiKeyMatcher.group(1);
             }
