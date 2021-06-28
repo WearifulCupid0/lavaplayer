@@ -57,7 +57,7 @@ public class YoutubeMusicClientInfoTracker {
         ) {
             HttpClientTools.assertSuccessWithContent(response, "music client info response");
 
-            String page = EntityUtils.toString(response.getEntity());
+            String page = response.getEntity().toString();
             Matcher apiKeyMatcher = innertubeApiKey.matcher(page);
             Matcher clientNameMatcher = innertubeClientName.matcher(page);
             Matcher clientVersionMatcher = innertubeClientVersion.matcher(page);
