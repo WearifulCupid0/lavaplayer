@@ -62,10 +62,16 @@ public class YoutubeMusicClientInfoTracker {
             Matcher apiKeyMatcher = innertubeApiKey.matcher(page);
             Matcher clientNameMatcher = innertubeClientName.matcher(page);
             Matcher clientVersionMatcher = innertubeClientVersion.matcher(page);
-
-            if (apiKeyMatcher.find()) this.apiKey = apiKeyMatcher.group(1);
-            if (clientNameMatcher.find()) this.clientName = clientNameMatcher.group(1);
-            if (clientVersionMatcher.find()) this.clientVersion = clientVersionMatcher.group(1);
+            
+            if (apiKeyMatcher.find()) {
+                apiKey = apiKeyMatcher.group(1);
+            }
+            if (clientNameMatcher.find()) {
+                clientName = clientNameMatcher.group(1);
+            }
+            if (clientVersionMatcher.find()) {
+                clientVersion = clientVersionMatcher.group(1);
+            }
         }
     }
 
