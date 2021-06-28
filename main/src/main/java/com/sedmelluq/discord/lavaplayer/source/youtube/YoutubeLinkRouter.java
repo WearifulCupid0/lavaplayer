@@ -16,6 +16,8 @@ public interface YoutubeLinkRouter {
 
     T searchMusic(String query);
 
+    T similar(String videoId);
+
     T anonymous(String videoIds);
 
     T none();

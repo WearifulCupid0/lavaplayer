@@ -48,6 +48,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
   private final YoutubeTrackDetailsLoader trackDetailsLoader;
   private final YoutubeSearchResultLoader searchResultLoader;
   private final YoutubeSearchMusicResultLoader searchMusicResultLoader;
+  private final YoutubeSimilarLoader similarLoader;
   private final YoutubePlaylistLoader playlistLoader;
   private final YoutubeLinkRouter linkRouter;
   private final LoadingRoutes loadingRoutes;
@@ -69,6 +70,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
         new DefaultYoutubeTrackDetailsLoader(),
         new YoutubeSearchProvider(),
         new YoutubeSearchMusicProvider(),
+        new DefaultYoutubeSimilarLoader(),
         new YoutubeSignatureCipherManager(),
         new DefaultYoutubePlaylistLoader(),
         new DefaultYoutubeLinkRouter(),
@@ -82,6 +84,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
       YoutubeTrackDetailsLoader trackDetailsLoader,
       YoutubeSearchResultLoader searchResultLoader,
       YoutubeSearchMusicResultLoader searchMusicResultLoader,
+      YoutubeSimilarLoader similarLoader,
       YoutubeSignatureResolver signatureResolver,
       YoutubePlaylistLoader playlistLoader,
       YoutubeLinkRouter linkRouter,
@@ -97,6 +100,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
     this.signatureResolver = signatureResolver;
     this.searchResultLoader = searchResultLoader;
     this.searchMusicResultLoader = searchMusicResultLoader;
+    this.similarLoader = similarLoader;
     this.playlistLoader = playlistLoader;
     this.linkRouter = linkRouter;
     this.mixLoader = mixLoader;
@@ -231,6 +235,8 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
 
     @Override
     public AudioItem channel(String channelId) {
+      log.debug("Starting to load channel with ID {}", channelId);
+
       try (HttpInterface httpInterface = getHttpInterface()) {
         return channelLoader.load(httpInterface, channelId, YoutubeAudioSourceManager.this::buildTrackFromInfo);
       } catch (Exception e) {
@@ -282,6 +288,18 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
         );
       }
       return null;
+    }
+
+    @Override
+    public AudioItem similar(String videoId) {
+      log.debug("Starting to load similar videos from ID {}", videoId);
+
+      try (HttpInterface httpInterface = getHttpInterface()) {
+        return similarLoader.load(httpInterface, videoId,
+              YoutubeAudioSourceManager.this::buildTrackFromInfo);
+      } catch (Exception e) {
+        throw ExceptionTools.wrapUnfriendlyExceptions(e);
+      }
     }
 
     @Override

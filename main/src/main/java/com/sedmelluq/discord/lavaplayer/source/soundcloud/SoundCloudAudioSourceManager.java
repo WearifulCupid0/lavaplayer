@@ -49,15 +49,23 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
   private static final String UNLISTED_URL_REGEX = "^(?:http://|https://|)(?:www\\.|)(?:m\\.|)soundcloud\\.com/([a-zA-Z0-9-_]+)/([a-zA-Z0-9-_]+)/s-([a-zA-Z0-9-_]+)(?:\\?.*|)$";
   private static final String LIKED_URL_REGEX = "^(?:http://|https://|)(?:www\\.|)(?:m\\.|)soundcloud\\.com/([a-zA-Z0-9-_]+)/likes/?(?:\\?.*|)$";
   private static final String LIKED_USER_URN_REGEX = "\"urn\":\"soundcloud:users:([0-9]+)\",\"username\":\"([^\"]+)\"";
+  
   private static final String SEARCH_PREFIX = "scsearch";
   private static final String SEARCH_PREFIX_DEFAULT = "scsearch:";
   private static final String SEARCH_REGEX = SEARCH_PREFIX + "\\[([0-9]{1,9}),([0-9]{1,9})\\]:\\s*(.*)\\s*";
+
+  private static final String SIMILAR_PREFIX = "scsimilar";
+  private static final String SIMILAR_PREFIX_DEFAULT = "scsimilar:";
+  private static final String SIMILAR_REGEX = SIMILAR_PREFIX_DEFAULT + "(.*)";
+  private static final String TRACK_ID_EXTRACTOR = "/soundcloud:tracks:([0-9-_]+)/";
 
   private static final Pattern trackUrlPattern = Pattern.compile(TRACK_URL_REGEX);
   private static final Pattern unlistedUrlPattern = Pattern.compile(UNLISTED_URL_REGEX);
   private static final Pattern likedUrlPattern = Pattern.compile(LIKED_URL_REGEX);
   private static final Pattern likedUserUrnPattern = Pattern.compile(LIKED_USER_URN_REGEX);
   private static final Pattern searchPattern = Pattern.compile(SEARCH_REGEX);
+  private static final Pattern similarPattern = Pattern.compile(SIMILAR_REGEX);
+  private static final Pattern trackIdPattern = Pattern.compile(TRACK_ID_EXTRACTOR);
 
   private final SoundCloudDataReader dataReader;
   private final SoundCloudHtmlDataLoader htmlDataLoader;
@@ -121,6 +129,10 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
 
     if (track == null) {
       track = processAsLikedTracks(reference);
+    }
+
+    if (track == null) {
+      track = processAsSimilarTracks(reference);
     }
 
     if (track == null && allowSearch) {
@@ -280,6 +292,70 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
       this.id = id;
       this.name = name;
     }
+  }
+
+  private AudioItem processAsSimilarTracks(AudioReference reference) {
+    if (reference.identifier.startsWith(SIMILAR_PREFIX)) {
+      Matcher matcher = null;
+      if (reference.identifier.startsWith(SIMILAR_PREFIX_DEFAULT)) {
+        String identifier = reference.identifier.substring(SIMILAR_PREFIX_DEFAULT.length()).trim();
+        if(( matcher = trackIdPattern.matcher(identifier) ).find()) {
+          return loadSimilarResult(matcher.group(1));
+        }
+      }
+
+      matcher = similarPattern.matcher(reference.identifier);
+
+      if (matcher.find()) {
+        if(( matcher = trackIdPattern.matcher(matcher.group(1)) ).find()) {
+          return loadSimilarResult(matcher.group(1));
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private AudioItem loadSimilarResult(String id) {
+    try (
+        HttpInterface httpInterface = getHttpInterface();
+        CloseableHttpResponse response = httpInterface.execute(new HttpGet(buildSimilarUri(id)))
+    ) {
+      return loadSimilarResultsFromResponse(response, id);
+    } catch (IOException e) {
+      throw new FriendlyException("Loading similar tracks from SoundCloud failed.", SUSPICIOUS, e);
+    }
+  }
+
+  private AudioItem loadSimilarResultsFromResponse(HttpResponse response, String id) throws IOException {
+    try {
+      JsonBrowser searchResults = JsonBrowser.parse(response.getEntity().getContent());
+      return extractTracksFromSimilarResults(id, searchResults);
+    } finally {
+      EntityUtils.consumeQuietly(response.getEntity());
+    }
+  }
+
+  private URI buildSimilarUri(String id) {
+    try {
+      return new URIBuilder("https://api-v2.soundcloud.com/tracks/" + id + "/related")
+      .addParameter("client_id", getClientId())
+      .build();
+    } catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private AudioItem extractTracksFromSimilarResults(String id, JsonBrowser searchResults) {
+    List<AudioTrack> tracks = new ArrayList<>();
+
+    for (JsonBrowser item : searchResults.get("collection").values()) {
+      if (!item.isNull()) {
+        tracks.add(loadFromTrackData(item));
+      }
+    }
+
+    return new BasicAudioPlaylist("Similar results for: " + id, "similar", tracks, null, true);
   }
 
   private AudioItem processAsSearchQuery(AudioReference reference) {

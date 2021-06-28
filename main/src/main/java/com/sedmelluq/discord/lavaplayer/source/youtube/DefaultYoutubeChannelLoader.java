@@ -4,7 +4,8 @@ import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
-import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
+import com.sedmelluq.discord.lavaplayer.track.AudioItem;
+import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
@@ -23,7 +24,7 @@ import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.B
 
 public class DefaultYoutubeChannelLoader implements YoutubeChannelLoader {
     @Override
-    public AudioPlaylist load(HttpInterface httpInterface, String channelId, Function<AudioTrackInfo, AudioTrack> trackFactory) {
+    public AudioItem load(HttpInterface httpInterface, String channelId, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         HttpPost post = new HttpPost(BROWSE_URL);
         StringEntity payload = new StringEntity(String.format(BROWSE_CHANNEL_PAYLOAD, channelId), "UTF-8");
         post.setEntity(payload);
@@ -37,7 +38,7 @@ public class DefaultYoutubeChannelLoader implements YoutubeChannelLoader {
             throw new RuntimeException(e);
         }
     }
-    private AudioPlaylist buildChannel(JsonBrowser json, Function<AudioTrackInfo, AudioTrack> trackFactory) {
+    private AudioItem buildChannel(JsonBrowser json, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         JsonBrowser channelData = json.get("metadata").get("channelMetadataRenderer");
         if (channelData == null) channelData = json.get("header").get("c4TabbedHeaderRenderer");
 
@@ -67,7 +68,7 @@ public class DefaultYoutubeChannelLoader implements YoutubeChannelLoader {
         });
 
         if(tracks.isEmpty()) {
-            return null;
+            return AudioReference.NO_TRACK;
         }
 
         return new BasicAudioPlaylist(channelName, "channel", tracks, null, false);

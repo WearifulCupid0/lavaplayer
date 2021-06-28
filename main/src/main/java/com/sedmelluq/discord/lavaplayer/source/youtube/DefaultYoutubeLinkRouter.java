@@ -13,14 +13,17 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
   private static final String SEARCH_PREFIX = "ytsearch:";
   private static final String SEARCH_MUSIC_PREFIX = "ytmsearch:";
+  private static final String SIMILAR_VIDEOS_PREFIX = "ytsimilar:";
 
   private static final String PROTOCOL_REGEX = "(?:http://|https://|)";
   private static final String DOMAIN_REGEX = "(?:www\\.|m\\.|music\\.|)youtube\\.com";
   private static final String SHORT_DOMAIN_REGEX = "(?:www\\.|)youtu\\.be";
   private static final String VIDEO_ID_REGEX = "(?<v>[a-zA-Z0-9_-]{11})";
   private static final String PLAYLIST_ID_REGEX = "(?<list>(PL|LL|FL|UU)[a-zA-Z0-9_-]+)";
+  private static final String CHANNEL_ID_REGEX = PROTOCOL_REGEX + DOMAIN_REGEX + "/channel/([a-zA-Z0-9-_]+)";
 
   private static final Pattern directVideoIdPattern = Pattern.compile("^" + VIDEO_ID_REGEX + "$");
+  private static final Pattern channelIdPattern = Pattern.compile("^" + CHANNEL_ID_REGEX +  "$");
 
   private final Extractor[] extractors = new Extractor[] {
       new Extractor(directVideoIdPattern, Routes::track),
@@ -35,6 +38,8 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
       return routes.search(link.substring(SEARCH_PREFIX.length()).trim());
     } else if (link.startsWith(SEARCH_MUSIC_PREFIX)) {
       return routes.searchMusic(link.substring(SEARCH_MUSIC_PREFIX.length()).trim());
+    } else if (link.startsWith(SIMILAR_VIDEOS_PREFIX)) {
+      return routes.similar(link.substring(SIMILAR_VIDEOS_PREFIX.length()).trim());
     }
 
     for (Extractor extractor : extractors) {
@@ -73,13 +78,10 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
       if (videoIds != null) {
         return routes.anonymous(videoIds);
       } 
-    } else if (urlInfo.path.startsWith("/channel/")) {
-      String channelId = urlInfo.path.replace("/channel/", "");
-      if(channelId.contains("?")) {
-        channelId = channelId.substring(0, channelId.indexOf("?"));
-      }
+    } else if (channelIdPattern.matcher(url).find()) {
+      String channelId = channelIdPattern.matcher(url).group(1);
       return routes.channel(channelId);
-    }    
+    }
 
     return null;
   }
