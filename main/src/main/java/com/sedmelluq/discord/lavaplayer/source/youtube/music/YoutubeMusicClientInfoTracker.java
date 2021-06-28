@@ -50,7 +50,7 @@ public class YoutubeMusicClientInfoTracker {
             HttpClientTools.assertSuccessWithContent(response, "music client info response");
 
             String page = EntityUtils.toString(response.getEntity());
-
+            log.info("{}", page.contains("INNERTUBE_API_KEY"));
             apiKey = extractApiKey(page);
             clientName = extractClientName(page);
             clientVersion = extractClientVersion(page);
