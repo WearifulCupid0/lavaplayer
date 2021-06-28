@@ -3,6 +3,7 @@ package com.sedmelluq.discord.lavaplayer.source.youtube;
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
 import com.sedmelluq.discord.lavaplayer.tools.http.ExtendedHttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -40,6 +41,7 @@ public class DefaultYoutubeChannelLoader implements YoutubeChannelLoader {
         try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
             HttpPost post = new HttpPost(BROWSE_URL);
             StringEntity payload = new StringEntity(String.format(BROWSE_CHANNEL_PAYLOAD, channelId), "UTF-8");
+            post.setHeader("Referer", "https://www.youtube.com");
             post.setEntity(payload);
             try (CloseableHttpResponse response = httpInterface.execute(post)) {
                 HttpClientTools.assertSuccessWithContent(response, "channel response");
@@ -59,7 +61,7 @@ public class DefaultYoutubeChannelLoader implements YoutubeChannelLoader {
         String channelName = channelData.get("title").text();
 
         List<AudioTrack> tracks = new ArrayList<>();
-        List<JsonBrowser> videos = json
+        JsonBrowser videos = json
         .get("contents")
         .get("twoColumnBrowseResultsRenderer")
         .get("tabs")
@@ -73,10 +75,9 @@ public class DefaultYoutubeChannelLoader implements YoutubeChannelLoader {
         .get("contents")
         .index(0)
         .get("gridRenderer")
-        .get("items")
-        .values();
+        .get("items");
 
-        videos.forEach(video -> {
+        videos.values().forEach(video -> {
             AudioTrack track = extractTrack(video, channelName, trackFactory);
             if(track != null) tracks.add(track);
         });
@@ -96,10 +97,8 @@ public class DefaultYoutubeChannelLoader implements YoutubeChannelLoader {
         String title = renderer.get("title").get("runs").index(0).get("text").text();
         String videoId = renderer.get("videoId").text();
         String uri = WATCH_URL_PREFIX + videoId;
-        List<JsonBrowser> artworks = renderer.get("thumbnail").get("thumbnails").values();
-        String artwork = artworks.get(artworks.size() - 1).get("url").text();
         long duration = DataFormatTools.durationTextToMillis(renderer.get("thumbnailOverlays").index(0).get("thumbnailOverlayTimeStatusRenderer").get("text").get("simpleText").text());
 
-        return trackFactory.apply(new AudioTrackInfo(title, channelName, duration, videoId, false, uri, artwork));
+        return trackFactory.apply(new AudioTrackInfo(title, channelName, duration, videoId, false, uri, PBJUtils.getYouTubeThumbnail(videoId)));
     }
 }

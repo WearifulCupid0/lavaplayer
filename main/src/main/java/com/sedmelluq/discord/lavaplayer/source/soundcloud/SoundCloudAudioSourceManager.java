@@ -16,7 +16,6 @@ import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.net.URLEncoder;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -57,7 +56,6 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
 
   private static final String SIMILAR_PREFIX = "scsimilar";
   private static final String SIMILAR_PREFIX_DEFAULT = "scsimilar:";
-  private static final String SIMILAR_REGEX = SIMILAR_PREFIX_DEFAULT + "(.*)";
   private static final String TRACK_ID_EXTRACTOR = "/soundcloud:tracks:([0-9-_]+)/";
 
   private static final Pattern trackUrlPattern = Pattern.compile(TRACK_URL_REGEX);
@@ -65,7 +63,6 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
   private static final Pattern likedUrlPattern = Pattern.compile(LIKED_URL_REGEX);
   private static final Pattern likedUserUrnPattern = Pattern.compile(LIKED_USER_URN_REGEX);
   private static final Pattern searchPattern = Pattern.compile(SEARCH_REGEX);
-  private static final Pattern similarPattern = Pattern.compile(SIMILAR_REGEX);
   private static final Pattern trackIdPattern = Pattern.compile(TRACK_ID_EXTRACTOR);
 
   private final SoundCloudDataReader dataReader;
@@ -297,18 +294,10 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
 
   private AudioItem processAsSimilarTracks(AudioReference reference) {
     if (reference.identifier.startsWith(SIMILAR_PREFIX)) {
-      Matcher matcher = null;
       if (reference.identifier.startsWith(SIMILAR_PREFIX_DEFAULT)) {
         String identifier = reference.identifier.substring(SIMILAR_PREFIX_DEFAULT.length()).trim();
-        if(( matcher = trackIdPattern.matcher(identifier) ).find()) {
-          return loadSimilarResult(matcher.group(1));
-        }
-      }
-
-      matcher = similarPattern.matcher(reference.identifier);
-
-      if (matcher.find()) {
-        if(( matcher = trackIdPattern.matcher(matcher.group(1)) ).find()) {
+        Matcher matcher = trackIdPattern.matcher(identifier);
+        if(matcher.matches()) {
           return loadSimilarResult(matcher.group(1));
         }
       }
@@ -337,9 +326,9 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
     }
   }
 
-  private String buildSimilarUri(String id) {
+  private URI buildSimilarUri(String id) {
     try {
-      return URLEncoder.encode("https://api-v2.soundcloud.com/tracks/" + id + "/related", "UTF-8");
+      return URI.create("https://api-v2.soundcloud.com/tracks/" + id + "/related");
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

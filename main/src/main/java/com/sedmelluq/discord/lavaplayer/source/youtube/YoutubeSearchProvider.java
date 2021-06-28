@@ -3,6 +3,7 @@ package com.sedmelluq.discord.lavaplayer.source.youtube;
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
 import com.sedmelluq.discord.lavaplayer.tools.http.ExtendedHttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -107,8 +108,7 @@ public class YoutubeSearchProvider implements YoutubeSearchResultLoader {
     String title = json.get("title").get("runs").index(0).get("text").text();
     String author = json.get("longBylineText").get("runs").index(0).get("text").text();
     String videoId = json.get("videoId").text();
-    List<JsonBrowser> artworks = json.get("thumbnail").get("thumbnails").values();
-    String artwork = artworks.get(artworks.size() - 1).get("url").text();
+    String artwork = PBJUtils.getYouTubeThumbnail(videoId);
     if (json.get("lengthText").isNull()) {
       info = new AudioTrackInfo(title, author, DURATION_MS_UNKNOWN, videoId, true,
       WATCH_URL_PREFIX + videoId, artwork);

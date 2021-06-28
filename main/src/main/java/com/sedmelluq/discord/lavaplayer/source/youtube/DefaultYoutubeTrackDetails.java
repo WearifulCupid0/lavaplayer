@@ -19,6 +19,8 @@ import org.slf4j.LoggerFactory;
 
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.COMMON;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
+
+import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.WATCH_URL_PREFIX;
 import static com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN;
 
 public class DefaultYoutubeTrackDetails implements YoutubeTrackDetails {
@@ -99,10 +101,7 @@ public class DefaultYoutubeTrackDetails implements YoutubeTrackDetails {
         videoDetails.get("lengthSeconds")
     );
 
-    List<JsonBrowser> artworks = videoDetails.get("thumbnail").get("thumbnails").values();
-    String artwork = artworks.get(artworks.size() - 1).get("url").text();
-
-    return buildTrackInfo(videoId, videoDetails.get("title").text(), videoDetails.get("author").text(), temporalInfo, artwork);
+    return buildTrackInfo(videoId, videoDetails.get("title").text(), videoDetails.get("author").text(), temporalInfo);
   }
 
   private AudioTrackInfo loadLegacyTrackInfo() {
@@ -117,12 +116,12 @@ public class DefaultYoutubeTrackDetails implements YoutubeTrackDetails {
         args.get("length_seconds")
     );
 
-    return buildTrackInfo(videoId, args.get("title").text(), args.get("author").text(), temporalInfo, PBJUtils.getYouTubeThumbnail(videoId));
+    return buildTrackInfo(videoId, args.get("title").text(), args.get("author").text(), temporalInfo);
   }
 
-  private AudioTrackInfo buildTrackInfo(String videoId, String title, String uploader, TemporalInfo temporalInfo, String thumbnail) {
+  private AudioTrackInfo buildTrackInfo(String videoId, String title, String uploader, TemporalInfo temporalInfo) {
     return new AudioTrackInfo(title, uploader, temporalInfo.durationMillis, videoId, temporalInfo.isActiveStream,
-        "https://www.youtube.com/watch?v=" + videoId, thumbnail);
+        WATCH_URL_PREFIX + videoId, PBJUtils.getYouTubeThumbnail(videoId));
   }
 
   private static class TemporalInfo {

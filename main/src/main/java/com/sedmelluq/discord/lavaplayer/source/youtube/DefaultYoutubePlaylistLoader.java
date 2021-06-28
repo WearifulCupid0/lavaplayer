@@ -2,6 +2,7 @@ package com.sedmelluq.discord.lavaplayer.source.youtube;
 
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
 import com.sedmelluq.discord.lavaplayer.tools.Units;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.BROWSE_CONTINUATION_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.BROWSE_PLAYLIST_PAYLOAD;
+import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.WATCH_URL_PREFIX;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.BROWSE_URL;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.COMMON;
 
@@ -61,6 +63,24 @@ public class DefaultYoutubePlaylistLoader implements YoutubePlaylistLoader {
             .get("text")
             .text();
 
+    String type = "playlist";
+    String albumImage = null;
+    if(playlistName.startsWith("Album")) {
+      type = "album";
+      playlistName = playlistName.replace("Album - ", "");
+
+      List<JsonBrowser> images = json
+      .get("header")
+      .get("playlistHeaderRenderer")
+      .get("playlistHeaderBanner")
+      .get("heroPlaylistThumbnailRenderer")
+      .get("thumbnail")
+      .get("thumbnails")
+      .values();
+
+      albumImage = images.get(images.size() - 1).get("url").text();
+    }
+
     JsonBrowser playlistVideoList = json
             .get("contents")
             .get("singleColumnBrowseResultsRenderer")
@@ -74,7 +94,7 @@ public class DefaultYoutubePlaylistLoader implements YoutubePlaylistLoader {
             .get("playlistVideoListRenderer");
 
     List<AudioTrack> tracks = new ArrayList<>();
-    String continuationsToken = extractPlaylistTracks(playlistVideoList, tracks, trackFactory);
+    String continuationsToken = extractPlaylistTracks(playlistVideoList, albumImage, tracks, trackFactory);
 
     // Also load the next pages, each result gives us a JSON with separate values for list html and next page loader html
     while (continuationsToken != null) {
@@ -89,11 +109,11 @@ public class DefaultYoutubePlaylistLoader implements YoutubePlaylistLoader {
         JsonBrowser playlistVideoListPage = continuationJson.get("continuationContents")
                 .get("playlistVideoListContinuation");
 
-        continuationsToken = extractPlaylistTracks(playlistVideoListPage, tracks, trackFactory);
+        continuationsToken = extractPlaylistTracks(playlistVideoListPage, albumImage, tracks, trackFactory);
       }
     }
 
-    return new BasicAudioPlaylist(playlistName, "playlist", tracks, findSelectedTrack(tracks, selectedVideoId), false);
+    return new BasicAudioPlaylist(playlistName, type, tracks, findSelectedTrack(tracks, selectedVideoId), false);
   }
 
   private String findErrorAlert(JsonBrowser jsonResponse) {
@@ -136,7 +156,7 @@ public class DefaultYoutubePlaylistLoader implements YoutubePlaylistLoader {
     return null;
   }
 
-  private String extractPlaylistTracks(JsonBrowser playlistVideoList, List<AudioTrack> tracks,
+  private String extractPlaylistTracks(JsonBrowser playlistVideoList, String albumImage, List<AudioTrack> tracks,
                                        Function<AudioTrackInfo, AudioTrack> trackFactory) {
     JsonBrowser contents = playlistVideoList.get("contents");
     if (contents.isNull()) return null;
@@ -158,11 +178,9 @@ public class DefaultYoutubePlaylistLoader implements YoutubePlaylistLoader {
         JsonBrowser lengthSeconds = item.get("lengthSeconds");
         long duration = Units.secondsToMillis(lengthSeconds.asLong(Units.DURATION_SEC_UNKNOWN));
 
-        List<JsonBrowser> artworks = item.get("thumbnail").get("thumbnails").values();
-        String artwork = artworks.get(artworks.size() - 1).get("url").text();
+        String artwork = albumImage != null ? albumImage : PBJUtils.getYouTubeThumbnail(videoId);
 
-        AudioTrackInfo info = new AudioTrackInfo(title, author, duration, videoId, false,
-            "https://www.youtube.com/watch?v=" + videoId, artwork);
+        AudioTrackInfo info = new AudioTrackInfo(title, author, duration, videoId, false, WATCH_URL_PREFIX + videoId, artwork);
 
         tracks.add(trackFactory.apply(info));
       }

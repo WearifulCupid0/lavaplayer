@@ -3,6 +3,7 @@ package com.sedmelluq.discord.lavaplayer.source.youtube;
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
 import com.sedmelluq.discord.lavaplayer.tools.http.ExtendedHttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -40,8 +41,8 @@ public class DefaultYoutubeSimilarLoader implements YoutubeSimilarLoader {
     public AudioItem load(String videoId, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
             HttpPost post = new HttpPost(NEXT_URL);
-            post.setHeader("Content-Type", "application/json");
             StringEntity payload = new StringEntity(String.format(NEXT_VIDEO_PAYLOAD, videoId), "UTF-8");
+            post.setHeader("Referer", "https://www.youtube.com");
             post.setEntity(payload);
             try (CloseableHttpResponse response = httpInterface.execute(post)) {
                 HttpClientTools.assertSuccessWithContent(response, "channel response");
@@ -56,7 +57,7 @@ public class DefaultYoutubeSimilarLoader implements YoutubeSimilarLoader {
     }
     private AudioItem buildResults(JsonBrowser json, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         List<AudioTrack> tracks = new ArrayList<>();
-        List<JsonBrowser> videos = json
+        JsonBrowser videos = json
         .get("contents")
         .get("twoColumnWatchNextResults")
         .get("secondaryResults")
@@ -64,10 +65,9 @@ public class DefaultYoutubeSimilarLoader implements YoutubeSimilarLoader {
         .get("results")
         .index(1)
         .get("itemSectionRenderer")
-        .get("contents")
-        .values();
+        .get("contents");
 
-        videos.forEach(video -> {
+        videos.values().forEach(video -> {
             AudioTrack track = extractTrack(video, trackFactory);
             if (track != null) tracks.add(track);
         });
@@ -102,8 +102,7 @@ public class DefaultYoutubeSimilarLoader implements YoutubeSimilarLoader {
         String videoId = json.get("videoId").text();
         String title = json.get("title").get("simpleText").text();
         String author = json.get("shortBylineText").get("runs").index(0).get("text").text();
-        List<JsonBrowser> artworks = json.get("thumbnail").get("thumbnails").values();
-        String artwork = artworks.get(artworks.size() - 1).get("url").text();
+        String artwork = PBJUtils.getYouTubeThumbnail(videoId);
         if (json.get("lengthText").isNull()) {
             info = new AudioTrackInfo(title, author, DURATION_MS_UNKNOWN, videoId, true,
             WATCH_URL_PREFIX + videoId, artwork);

@@ -1,4 +1,4 @@
-package com.sedmelluq.discord.lavaplayer.source.youtube;
+package com.sedmelluq.discord.lavaplayer.source.youtube.music;
 
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
@@ -21,9 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.MUSIC_SEARCH_URL;
-import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.MUSIC_SEARCH_PAYLOAD;
-import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.MUSIC_WATCH_URL_PREFIX;
+import static com.sedmelluq.discord.lavaplayer.source.youtube.music.YoutubeMusicConstants.MUSIC_SEARCH_URL;
+import static com.sedmelluq.discord.lavaplayer.source.youtube.music.YoutubeMusicConstants.MUSIC_SEARCH_PAYLOAD;
+import static com.sedmelluq.discord.lavaplayer.source.youtube.music.YoutubeMusicConstants.MUSIC_WATCH_URL_PREFIX;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -33,9 +33,11 @@ public class YoutubeSearchMusicProvider implements YoutubeSearchMusicResultLoade
   private static final Logger log = LoggerFactory.getLogger(YoutubeSearchMusicProvider.class);
 
   private final HttpInterfaceManager httpInterfaceManager;
+  private final YoutubeMusicClientInfoTracker clientInfoTracker;
 
   public YoutubeSearchMusicProvider() {
     this.httpInterfaceManager = HttpClientTools.createCookielessThreadLocalManager();
+    this.clientInfoTracker = new YoutubeMusicClientInfoTracker(this.httpInterfaceManager);
   }
 
   public ExtendedHttpConfigurable getHttpConfiguration() {
@@ -51,8 +53,8 @@ public class YoutubeSearchMusicProvider implements YoutubeSearchMusicResultLoade
     log.debug("Performing a search music with query {}", query);
 
     try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
-      HttpPost post = new HttpPost(MUSIC_SEARCH_URL);
-      StringEntity payload = new StringEntity(String.format(MUSIC_SEARCH_PAYLOAD, query.replace("\"", "\\\"")), "UTF-8");
+      HttpPost post = new HttpPost(getMusicSearchUrl());
+      StringEntity payload = new StringEntity(getMusicPayload(query), "UTF-8");
       post.setHeader("Referer", "music.youtube.com");
       post.setEntity(payload);
 
@@ -148,5 +150,16 @@ public class YoutubeSearchMusicProvider implements YoutubeSearchMusicResultLoade
         MUSIC_WATCH_URL_PREFIX + videoId, PBJUtils.getYouTubeMusicThumbnail(thumbnail, videoId));
 
     return trackFactory.apply(info);
+  }
+  private String getMusicSearchUrl() {
+    return String.format(MUSIC_SEARCH_URL, this.clientInfoTracker.getApiKey());
+  }
+  private String getMusicPayload(String query) {
+    return String.format(
+      MUSIC_SEARCH_PAYLOAD,
+      this.clientInfoTracker.getClientName(),
+      this.clientInfoTracker.getClientVersion(),
+      query.replace("\"", "\\\"")
+    );
   }
 }
