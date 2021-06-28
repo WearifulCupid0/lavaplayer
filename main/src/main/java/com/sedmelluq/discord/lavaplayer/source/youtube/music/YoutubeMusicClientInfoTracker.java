@@ -3,12 +3,11 @@ package com.sedmelluq.discord.lavaplayer.source.youtube.music;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
+import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,13 +18,6 @@ public class YoutubeMusicClientInfoTracker {
     private static final Logger log = LoggerFactory.getLogger(YoutubeMusicClientInfoTracker.class);
 
     private static final long REFRESH_INTERVAL = TimeUnit.HOURS.toMillis(1);
-    private static final String INNERTUBE_API_KEY_REGEX = "INNERTUBE_API_KEY\":\"([0-9a-zA-Z_-]+?)\"";
-    private static final String INNERTUBE_CLIENT_NAME_REGEX = "INNERTUBE_CLIENT_NAME\":\"([0-9a-zA-Z_-]+?)\",";
-    private static final String INNERTUBE_CLIENT_VERSION_REGEX = "INNERTUBE_CLIENT_VERSION\":\"([0-9\\.]+?)\",";
-
-    private static final Pattern innertubeApiKey = Pattern.compile(INNERTUBE_API_KEY_REGEX);
-    private static final Pattern innertubeClientName = Pattern.compile(INNERTUBE_CLIENT_NAME_REGEX);
-    private static final Pattern innertubeClientVersion = Pattern.compile(INNERTUBE_CLIENT_VERSION_REGEX);
 
     private final HttpInterfaceManager httpInterfaceManager;
 
@@ -58,18 +50,27 @@ public class YoutubeMusicClientInfoTracker {
             HttpClientTools.assertSuccessWithContent(response, "music client info response");
 
             String page = EntityUtils.toString(response.getEntity());
-            Matcher apiKeyMatcher = innertubeApiKey.matcher(page);
-            Matcher clientNameMatcher = innertubeClientName.matcher(page);
-            Matcher clientVersionMatcher = innertubeClientVersion.matcher(page);
 
-            if(!apiKeyMatcher.find() || !clientNameMatcher.find() || !clientVersionMatcher.find()) {
-                throw new IllegalStateException("Failed to find client info from main page.");
+            apiKey = extractApiKey(page);
+            clientName = extractClientName(page);
+            clientVersion = extractClientVersion(page);
+
+            if(apiKey == null || clientName == null || clientVersion == null) {
+                throw new IllegalStateException("Failed to parse client info page from YoutubeMusic.");
             }
-
-            apiKey = apiKeyMatcher.group(1);
-            clientName = clientNameMatcher.group(1);
-            clientVersion = clientVersionMatcher.group(1);
         }
+    }
+
+    private String extractApiKey(String page) {
+        return DataFormatTools.extractBetween(page, "INNERTUBE_API_KEY\":\"", "\",");
+    }
+
+    private String extractClientName(String page) {
+        return DataFormatTools.extractBetween(page, "INNERTUBE_CLIENT_NAME\":\"", "\",");
+    }
+
+    private String extractClientVersion(String page) {
+        return DataFormatTools.extractBetween(page, "INNERTUBE_CLIENT_VERSION\":\"", "\",");
     }
 
     public String getApiKey() {
