@@ -63,13 +63,9 @@ public class YoutubeMusicClientInfoTracker {
             Matcher clientNameMatcher = innertubeClientName.matcher(page);
             Matcher clientVersionMatcher = innertubeClientVersion.matcher(page);
 
-            if(!apiKeyMatcher.find() || !clientNameMatcher.find() || !clientVersionMatcher.find()) {
-                throw new IllegalStateException("Failed to find client info from main page.");
-            }
-
-            this.apiKey = apiKeyMatcher.group(1);
-            this.clientName = clientNameMatcher.group(1);
-            this.clientVersion = clientVersionMatcher.group(1);
+            if (apiKeyMatcher.find()) this.apiKey = apiKeyMatcher.group(1);
+            if (clientNameMatcher.find()) this.clientName = clientNameMatcher.group(1);
+            if (clientVersionMatcher.find()) this.clientVersion = clientVersionMatcher.group(1);
         }
     }
 
