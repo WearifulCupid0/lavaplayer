@@ -33,11 +33,9 @@ public class YoutubeSearchMusicProvider implements YoutubeSearchMusicResultLoade
   private static final Logger log = LoggerFactory.getLogger(YoutubeSearchMusicProvider.class);
 
   private final HttpInterfaceManager httpInterfaceManager;
-  private final YoutubeMusicClientInfoTracker clientInfoTracker;
 
   public YoutubeSearchMusicProvider() {
     this.httpInterfaceManager = HttpClientTools.createCookielessThreadLocalManager();
-    this.clientInfoTracker = new YoutubeMusicClientInfoTracker(this.httpInterfaceManager);
   }
 
   public ExtendedHttpConfigurable getHttpConfiguration() {
@@ -53,8 +51,8 @@ public class YoutubeSearchMusicProvider implements YoutubeSearchMusicResultLoade
     log.debug("Performing a search music with query {}", query);
 
     try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
-      HttpPost post = new HttpPost(getMusicSearchUrl());
-      StringEntity payload = new StringEntity(getMusicPayload(query), "UTF-8");
+      HttpPost post = new HttpPost(MUSIC_SEARCH_URL);
+      StringEntity payload = new StringEntity(String.format(MUSIC_SEARCH_PAYLOAD, query.replace("\"", "\\\"")), "UTF-8");
       post.setHeader("Referer", "music.youtube.com");
       post.setEntity(payload);
 
@@ -147,19 +145,8 @@ public class YoutubeSearchMusicProvider implements YoutubeSearchMusicResultLoade
     long duration = DataFormatTools.durationTextToMillis(lastElement.get("text").text());
 
     AudioTrackInfo info = new AudioTrackInfo(title, author, duration, videoId, false,
-        MUSIC_WATCH_URL_PREFIX + videoId, PBJUtils.getYouTubeMusicThumbnail(thumbnail, videoId));
+    MUSIC_WATCH_URL_PREFIX + videoId, PBJUtils.getYouTubeMusicThumbnail(thumbnail, videoId));
 
     return trackFactory.apply(info);
-  }
-  private String getMusicSearchUrl() {
-    return String.format(MUSIC_SEARCH_URL, this.clientInfoTracker.getApiKey());
-  }
-  private String getMusicPayload(String query) {
-    return String.format(
-      MUSIC_SEARCH_PAYLOAD,
-      this.clientInfoTracker.getClientName(),
-      this.clientInfoTracker.getClientVersion(),
-      query.replace("\"", "\\\"")
-    );
   }
 }
