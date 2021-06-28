@@ -13,15 +13,13 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.sedmelluq.discord.lavaplayer.source.youtube.music.YoutubeMusicConstants.MUSIC_ORIGIN;
-
 public class YoutubeMusicClientInfoTracker {
     private static final Logger log = LoggerFactory.getLogger(YoutubeMusicClientInfoTracker.class);
 
     private static final long REFRESH_INTERVAL = TimeUnit.HOURS.toMillis(1);
-    private static final String INNERTUBE_API_KEY_REGEX = "INNERTUBE_API_KEY\":\"(.*)\",";
-    private static final String INNERTUBE_CLIENT_NAME_REGEX = "INNERTUBE_CLIENT_NAME\":\"(.*)\",";
-    private static final String INNERTUBE_CLIENT_VERSION_REGEX = "INNERTUBE_CLIENT_VERSION\":\"(.*)\",";
+    private static final String INNERTUBE_API_KEY_REGEX = "INNERTUBE_API_KEY\":\"([a-zA-Z0-9-_]+)\",";
+    private static final String INNERTUBE_CLIENT_NAME_REGEX = "INNERTUBE_CLIENT_NAME\":\"([a-zA-Z0-9-_]+)\",";
+    private static final String INNERTUBE_CLIENT_VERSION_REGEX = "INNERTUBE_CLIENT_VERSION\":\"([0-9\\.]+?)\",";
 
     private static final Pattern innertubeApiKey = Pattern.compile(INNERTUBE_API_KEY_REGEX);
     private static final Pattern innertubeClientName = Pattern.compile(INNERTUBE_CLIENT_NAME_REGEX);
@@ -51,10 +49,13 @@ public class YoutubeMusicClientInfoTracker {
     }
 
     private void findClientInfoFromSite() throws IOException {
-        try (
-            HttpInterface httpInterface = httpInterfaceManager.getInterface();
-            CloseableHttpResponse response = httpInterface.execute(new HttpGet(MUSIC_ORIGIN))
-        ) {
+        try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
+            findClientInfo(httpInterface);
+        }
+    }
+
+    private void findClientInfo(HttpInterface httpInterface) throws IOException {
+        try (CloseableHttpResponse response = httpInterface.execute(new HttpGet("https://music.youtube.com"))) {
             HttpClientTools.assertSuccessWithContent(response, "music client info response");
 
             String page = EntityUtils.toString(response.getEntity());
