@@ -27,6 +27,7 @@ public class DefaultYoutubeSimilarLoader implements YoutubeSimilarLoader {
     @Override
     public AudioItem load(HttpInterface httpInterface, String videoId, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         HttpPost post = new HttpPost(NEXT_URL);
+        post.setHeader("Content-Type", "application/json");
         StringEntity payload = new StringEntity(String.format(NEXT_VIDEO_PAYLOAD, videoId), "UTF-8");
         post.setEntity(payload);
         try (CloseableHttpResponse response = httpInterface.execute(post)) {
@@ -57,10 +58,6 @@ public class DefaultYoutubeSimilarLoader implements YoutubeSimilarLoader {
             if (track != null) tracks.add(track);
         });
 
-        if (tracks.isEmpty()) {
-            return AudioReference.NO_TRACK;
-        }
-
         String title = json
         .get("contents")
         .get("twoColumnWatchNextResults")
@@ -75,11 +72,17 @@ public class DefaultYoutubeSimilarLoader implements YoutubeSimilarLoader {
         .get("text")
         .text();
 
+        if (tracks.isEmpty()) {
+            return AudioReference.NO_TRACK;
+        }
+
         return new BasicAudioPlaylist("Similar videos for: " + title, "similar", tracks, null, false);
     }
     private AudioTrack extractTrack(JsonBrowser json, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         json = json.get("compactVideoRenderer");
-        if(json.isNull()) return null; // Ignore everything which is not a track
+        if (json.isNull()) {
+            return null; // Ignore everything which is not a track
+        }
 
         AudioTrackInfo info = null;
         String videoId = json.get("videoId").text();

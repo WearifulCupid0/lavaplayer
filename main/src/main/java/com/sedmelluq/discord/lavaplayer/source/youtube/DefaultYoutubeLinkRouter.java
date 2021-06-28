@@ -4,6 +4,7 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
@@ -60,6 +61,10 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
   }
 
   protected <T> T routeFromMainDomain(Routes<T> routes, String url) {
+    Matcher channelIdMatcher = channelIdPattern.matcher(url);
+    if (channelIdMatcher.matches()) {
+      return routes.channel(channelIdMatcher.group(1));
+    }
     UrlInfo urlInfo = getUrlInfo(url, true);
     if ("/watch".equals(urlInfo.path)) {
       String videoId = urlInfo.parameters.get("v");
@@ -78,9 +83,6 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
       if (videoIds != null) {
         return routes.anonymous(videoIds);
       } 
-    } else if (channelIdPattern.matcher(url).find()) {
-      String channelId = channelIdPattern.matcher(url).group(1);
-      return routes.channel(channelId);
     }
 
     return null;
@@ -94,7 +96,7 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
     
     if (!directVideoIdPattern.matcher(videoId).matches()) {
       return routes.none();
-    } else if (urlInfo.parameters.containsValue("list")) {
+    } else if (urlInfo.parameters.containsKey("list")) {
       String playlistId = urlInfo.parameters.get("list");
 
       if (playlistId.startsWith("RD")) {

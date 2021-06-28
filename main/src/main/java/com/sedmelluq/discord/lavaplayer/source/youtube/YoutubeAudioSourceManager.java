@@ -295,8 +295,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
       log.debug("Starting to load similar videos from ID {}", videoId);
 
       try (HttpInterface httpInterface = getHttpInterface()) {
-        return similarLoader.load(httpInterface, videoId,
-              YoutubeAudioSourceManager.this::buildTrackFromInfo);
+        return similarLoader.load(httpInterface, videoId, YoutubeAudioSourceManager.this::buildTrackFromInfo);
       } catch (Exception e) {
         throw ExceptionTools.wrapUnfriendlyExceptions(e);
       }
