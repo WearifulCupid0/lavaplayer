@@ -16,6 +16,7 @@ import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -336,12 +337,10 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
     }
   }
 
-  private URI buildSimilarUri(String id) {
+  private String buildSimilarUri(String id) {
     try {
-      return new URIBuilder("https://api-v2.soundcloud.com/tracks/" + id + "/related")
-      .addParameter("client_id", getClientId())
-      .build();
-    } catch (URISyntaxException e) {
+      return URLEncoder.encode("https://api-v2.soundcloud.com/tracks/" + id + "/related", "UTF-8");
+    } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
