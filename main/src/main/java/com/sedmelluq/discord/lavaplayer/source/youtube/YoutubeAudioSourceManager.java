@@ -109,7 +109,9 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
     combinedHttpConfiguration = new MultiHttpConfigurable(Arrays.asList(
         httpInterfaceManager,
         searchResultLoader.getHttpConfiguration(),
-        searchMusicResultLoader.getHttpConfiguration()
+        searchMusicResultLoader.getHttpConfiguration(),
+        channelLoader.getHttpConfiguration(),
+        similarLoader.getHttpConfiguration()
     ));
   }
 
@@ -191,6 +193,14 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
 
   public ExtendedHttpConfigurable getSearchMusicHttpConfiguration() {
     return searchMusicResultLoader.getHttpConfiguration();
+  }
+
+  public ExtendedHttpConfigurable getChannelLoaderHttpConfiguration() {
+    return channelLoader.getHttpConfiguration();
+  }
+
+  public ExtendedHttpConfigurable getSimilarLoaderHttpConfiguration() {
+    return similarLoader.getHttpConfiguration();
   }
 
   private AudioItem loadItemOnce(AudioReference reference) {
