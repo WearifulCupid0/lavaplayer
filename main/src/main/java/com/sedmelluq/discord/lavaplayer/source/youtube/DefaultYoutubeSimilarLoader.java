@@ -1,7 +1,6 @@
 package com.sedmelluq.discord.lavaplayer.source.youtube;
 
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
-import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
@@ -37,59 +36,66 @@ public class DefaultYoutubeSimilarLoader implements YoutubeSimilarLoader {
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
             return buildResults(json, trackFactory);
         } catch (IOException e) {
-            throw ExceptionTools.wrapUnfriendlyExceptions(e);
+            throw new RuntimeException(e);
         }
     }
     private AudioPlaylist buildResults(JsonBrowser json, Function<AudioTrackInfo, AudioTrack> trackFactory) throws IOException {
         List<AudioTrack> tracks = new ArrayList<>();
-        JsonBrowser videos = json
+        List<JsonBrowser> data = json
         .get("contents")
-        .get("twoColumnWatchNextResults")
-        .get("secondaryResults")
-        .get("secondaryResults")
+        .get("singleColumnWatchNextResults")
         .get("results")
-        .index(1)
-        .get("itemSectionRenderer")
-        .get("contents");
+        .get("results")
+        .get("contents")
+        .values();
+
+        JsonBrowser videos = data
+        .get(1)
+        .get("shelfRenderer")
+        .get("content")
+        .get("horizontalListRenderer")
+        .get("items");
 
         videos.values().forEach(video -> {
             AudioTrack track = extractTrack(video, trackFactory);
             if (track != null) tracks.add(track);
         });
 
-        String title = json
-        .get("contents")
-        .get("twoColumnWatchNextResults")
-        .get("results")
-        .get("results")
+        String title = data
+        .get(0)
+        .get("slimVideoMetadataSectionRenderer")
         .get("contents")
         .index(0)
-        .get("videoPrimaryInfoRenderer")
+        .get("slimVideoInformationRenderer")
         .get("title")
         .get("runs")
         .index(0)
         .get("text")
         .text();
 
-        return new BasicAudioPlaylist("Similar videos for: " + title, "similar", tracks, null, false);
+        if (tracks.isEmpty()) {
+            return null;
+        }
+
+        return new BasicAudioPlaylist("Similar videos for: " + title, "similar", tracks, null, true);
     }
     private AudioTrack extractTrack(JsonBrowser json, Function<AudioTrackInfo, AudioTrack> trackFactory) {
-        json = json.get("compactVideoRenderer");
+        json = json.get("gridVideoRenderer");
         if (json.isNull()) {
             return null; // Ignore everything which is not a track
         }
 
         AudioTrackInfo info = null;
         String videoId = json.get("videoId").text();
-        String title = json.get("title").get("simpleText").text();
+        String title = json.get("title").get("runs").index(0).get("text").text();
         String author = json.get("shortBylineText").get("runs").index(0).get("text").text();
         String artwork = PBJUtils.getYouTubeThumbnail(videoId);
-        if (json.get("lengthText").isNull()) {
+        if (json.get("lengthText").isNull() || json.get("lengthText").get("runs").isNull()) {
             info = new AudioTrackInfo(title, author, DURATION_MS_UNKNOWN, videoId, true,
             WATCH_URL_PREFIX + videoId, artwork);
 
         } else {
-        long duration = DataFormatTools.durationTextToMillis(json.get("lengthText").get("simpleText").text());
+        long duration = DataFormatTools.durationTextToMillis(json.get("lengthText").get("runs").index(0).get("text").text());
           
         info = new AudioTrackInfo(title, author, duration, videoId, false,
             WATCH_URL_PREFIX + videoId, artwork);

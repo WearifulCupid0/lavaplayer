@@ -1,7 +1,6 @@
 package com.sedmelluq.discord.lavaplayer.source.youtube;
 
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
-import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
@@ -36,19 +35,16 @@ public class DefaultYoutubeChannelLoader implements YoutubeChannelLoader {
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
             return buildChannel(json, trackFactory);
         } catch (IOException e) {
-            throw ExceptionTools.wrapUnfriendlyExceptions(e);
+            throw new RuntimeException(e);
         }
     }
     private AudioPlaylist buildChannel(JsonBrowser json, Function<AudioTrackInfo, AudioTrack> trackFactory) throws IOException {
-        JsonBrowser channelData = json.get("metadata").get("channelMetadataRenderer");
-        if (channelData == null) channelData = json.get("header").get("c4TabbedHeaderRenderer");
-
-        String channelName = channelData.get("title").text();
+        String channelName = json.get("header").get("c4TabbedHeaderRenderer").get("title").text();
 
         List<AudioTrack> tracks = new ArrayList<>();
         JsonBrowser videos = json
         .get("contents")
-        .get("twoColumnBrowseResultsRenderer")
+        .get("singleColumnBrowseResultsRenderer")
         .get("tabs")
         .index(1)
         .get("tabRenderer")
@@ -57,28 +53,36 @@ public class DefaultYoutubeChannelLoader implements YoutubeChannelLoader {
         .get("contents")
         .index(0)
         .get("itemSectionRenderer")
-        .get("contents")
-        .index(0)
-        .get("gridRenderer")
-        .get("items");
+        .get("contents");
 
         videos.values().forEach(video -> {
             AudioTrack track = extractTrack(video, channelName, trackFactory);
             if(track != null) tracks.add(track);
         });
 
-        return new BasicAudioPlaylist(channelName, "channel", tracks, null, false);
-    }
-    private AudioTrack extractTrack(JsonBrowser json, String channelName, Function<AudioTrackInfo, AudioTrack> trackFactory) {
-        JsonBrowser renderer = json.get("gridVideoRenderer");
-        if(renderer.isNull()) {
+        if (tracks.isEmpty()) {
             return null;
         }
 
-        String title = renderer.get("title").get("runs").index(0).get("text").text();
-        String videoId = renderer.get("videoId").text();
+        return new BasicAudioPlaylist(channelName, "channel", tracks, null, false);
+    }
+    private AudioTrack extractTrack(JsonBrowser json, String channelName, Function<AudioTrackInfo, AudioTrack> trackFactory) {
+        JsonBrowser renderer = json.get("elementRenderer");
+        if(renderer.isNull()) {
+            return null;
+        }
+        JsonBrowser videoModel = renderer
+        .get("newElement")
+        .get("type")
+        .get("componentType")
+        .get("model")
+        .get("compactVideoModel")
+        .get("compactVideoData");
+
+        String title = videoModel.get("videoData").get("metadata").get("title").text();
+        String videoId = videoModel.get("onTap").get("innertubeCommand").get("watchEndpoint").get("videoId").text();
         String uri = WATCH_URL_PREFIX + videoId;
-        long duration = DataFormatTools.durationTextToMillis(renderer.get("thumbnailOverlays").index(0).get("thumbnailOverlayTimeStatusRenderer").get("text").get("simpleText").text());
+        long duration = DataFormatTools.durationTextToMillis(videoModel.get("videoData").get("thumbnail").get("timestampText").text());
 
         return trackFactory.apply(new AudioTrackInfo(title, channelName, duration, videoId, false, uri, PBJUtils.getYouTubeThumbnail(videoId)));
     }
