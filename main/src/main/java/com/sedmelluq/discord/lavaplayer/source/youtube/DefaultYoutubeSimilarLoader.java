@@ -4,12 +4,9 @@ import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
-import com.sedmelluq.discord.lavaplayer.tools.http.ExtendedHttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
-import com.sedmelluq.discord.lavaplayer.track.AudioItem;
-import com.sedmelluq.discord.lavaplayer.track.AudioReference;
+import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
@@ -17,6 +14,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -27,35 +25,22 @@ import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.N
 import static com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN;
 
 public class DefaultYoutubeSimilarLoader implements YoutubeSimilarLoader {
-    private final HttpInterfaceManager httpInterfaceManager;
-
-    public DefaultYoutubeSimilarLoader() {
-        this.httpInterfaceManager = HttpClientTools.createCookielessThreadLocalManager();
-    }
-
-    public ExtendedHttpConfigurable getHttpConfiguration() {
-        return httpInterfaceManager;
-    }
-
     @Override
-    public AudioItem load(String videoId, Function<AudioTrackInfo, AudioTrack> trackFactory) {
-        try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
-            HttpPost post = new HttpPost(NEXT_URL);
-            StringEntity payload = new StringEntity(String.format(NEXT_VIDEO_PAYLOAD, videoId), "UTF-8");
-            post.setHeader("Referer", "https://www.youtube.com");
-            post.setEntity(payload);
-            try (CloseableHttpResponse response = httpInterface.execute(post)) {
-                HttpClientTools.assertSuccessWithContent(response, "channel response");
-                HttpClientTools.assertJsonContentType(response);
+    public AudioPlaylist load(String videoId, HttpInterface httpInterface, Function<AudioTrackInfo, AudioTrack> trackFactory) {
+        HttpPost post = new HttpPost(NEXT_URL);
+        StringEntity payload = new StringEntity(String.format(NEXT_VIDEO_PAYLOAD, videoId), "UTF-8");
+        post.setEntity(payload);
+        try (CloseableHttpResponse response = httpInterface.execute(post)) {
+            HttpClientTools.assertSuccessWithContent(response, "channel response");
+            HttpClientTools.assertJsonContentType(response);
 
-                JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
-                return buildResults(json, trackFactory);
-            }
-        } catch (Exception e) {
+            JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
+            return buildResults(json, trackFactory);
+        } catch (IOException e) {
             throw ExceptionTools.wrapUnfriendlyExceptions(e);
         }
     }
-    private AudioItem buildResults(JsonBrowser json, Function<AudioTrackInfo, AudioTrack> trackFactory) {
+    private AudioPlaylist buildResults(JsonBrowser json, Function<AudioTrackInfo, AudioTrack> trackFactory) throws IOException {
         List<AudioTrack> tracks = new ArrayList<>();
         JsonBrowser videos = json
         .get("contents")
@@ -85,10 +70,6 @@ public class DefaultYoutubeSimilarLoader implements YoutubeSimilarLoader {
         .index(0)
         .get("text")
         .text();
-
-        if (tracks.isEmpty()) {
-            return AudioReference.NO_TRACK;
-        }
 
         return new BasicAudioPlaylist("Similar videos for: " + title, "similar", tracks, null, false);
     }

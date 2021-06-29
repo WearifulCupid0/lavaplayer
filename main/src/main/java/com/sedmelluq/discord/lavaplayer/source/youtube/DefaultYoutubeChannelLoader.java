@@ -4,12 +4,9 @@ import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
-import com.sedmelluq.discord.lavaplayer.tools.http.ExtendedHttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
-import com.sedmelluq.discord.lavaplayer.track.AudioItem;
-import com.sedmelluq.discord.lavaplayer.track.AudioReference;
+import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
@@ -17,6 +14,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -26,35 +24,22 @@ import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.W
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.BROWSE_URL;
 
 public class DefaultYoutubeChannelLoader implements YoutubeChannelLoader {
-    private final HttpInterfaceManager httpInterfaceManager;
-
-    public DefaultYoutubeChannelLoader() {
-        this.httpInterfaceManager = HttpClientTools.createCookielessThreadLocalManager();
-    }
-
-    public ExtendedHttpConfigurable getHttpConfiguration() {
-        return httpInterfaceManager;
-    }
-
     @Override
-    public AudioItem load(String channelId, Function<AudioTrackInfo, AudioTrack> trackFactory) {
-        try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
-            HttpPost post = new HttpPost(BROWSE_URL);
-            StringEntity payload = new StringEntity(String.format(BROWSE_CHANNEL_PAYLOAD, channelId), "UTF-8");
-            post.setHeader("Referer", "https://www.youtube.com");
-            post.setEntity(payload);
-            try (CloseableHttpResponse response = httpInterface.execute(post)) {
-                HttpClientTools.assertSuccessWithContent(response, "channel response");
-                HttpClientTools.assertJsonContentType(response);
+    public AudioPlaylist load(String channelId, HttpInterface httpInterface, Function<AudioTrackInfo, AudioTrack> trackFactory) {
+        HttpPost post = new HttpPost(BROWSE_URL);
+        StringEntity payload = new StringEntity(String.format(BROWSE_CHANNEL_PAYLOAD, channelId), "UTF-8");
+        post.setEntity(payload);
+        try (CloseableHttpResponse response = httpInterface.execute(post)) {
+            HttpClientTools.assertSuccessWithContent(response, "channel response");
+            HttpClientTools.assertJsonContentType(response);
 
-                JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
-                return buildChannel(json, trackFactory);
-            }
-        } catch (Exception e) {
+            JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
+            return buildChannel(json, trackFactory);
+        } catch (IOException e) {
             throw ExceptionTools.wrapUnfriendlyExceptions(e);
         }
     }
-    private AudioItem buildChannel(JsonBrowser json, Function<AudioTrackInfo, AudioTrack> trackFactory) {
+    private AudioPlaylist buildChannel(JsonBrowser json, Function<AudioTrackInfo, AudioTrack> trackFactory) throws IOException {
         JsonBrowser channelData = json.get("metadata").get("channelMetadataRenderer");
         if (channelData == null) channelData = json.get("header").get("c4TabbedHeaderRenderer");
 
@@ -81,10 +66,6 @@ public class DefaultYoutubeChannelLoader implements YoutubeChannelLoader {
             AudioTrack track = extractTrack(video, channelName, trackFactory);
             if(track != null) tracks.add(track);
         });
-
-        if(tracks.isEmpty()) {
-            return AudioReference.NO_TRACK;
-        }
 
         return new BasicAudioPlaylist(channelName, "channel", tracks, null, false);
     }
