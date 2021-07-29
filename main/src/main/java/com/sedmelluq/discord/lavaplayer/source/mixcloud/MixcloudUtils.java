@@ -12,10 +12,13 @@ public class MixcloudUtils {
             trackInfo.get("name").text(),
             trackInfo.get("owner").get("displayName").text(),
             (long) (trackInfo.get("audioLength").as(Double.class) * 1000.0),
-            trackInfo.get("url").text(),
+            buildIdentifier(trackInfo.get("slug").text(), trackInfo.get("owner").get("username").text()),
             false,
             trackInfo.get("url").text(),
             trackInfo.get("picture").get("url").text()
         ));
+    }
+    public static String buildIdentifier(String slug, String username) {
+        return slug + "/" + username;
     }
 }

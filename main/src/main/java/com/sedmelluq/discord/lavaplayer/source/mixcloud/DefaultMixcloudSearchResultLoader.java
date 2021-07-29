@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.function.Function;
 
 import static com.sedmelluq.discord.lavaplayer.source.mixcloud.MixcloudConstants.MIXCLOUD_SEARCH_API;
+import static com.sedmelluq.discord.lavaplayer.source.mixcloud.MixcloudUtils.buildIdentifier;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class DefaultMixcloudSearchResultLoader implements MixcloudSearchProvider {
@@ -74,8 +75,8 @@ public class DefaultMixcloudSearchResultLoader implements MixcloudSearchProvider
         String author = track.get("user").get("name").text();
         String uri = track.get("url").text();
         String artwork = track.get("pictures").get("1024wx1024h").text();
+        String identifier = buildIdentifier(track.get("slug").text(), track.get("user").get("username").text());
 
-
-        return trackFactory.apply(new AudioTrackInfo(title, author, (long) (track.get("audio_length").as(Double.class) * 1000.0), uri, false, uri, artwork));
+        return trackFactory.apply(new AudioTrackInfo(title, author, (long) (track.get("audio_length").as(Double.class) * 1000.0), identifier, false, uri, artwork));
     }
 }
