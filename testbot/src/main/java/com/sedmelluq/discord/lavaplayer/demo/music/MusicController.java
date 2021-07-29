@@ -76,7 +76,7 @@ public class MusicController implements BotController {
 
   @BotCommandHandler
   private void hex(Message message, int pageCount) {
-    manager.source(YoutubeAudioSourceManager.class).setPlaylistPageCount(pageCount);
+    manager.source(YoutubeAudioSourceManager.class);
   }
 
   @BotCommandHandler

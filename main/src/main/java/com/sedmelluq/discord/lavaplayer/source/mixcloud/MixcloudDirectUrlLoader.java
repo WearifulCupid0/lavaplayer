@@ -1,5 +1,5 @@
 package com.sedmelluq.discord.lavaplayer.source.mixcloud;
 
-public interface MixcloudDirectUrlLoader {
+public interface MixcloudDirectUrlLoader extends MixcloudApiLoader {
     String getStreamUrl(String url);
 }

@@ -113,6 +113,7 @@ public class GetyarnAudioSourceManager implements HttpConfigurable, AudioSourceM
           .setIsStream(false)
           .setIdentifier(document.selectFirst("meta[property=og:video:secure_url]").attr("content"))
           .setTitle(document.selectFirst("meta[property=og:title]").attr("content"))
+          .setArtworkUrl(document.selectFirst("meta[property=og:image]").attr("content"))
           .build();
 
       return createTrack(trackInfo);
