@@ -16,7 +16,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
 public class TikTokMediaExtractor {
-    private static final String urlFormat = "https://www.tiktok.com/%s/video/%s";
+    private static final String urlFormat = "https://www.tiktok.com/@%s/video/%s";
     public JsonBrowser fetchFromPage(String user, String id, HttpInterface httpInterface) {
         try(CloseableHttpResponse response = httpInterface.execute(new HttpGet(String.format(urlFormat, user, id)))) {
             String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
@@ -44,7 +44,7 @@ public class TikTokMediaExtractor {
         String author = item.get("author").get("nickname").text();
         String authorId = item.get("author").get("uniqueId").text();
         String id = item.get("id").text();
-        String uri = String.format(urlFormat, "@" + authorId, id);
+        String uri = String.format(urlFormat, authorId, id);
         String title = author != null ? author : id;
         String artwork = video.get("cover").text();
         String identifier = authorId + "/" + id;
