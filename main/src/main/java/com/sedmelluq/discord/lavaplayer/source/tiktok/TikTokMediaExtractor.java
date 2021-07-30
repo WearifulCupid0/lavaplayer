@@ -2,6 +2,7 @@ package com.sedmelluq.discord.lavaplayer.source.tiktok;
 
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -19,9 +20,11 @@ public class TikTokMediaExtractor {
     private static final String urlFormat = "https://www.tiktok.com/@%s/video/%s";
     public JsonBrowser fetchFromPage(String user, String id, HttpInterface httpInterface) {
         try(CloseableHttpResponse response = httpInterface.execute(new HttpGet(String.format(urlFormat, user, id)))) {
+            HttpClientTools.assertSuccessWithContent(response, "video metadata");
+            
             String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             Document document = Jsoup.parse(html);
-            JsonBrowser json = JsonBrowser.parse(document.selectFirst("script[id=__NEXT_DATA__]").text());
+            JsonBrowser json = JsonBrowser.parse(document.getElementById("__NEXT_DATA__").text());
             if(json == null) {
                 return null;
             }
