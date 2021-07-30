@@ -21,10 +21,10 @@ public class TikTokMediaExtractor {
     public JsonBrowser fetchFromPage(String user, String id, HttpInterface httpInterface) {
         try(CloseableHttpResponse response = httpInterface.execute(new HttpGet(String.format(urlFormat, user, id)))) {
             HttpClientTools.assertSuccessWithContent(response, "video metadata");
-            
+
             String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             Document document = Jsoup.parse(html);
-            JsonBrowser json = JsonBrowser.parse(document.getElementById("__NEXT_DATA__").text());
+            JsonBrowser json = JsonBrowser.parse(document.getElementById("__NEXT_DATA__").ownText());
             if(json == null) {
                 return null;
             }
