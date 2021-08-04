@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.BROWSE_CONTINUATION_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.BROWSE_CHANNEL_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.WATCH_URL_PREFIX;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.BROWSE_URL;
@@ -33,16 +34,16 @@ public class DefaultYoutubeChannelLoader implements YoutubeChannelLoader {
             HttpClientTools.assertJsonContentType(response);
 
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
-            return buildChannel(json, trackFactory);
+            return buildChannel(json, httpInterface, trackFactory);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
-    private AudioPlaylist buildChannel(JsonBrowser json, Function<AudioTrackInfo, AudioTrack> trackFactory) throws IOException {
+    private AudioPlaylist buildChannel(JsonBrowser json, HttpInterface httpInterface, Function<AudioTrackInfo, AudioTrack> trackFactory) throws IOException {
         String channelName = json.get("header").get("c4TabbedHeaderRenderer").get("title").text();
-
+        String continuationToken = null;
         List<AudioTrack> tracks = new ArrayList<>();
-        JsonBrowser videos = json
+        JsonBrowser sectionRenderer = json
         .get("contents")
         .get("singleColumnBrowseResultsRenderer")
         .get("tabs")
@@ -52,13 +53,54 @@ public class DefaultYoutubeChannelLoader implements YoutubeChannelLoader {
         .get("sectionListRenderer")
         .get("contents")
         .index(0)
-        .get("itemSectionRenderer")
-        .get("contents");
+        .get("itemSectionRenderer");
 
-        videos.values().forEach(video -> {
+        sectionRenderer.get("contents").values().forEach(video -> {
             AudioTrack track = extractTrack(video, channelName, trackFactory);
             if(track != null) tracks.add(track);
         });
+
+        JsonBrowser continuationData = sectionRenderer.get("continuations")
+        .index(0)
+        .get("nextContinuationData");
+
+        if(!continuationData.isNull()) {
+            continuationToken = continuationData.get("continuation").text();
+        }
+
+        while(continuationToken != null) {
+            HttpPost post = new HttpPost(BROWSE_URL);
+            StringEntity payload = new StringEntity(String.format(BROWSE_CONTINUATION_PAYLOAD, continuationToken), "UTF-8");
+            post.setEntity(payload);
+            try (CloseableHttpResponse response = httpInterface.execute(post)) {
+                HttpClientTools.assertSuccessWithContent(response, "channel response");
+
+                JsonBrowser continuationJson = JsonBrowser.parse(response.getEntity().getContent());
+
+                continuationJson
+                .get("continuationContents")
+                .get("itemSectionContinuation")
+                .get("contents")
+                .values()
+                .forEach(video -> {
+                    AudioTrack track = extractTrack(video, channelName, trackFactory);
+                    if(track != null) tracks.add(track);
+                });
+
+                continuationData = continuationJson
+                .get("continuationContents")
+                .get("itemSectionContinuation")
+                .get("continuations")
+                .index(0)
+                .get("nextContinuationData");
+                
+                if(!continuationData.isNull()) {
+                    continuationToken = continuationData.get("continuation").text();
+                } else {
+                    continuationToken = null;
+                }
+            }
+        }
 
         if (tracks.isEmpty()) {
             return null;

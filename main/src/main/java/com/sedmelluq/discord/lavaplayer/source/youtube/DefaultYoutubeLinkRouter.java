@@ -4,7 +4,6 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
@@ -21,16 +20,17 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
   private static final String SHORT_DOMAIN_REGEX = "(?:www\\.|)youtu\\.be";
   private static final String VIDEO_ID_REGEX = "(?<v>[a-zA-Z0-9_-]{11})";
   private static final String PLAYLIST_ID_REGEX = "(?<list>(PL|LL|FL|UU)[a-zA-Z0-9_-]+)";
-  private static final String CHANNEL_ID_REGEX = PROTOCOL_REGEX + DOMAIN_REGEX + "/channel/([a-zA-Z0-9-_]+)";
 
   private static final Pattern directVideoIdPattern = Pattern.compile("^" + VIDEO_ID_REGEX + "$");
-  private static final Pattern channelIdPattern = Pattern.compile("^" + CHANNEL_ID_REGEX +  "$");
 
   private final Extractor[] extractors = new Extractor[] {
       new Extractor(directVideoIdPattern, Routes::track),
       new Extractor(Pattern.compile("^" + PLAYLIST_ID_REGEX + "$"), this::routeDirectPlaylist),
       new Extractor(Pattern.compile("^" + PROTOCOL_REGEX + DOMAIN_REGEX + "/.*"), this::routeFromMainDomain),
-      new Extractor(Pattern.compile("^" + PROTOCOL_REGEX + SHORT_DOMAIN_REGEX + "/.*"), this::routeFromShortDomain)
+      new Extractor(Pattern.compile("^" + PROTOCOL_REGEX + SHORT_DOMAIN_REGEX + "/.*"), this::routeFromShortDomain),
+      new Extractor(Pattern.compile("^" + PROTOCOL_REGEX + DOMAIN_REGEX + "/embed/.*"), this::routeFromEmbed),
+      new Extractor(Pattern.compile("^" + PROTOCOL_REGEX + DOMAIN_REGEX + "/shorts/.*"), this::routeFromShorts),
+      new Extractor(Pattern.compile("^" + PROTOCOL_REGEX + DOMAIN_REGEX + "/channel/.*"), this::routeFromChannel)
   };
 
   @Override
@@ -61,10 +61,6 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
   }
 
   protected <T> T routeFromMainDomain(Routes<T> routes, String url) {
-    Matcher channelIdMatcher = channelIdPattern.matcher(url);
-    if (channelIdMatcher.matches()) {
-      return routes.channel(channelIdMatcher.group(1));
-    }
     UrlInfo urlInfo = getUrlInfo(url, true);
     if ("/watch".equals(urlInfo.path)) {
       String videoId = urlInfo.parameters.get("v");
@@ -112,6 +108,21 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
   protected <T> T routeFromShortDomain(Routes<T> routes, String url) {
     UrlInfo urlInfo = getUrlInfo(url, true);
     return routeFromUrlWithVideoId(routes, urlInfo.path.substring(1), urlInfo);
+  }
+
+  protected <T> T routeFromChannel(Routes<T> routes, String url) {
+    UrlInfo urlInfo = getUrlInfo(url, true);
+    return routes.channel(urlInfo.path.substring(9));
+  }
+
+  protected <T> T routeFromEmbed(Routes<T> routes, String url) {
+    UrlInfo urlInfo = getUrlInfo(url, true);
+    return routeFromUrlWithVideoId(routes, urlInfo.path.substring(7), urlInfo);
+  }
+
+  protected <T> T routeFromShorts(Routes<T> routes, String url) {
+    UrlInfo urlInfo = getUrlInfo(url, true);
+    return routeFromUrlWithVideoId(routes, urlInfo.path.substring(8), urlInfo);
   }
 
   private static UrlInfo getUrlInfo(String url, boolean retryValidPart) {
