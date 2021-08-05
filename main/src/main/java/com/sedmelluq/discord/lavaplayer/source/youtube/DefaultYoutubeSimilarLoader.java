@@ -77,7 +77,7 @@ public class DefaultYoutubeSimilarLoader implements YoutubeSimilarLoader {
             return null;
         }
 
-        return new BasicAudioPlaylist("Similar videos for: " + title, "similar", tracks, null, true);
+        return new BasicAudioPlaylist("Similar videos for: " + title, null, null, null, "similar", tracks, null, true);
     }
     private AudioTrack extractTrack(JsonBrowser json, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         json = json.get("gridVideoRenderer");

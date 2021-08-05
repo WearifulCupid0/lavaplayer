@@ -1,5 +1,6 @@
 package com.sedmelluq.discord.lavaplayer.source.soundcloud;
 
+import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
@@ -75,6 +76,9 @@ public class DefaultSoundCloudPlaylistLoader implements SoundCloudPlaylistLoader
 
       return new BasicAudioPlaylist(
           dataReader.readPlaylistName(playlistData),
+          playlistData.get("user").get("username").text(),
+          PBJUtils.getSoundCloudThumbnail(playlistData),
+          playlistData.get("permalink_url").text(),
           playlistData.get("is_album").as(Boolean.class) ? "album": "playlist",
           loadPlaylistTracks(httpInterface, playlistData, trackFactory),
           null,

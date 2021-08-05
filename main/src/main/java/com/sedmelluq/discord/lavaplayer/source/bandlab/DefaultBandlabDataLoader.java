@@ -11,6 +11,8 @@ import java.util.function.Function;
 import static com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabConstants.COLLECTION_BANDLAB_API;
 import static com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabConstants.SONG_POST_BANDLAB_API;
 import static com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabConstants.ALBUM_BANDLAB_API;
+import static com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabConstants.COLLECTION_URI;
+import static com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabConstants.ALBUM_URI;
 
 public class DefaultBandlabDataLoader extends AbstractBandlabApiLoader implements BandlabDataLoader {
     private BandlabDataReader dataReader;
@@ -41,7 +43,16 @@ public class DefaultBandlabDataLoader extends AbstractBandlabApiLoader implement
                 return null;
             }
 
-            return new BasicAudioPlaylist(response.get("name").text(), "playlist", tracks, null, false);
+            return new BasicAudioPlaylist(
+                response.get("name").text(),
+                response.get("creator").get("name").text(),
+                dataReader.getArtwork(response.get("picture")),
+                String.format(COLLECTION_URI, response.get("creator").get("username").text(), collectionId),
+                "playlist",
+                tracks,
+                null,
+                false
+            );
         });
     }
 
@@ -61,7 +72,16 @@ public class DefaultBandlabDataLoader extends AbstractBandlabApiLoader implement
                 return null;
             }
 
-            return new BasicAudioPlaylist(response.get("name").text(), "album", tracks, null, false);
+            return new BasicAudioPlaylist(
+                response.get("name").text(),
+                response.get("creator").get("name").text(),
+                dataReader.getArtwork(response.get("picture")),
+                String.format(ALBUM_URI, response.get("creator").get("username").text(), albumId),
+                "album",
+                tracks,
+                null,
+                false
+            );
         });
     }
 }

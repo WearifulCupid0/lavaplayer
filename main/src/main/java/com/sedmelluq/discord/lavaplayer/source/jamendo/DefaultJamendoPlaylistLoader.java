@@ -31,7 +31,16 @@ public class DefaultJamendoPlaylistLoader extends AbstractJamendoApiLoader imple
                 String artwork = track.get("image").text().replace("width=200", "width=500");
                 tracks.add(JamendoUtils.extractTrack(track, artist, artwork, trackFactory));
             });
-            return new BasicAudioPlaylist(playlist.get("name").text(), "playlist", tracks, null, false);
+            return new BasicAudioPlaylist(
+                playlist.get("name").text(),
+                playlist.get("user_name").text(),
+                null,
+                "https://www.jamendo.com/playlist/" + id,
+                "playlist",
+                tracks,
+                null,
+                false
+            );
         });
     }
 
@@ -46,7 +55,16 @@ public class DefaultJamendoPlaylistLoader extends AbstractJamendoApiLoader imple
             .forEach(track -> {
                 tracks.add(JamendoUtils.extractTrack(track, artist, artwork, trackFactory));
             });
-            return new BasicAudioPlaylist(album.get("name").text(), "album", tracks, null, false);
+            return new BasicAudioPlaylist(
+                album.get("name").text(),
+                artist,
+                artwork,
+                "https://www.jamendo.com/album/" + id,
+                "album",
+                tracks,
+                null,
+                false
+            );
         });
     }
 
@@ -61,7 +79,16 @@ public class DefaultJamendoPlaylistLoader extends AbstractJamendoApiLoader imple
                 String artwork = track.get("image").text().replace("width=200", "width=500");
                 tracks.add(JamendoUtils.extractTrack(track, artistName, artwork, trackFactory));
             });
-            return new BasicAudioPlaylist(artistName, "artist", tracks, null, false);
+            return new BasicAudioPlaylist(
+                artistName,
+                artistName,
+                artist.get("image").text().replace("1.200", "1.500"),
+                "https://www.jamendo.com/artist/" + id,
+                "artist",
+                tracks,
+                null,
+                false
+            );
         });
     }
 }

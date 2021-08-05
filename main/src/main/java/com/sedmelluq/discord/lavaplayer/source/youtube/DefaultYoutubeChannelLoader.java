@@ -40,7 +40,10 @@ public class DefaultYoutubeChannelLoader implements YoutubeChannelLoader {
         }
     }
     private AudioPlaylist buildChannel(JsonBrowser json, HttpInterface httpInterface, Function<AudioTrackInfo, AudioTrack> trackFactory) throws IOException {
-        String channelName = json.get("header").get("c4TabbedHeaderRenderer").get("title").text();
+        JsonBrowser header = json.get("header").get("c4TabbedHeaderRenderer");
+        String channelName = header.get("title").text();
+        List<JsonBrowser> avatars = header.get("avatar").get("thumbnails").values();
+        String avatar = avatars.get(avatars.size() - 1).get("url").text();
         String continuationToken = null;
         List<AudioTrack> tracks = new ArrayList<>();
         JsonBrowser sectionRenderer = json
@@ -106,7 +109,16 @@ public class DefaultYoutubeChannelLoader implements YoutubeChannelLoader {
             return null;
         }
 
-        return new BasicAudioPlaylist(channelName, "channel", tracks, null, false);
+        return new BasicAudioPlaylist(
+            channelName,
+            channelName,
+            avatar,
+            "https://www.youtube.com/channel/" + header.get("channelId").text(),
+            "channel",
+            tracks,
+            null,
+            false
+        );
     }
     private AudioTrack extractTrack(JsonBrowser json, String channelName, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         JsonBrowser renderer = json.get("elementRenderer");

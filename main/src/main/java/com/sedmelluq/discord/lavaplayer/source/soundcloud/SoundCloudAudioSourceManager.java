@@ -279,7 +279,7 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
       }
     }
 
-    return new BasicAudioPlaylist("Liked by " + userInfo.name, "user", tracks, null, false);
+    return new BasicAudioPlaylist("Liked by " + userInfo.name, null, null, null, "user", tracks, null, false);
   }
 
   private static class UserInfo {
@@ -343,7 +343,7 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
       }
     }
 
-    return new BasicAudioPlaylist("Similar results for: " + id, "similar", tracks, null, true);
+    return new BasicAudioPlaylist("Similar results for: " + id, null, null, null, "similar", tracks, null, true);
   }
 
   private AudioItem processAsSearchQuery(AudioReference reference) {
@@ -405,7 +405,7 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
       }
     }
 
-    return new BasicAudioPlaylist("Search results for: " + query, "search", tracks, null, true);
+    return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
   }
 
   public static class Builder {

@@ -26,4 +26,5 @@ public class YoutubeConstants {
     static final String NEXT_VIDEO_PAYLOAD = BASE_PAYLOAD + "\"videoId\":\"%s\"}";
 
     static final String WATCH_URL_PREFIX = YOUTUBE_ORIGIN + "/watch?v=";
+    static final String PLAYLIST_URL_PREFIX = YOUTUBE_ORIGIN + "/playlist?list=";
 }

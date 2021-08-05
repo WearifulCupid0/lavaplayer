@@ -63,7 +63,7 @@ public class DefaultYandexSearchProvider extends AbstractYandexMusicApiLoader im
     if (tracks.isEmpty()) {
       return AudioReference.NO_TRACK;
     }
-    return new BasicAudioPlaylist("Yandex search result", "search", tracks, null, true);
+    return new BasicAudioPlaylist("Yandex search result", null, null, null, "search", tracks, null, true);
   }
 
   private AudioItem loadPlaylist(List<JsonBrowser> results,

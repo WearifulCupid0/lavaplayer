@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.PLAYLIST_URL_PREFIX;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.BROWSE_CONTINUATION_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.BROWSE_PLAYLIST_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.WATCH_URL_PREFIX;
@@ -53,10 +54,11 @@ public class DefaultYoutubePlaylistLoader implements YoutubePlaylistLoader {
     if (errorAlertMessage != null) {
       throw new FriendlyException(errorAlertMessage, COMMON, null);
     }
+    JsonBrowser header = json
+    .get("header")
+    .get("playlistHeaderRenderer");
 
-    String playlistName = json
-            .get("header")
-            .get("playlistHeaderRenderer")
+    String playlistName = header
             .get("title")
             .get("runs")
             .index(0)
@@ -113,7 +115,16 @@ public class DefaultYoutubePlaylistLoader implements YoutubePlaylistLoader {
       }
     }
 
-    return new BasicAudioPlaylist(playlistName, type, tracks, findSelectedTrack(tracks, selectedVideoId), false);
+    return new BasicAudioPlaylist(
+      playlistName,
+      header.get("ownerText").get("runs").index(0).get("text").text(),
+      tracks.get(0).getInfo().artwork,
+      PLAYLIST_URL_PREFIX + header.get("playlistId").text(),
+      type,
+      tracks,
+      findSelectedTrack(tracks, selectedVideoId),
+      false
+    );
   }
 
   private String findErrorAlert(JsonBrowser jsonResponse) {

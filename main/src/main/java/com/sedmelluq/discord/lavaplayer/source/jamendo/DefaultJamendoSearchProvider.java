@@ -28,7 +28,7 @@ public class DefaultJamendoSearchProvider extends AbstractJamendoApiLoader imple
                     tracks.add(JamendoUtils.extractTrack(track, artist, artwork, trackFactory));
                 });
 
-                return new BasicAudioPlaylist("Search results for: " + text, "search", tracks, null, true);
+                return new BasicAudioPlaylist("Search results for: " + text, null, null, null, "search", tracks, null, true);
             });
         } catch (Exception e) {
             throw new FriendlyException("Could not load search results", FriendlyException.Severity.SUSPICIOUS, e);

@@ -67,7 +67,7 @@ public class DefaultMixcloudSearchResultLoader implements MixcloudSearchProvider
             return AudioReference.NO_TRACK;
         }
 
-        return new BasicAudioPlaylist("Search results for: " + query, "search", tracks, null, true);
+        return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
     }
 
     private AudioTrack extractTrack(JsonBrowser track, Function<AudioTrackInfo, AudioTrack> trackFactory) {

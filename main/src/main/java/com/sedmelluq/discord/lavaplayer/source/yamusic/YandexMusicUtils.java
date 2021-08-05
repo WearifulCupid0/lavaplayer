@@ -24,25 +24,6 @@ public class YandexMusicUtils {
 
     String albumId = album.get("id").text();
 
-    String artwork = null;
-    JsonBrowser cover = trackInfo.get("coverUri");
-    if (!cover.isNull()) {
-      artwork = "https://" + cover.text().replace("%%", "1000x1000");
-    }
-    if (artwork == null) {
-      JsonBrowser ogImage = trackInfo.get("ogImage");
-      if (!ogImage.isNull()) {
-        artwork = "https://" + ogImage.text().replace("%%", "1000x1000");
-      }
-    }
-
-    if (artwork == null) {
-      cover = album.get("coverUri");
-      if (!cover.isNull()) {
-        artwork = "https://" + cover.text().replace("%%", "1000x1000");
-      }
-    }
-
     return trackFactory.apply(new AudioTrackInfo(
         trackInfo.get("title").text(),
         artists,
@@ -50,7 +31,35 @@ public class YandexMusicUtils {
         trackInfo.get("id").text(),
         false,
         String.format(TRACK_URL_FORMAT, albumId, trackId),
-        artwork
+        getArtwork(trackInfo)
     ));
+  }
+  public static String getArtwork(JsonBrowser data) {
+    String artwork = null;
+    JsonBrowser cover = data.get("coverUri");
+    if (!cover.isNull()) {
+      artwork = "https://" + cover.text().replace("%%", "1000x1000");
+    }
+    if (artwork == null) {
+      JsonBrowser ogImage = data.get("ogImage");
+      if (!ogImage.isNull()) {
+        artwork = "https://" + ogImage.text().replace("%%", "1000x1000");
+      }
+    }
+
+    if (artwork == null) {
+      cover = data.get("coverUri");
+      if (!cover.isNull()) {
+        artwork = "https://" + cover.text().replace("%%", "1000x1000");
+      }
+    }
+
+    if (artwork == null) {
+      cover = data.get("cover");
+      if (!cover.isNull()) {
+        artwork = "https://" + cover.get("uri").text().replace("%%", "1000x1000");
+      }
+    }
+    return artwork;
   }
 }

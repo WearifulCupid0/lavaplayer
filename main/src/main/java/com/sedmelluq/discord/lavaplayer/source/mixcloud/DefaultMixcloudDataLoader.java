@@ -28,7 +28,16 @@ public class DefaultMixcloudDataLoader extends AbstractMixcloudApiLoader impleme
                 tracks.add(extractTrack(d.get("node"), trackFactory));
             });
 
-            return new BasicAudioPlaylist(data.get("user").get("displayName").text(), "artist", tracks, null, false);
+            return new BasicAudioPlaylist(
+                data.get("user").get("displayName").text(),
+                data.get("user").get("displayName").text(),
+                data.get("user").get("picture").get("url").text(),
+                String.format("https://www.mixcloud.com/%s/", data.get("user").get("username").text()),
+                "artist",
+                tracks,
+                null,
+                false
+            );
         });
     }
 
@@ -40,7 +49,20 @@ public class DefaultMixcloudDataLoader extends AbstractMixcloudApiLoader impleme
                 tracks.add(extractTrack(d.get("node").get("cloudcast"), trackFactory));
             });
 
-            return new BasicAudioPlaylist(data.get("playlist").get("name").text(), "playlist", tracks, null, false);
+            return new BasicAudioPlaylist(
+                data.get("playlist").get("name").text(),
+                data.get("playlist").get("owner").get("displayName").text(),
+                data.get("playlist").get("picture").get("url").text(),
+                String.format(
+                    "https://www.mixcloud.com/%s/playlists/%s/",
+                    data.get("playlist").get("owner").get("username").text(),
+                    data.get("playlist").get("slug").text()
+                ),
+                "playlist",
+                tracks,
+                null,
+                false
+            );
         });
     }
 }
