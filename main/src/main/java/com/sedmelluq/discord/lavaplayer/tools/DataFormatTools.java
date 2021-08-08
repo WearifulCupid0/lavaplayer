@@ -1,6 +1,7 @@
 package com.sedmelluq.discord.lavaplayer.tools;
 
 import java.nio.charset.StandardCharsets;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.http.NameValuePair;
 
@@ -13,6 +14,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
+
 import org.apache.http.client.utils.URLEncodedUtils;
 
 /**
@@ -138,6 +140,7 @@ public class DataFormatTools {
 
     return length * 1000L;
   }
+
 
   /**
    * Writes a string to output with the additional information whether it is <code>null</code> or not. Compatible with

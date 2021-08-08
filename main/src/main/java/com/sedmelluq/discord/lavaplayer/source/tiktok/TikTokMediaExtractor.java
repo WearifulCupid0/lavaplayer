@@ -51,6 +51,7 @@ public class TikTokMediaExtractor {
         String title = author != null ? author : id;
         String artwork = video.get("cover").text();
         String identifier = authorId + "/" + id;
+
         return new AudioTrackInfo(title, author, (long) (video.get("duration").as(Double.class) * 1000.0), identifier, false, uri, artwork);
     }
 }

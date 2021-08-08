@@ -151,9 +151,7 @@ public class YoutubeSearchMusicProvider implements YoutubeSearchMusicResultLoade
       // The duration element should not have this key, if it does, then duration is probably missing, so return
       return null;
     }
-
     long duration = DataFormatTools.durationTextToMillis(lastElement.get("text").text());
-
     AudioTrackInfo info = new AudioTrackInfo(title, author, duration, videoId, false,
     MUSIC_WATCH_URL_PREFIX + videoId, PBJUtils.getYouTubeMusicThumbnail(thumbnail, videoId));
 

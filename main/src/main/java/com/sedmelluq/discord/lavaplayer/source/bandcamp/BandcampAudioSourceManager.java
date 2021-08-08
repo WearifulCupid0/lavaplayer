@@ -93,6 +93,7 @@ public class BandcampAudioSourceManager implements AudioSourceManager, HttpConfi
   private AudioItem loadAlbum(UrlInfo urlInfo) {
     return extractFromPage(urlInfo.fullUrl, (httpClient, text) -> {
       JsonBrowser trackListInfo = readTrackListInformation(text);
+      JsonBrowser albumInfo = readAlbumInformation(text);
       String artist = trackListInfo.get("artist").text();
       String artworkUrl = extractArtwork(trackListInfo);
 
@@ -101,7 +102,6 @@ public class BandcampAudioSourceManager implements AudioSourceManager, HttpConfi
         tracks.add(extractTrack(trackInfo, urlInfo.baseUrl, artist, artworkUrl));
       }
 
-      JsonBrowser albumInfo = readAlbumInformation(text);
       return new BasicAudioPlaylist(
           albumInfo.get("current").get("title").text(), 
           artist,
@@ -115,9 +115,8 @@ public class BandcampAudioSourceManager implements AudioSourceManager, HttpConfi
     });
   }
 
-  private AudioTrack extractTrack(JsonBrowser trackInfo, String bandUrl, String artist, String artworkUrl) {
+  private AudioTrack extractTrack(JsonBrowser trackInfo,  String bandUrl, String artist, String artworkUrl) {
     String trackPageUrl = bandUrl + trackInfo.get("title_link").text();
-
     return new BandcampAudioTrack(new AudioTrackInfo(
         trackInfo.get("title").text(),
         artist,

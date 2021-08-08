@@ -8,7 +8,7 @@ import com.sedmelluq.discord.lavaplayer.tools.io.SeekableInputStream;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
-import ibxm.Module;
+import com.sedmelluq.lavaplayer.extensions.format.xm.ibxm.Module;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +48,9 @@ public class XmContainerProbe implements MediaContainerProbe {
         Units.DURATION_MS_UNKNOWN,
         reference.identifier,
         true,
-        reference.identifier
+        reference.identifier,
+        null,
+        null
     ));
   }
 

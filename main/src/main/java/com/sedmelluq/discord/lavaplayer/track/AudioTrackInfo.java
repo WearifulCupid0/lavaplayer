@@ -34,13 +34,13 @@ public class AudioTrackInfo {
   public final String artwork;
 
   /**
-   * @param title Track title
-   * @param author Track author, if known
-   * @param length Length of the track in milliseconds
-   * @param identifier Audio source specific track identifier
-   * @param isStream True if this track is a stream
+   * @param title Track title.
+   * @param author Track author, if known.
+   * @param length Length of the track in milliseconds.
+   * @param identifier Audio source specific track identifier.
+   * @param isStream True if this track is a stream.
    * @param uri URL of the track or path to its file.
-   * @param artwork Thumbnail of the track
+   * @param artwork Thumbnail of the track.
    */
   public AudioTrackInfo(String title, String author, long length, String identifier, boolean isStream, String uri, String artwork) {
     this.title = title;

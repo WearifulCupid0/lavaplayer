@@ -106,7 +106,6 @@ public class GetyarnAudioSourceManager implements HttpConfigurable, AudioSourceM
     try (final CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(reference.identifier))) {
       final String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
       final Document document = Jsoup.parse(html);
-
       final AudioTrackInfo trackInfo = AudioTrackInfoBuilder.empty()
           .setUri(reference.identifier)
           .setAuthor("Unknown")

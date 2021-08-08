@@ -5,15 +5,10 @@ plugins {
 }
 
 ext.moduleName = 'lavaplayer-ext-format-xm'
-version = '0.1.0'
-
-repositories {
-  maven { url "https://dl.bintray.com/gabixdev/kyoko" }
-}
+version = '0.1.1'
 
 dependencies {
   compile project(':main')
-  implementation 'com.github.micromod:ibxm:a73'
 }
 
 task sourceJar(type: Jar) {

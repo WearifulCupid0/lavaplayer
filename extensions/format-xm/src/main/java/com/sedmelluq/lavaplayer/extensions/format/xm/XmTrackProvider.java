@@ -4,7 +4,7 @@ import com.sedmelluq.discord.lavaplayer.filter.AudioPipeline;
 import com.sedmelluq.discord.lavaplayer.filter.AudioPipelineFactory;
 import com.sedmelluq.discord.lavaplayer.filter.PcmFormat;
 import com.sedmelluq.discord.lavaplayer.track.playback.AudioProcessingContext;
-import ibxm.IBXM;
+import com.sedmelluq.lavaplayer.extensions.format.xm.ibxm.IBXM;
 
 public class XmTrackProvider {
   private final IBXM ibxm;

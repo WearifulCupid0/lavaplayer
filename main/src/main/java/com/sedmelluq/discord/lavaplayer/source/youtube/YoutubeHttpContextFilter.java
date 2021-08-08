@@ -16,9 +16,9 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 public class YoutubeHttpContextFilter implements HttpContextFilter {
   private static final String ATTRIBUTE_RESET_RETRY = "isResetRetry";
 
-  private static String PAPISID = null;
-  private static String PSID = null;
-  private static String PSIDCC = null;
+  private static String PAPISID = "HElVHkUVenb2eFXx/AhvhxMhD_KPsM4nZE";
+  private static String PSID = "8Qc_mMTGhpfQdTm1-fdKq6rh9KNCUC9OONEP44RAQkvVrQrFDkgjRaj6vJdchtNXMrWd4w.";
+  private static String PSIDCC = "AJi4QfE9ix2TVKVWZzmswEkeDpCcZnuScw9N2pu2dS2fGx1Nyrtv_uDH4vvaiujL82_Ys1OO";
 
   public static void setPAPISID(String value) {
     PAPISID = value;

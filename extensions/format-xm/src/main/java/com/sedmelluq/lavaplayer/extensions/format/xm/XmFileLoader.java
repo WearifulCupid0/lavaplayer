@@ -2,9 +2,9 @@ package com.sedmelluq.lavaplayer.extensions.format.xm;
 
 import com.sedmelluq.discord.lavaplayer.tools.io.SeekableInputStream;
 import com.sedmelluq.discord.lavaplayer.track.playback.AudioProcessingContext;
-import ibxm.Channel;
-import ibxm.IBXM;
-import ibxm.Module;
+import com.sedmelluq.lavaplayer.extensions.format.xm.ibxm.Channel;
+import com.sedmelluq.lavaplayer.extensions.format.xm.ibxm.IBXM;
+import com.sedmelluq.lavaplayer.extensions.format.xm.ibxm.Module;
 
 import java.io.IOException;
 

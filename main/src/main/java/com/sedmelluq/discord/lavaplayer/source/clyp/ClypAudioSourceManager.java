@@ -116,6 +116,7 @@ public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigura
             String author = audioFile.get("User").get("LastName").isNull()
             ? audioFile.get("User").get("FirstName").text()
             : audioFile.get("User").get("FirstName").text() + " " + audioFile.get("User").get("LastName").text();
+            
             return new ClypAudioTrack(new AudioTrackInfo(title, author, (long) (audioFile.get("Duration").as(Double.class) * 1000.0), identifier, false, uri, artwork), this);
         }
 
