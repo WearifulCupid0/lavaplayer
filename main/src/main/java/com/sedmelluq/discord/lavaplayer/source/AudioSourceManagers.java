@@ -12,6 +12,7 @@ import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.tiktok.TikTokAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.mixcloud.MixcloudAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.saavn.SaavnAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.jamendo.JamendoAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.yamusic.YandexMusicAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
@@ -39,6 +40,7 @@ public class AudioSourceManagers {
     playerManager.registerSourceManager(new YandexMusicAudioSourceManager(true));
     playerManager.registerSourceManager(new MixcloudAudioSourceManager(true));
     playerManager.registerSourceManager(new JamendoAudioSourceManager(true));
+    playerManager.registerSourceManager(new SaavnAudioSourceManager(true));
     playerManager.registerSourceManager(SoundCloudAudioSourceManager.createDefault());
     playerManager.registerSourceManager(new BandlabAudioSourceManager());
     playerManager.registerSourceManager(new TikTokAudioSourceManager());

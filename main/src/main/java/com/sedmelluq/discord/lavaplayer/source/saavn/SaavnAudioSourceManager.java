@@ -8,8 +8,6 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
-import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
-import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.AudioItem;
@@ -19,23 +17,25 @@ import org.apache.http.client.config.RequestConfig;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class SaavnAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-    private final static String REGEX = "^(?:http://|https://|)(?:www\\.|)jiosaavn\\.com/(song|album|featured)/(?:.*)/([a-zA-Z0-9-_]+)$";
-    private final static Pattern regexPattern = Pattern.compile(REGEX);
+    private final static String SONG_REGEX = "^(?:http://|https://|)(?:www\\.|)jiosaavn\\.com/song/(?:.*)/([a-zA-Z0-9-_]+)$";
+    private final static String ALBUM_REGEX = "^(?:http://|https://|)(?:www\\.|)jiosaavn\\.com/album/(?:.*)/([a-zA-Z0-9-_]+)$";
+    private final static String PLAYLIST_REGEX = "^(?:http://|https://|)(?:www\\.|)jiosaavn\\.com/featured/(?:.*)/([a-zA-Z0-9-_]+)$";
 
-    private final String SEARCH_PREFIX = "sasearch:";
+    private final static String SEARCH_PREFIX = "sasearch:";
+
+    private final static Pattern songPattern = Pattern.compile(SONG_REGEX);
+    private final static Pattern albumPattern = Pattern.compile(ALBUM_REGEX);
+    private final static Pattern playlistPattern = Pattern.compile(PLAYLIST_REGEX);
 
     private final Boolean allowSearch;
-    public final SaavnApiRequester apiRequester;
     private final HttpInterfaceManager httpInterfaceManager;
+    private final SaavnDataLoader dataLoader;
 
     /**
      * Create an instance.
@@ -45,8 +45,12 @@ public class SaavnAudioSourceManager implements AudioSourceManager, HttpConfigur
     }
 
     public SaavnAudioSourceManager(Boolean allowSearch) {
+        this(allowSearch, new DefaultSaavnDataLoader());
+    }
+
+    public SaavnAudioSourceManager(Boolean allowSearch, SaavnDataLoader dataLoader) {
         this.allowSearch = allowSearch;
-        this.apiRequester = new SaavnApiRequester(this);
+        this.dataLoader = dataLoader;
 
         httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
     }
@@ -58,70 +62,21 @@ public class SaavnAudioSourceManager implements AudioSourceManager, HttpConfigur
 
     @Override
     public AudioItem loadItem(DefaultAudioPlayerManager manager, AudioReference reference) {
-        Matcher matcher = regexPattern.matcher(reference.identifier);
-        if(matcher.find()) {
-            String type = matcher.group(1);
-            String id = matcher.group(2);
-            if(type == "song") {
-                return buildTrack(apiRequester.track(id), id);
-            }
-            if(type == "album") {
-                List<AudioTrack> tracks = new ArrayList<>();
-                JsonBrowser album = apiRequester.album(id);
-                album.get("list").values()
-                .forEach(song -> {
-                    String identifier = regexPattern.matcher(song.get("perma_url").text()).group(2);
-                    tracks.add(buildTrack(song, identifier));
-                });
-                return new BasicAudioPlaylist(
-                    album.get("title").text(),
-                    album.get("more_info").get("artistMap")
-                    .get("primary_artists").values().stream()
-                    .map(e -> e.get("name").text())
-                    .collect(Collectors.joining(", ")),
-                    album.get("image").text(),
-                    album.get("perma_url").text(),
-                    "album",
-                    tracks,
-                    null,
-                    false
-                );
-            }
-            if(type == "featured") {
-                List<AudioTrack> tracks = new ArrayList<>();
-                JsonBrowser playlist = apiRequester.playlist(id);
-                playlist.get("list").values()
-                .forEach(song -> {
-                    String identifier = regexPattern.matcher(song.get("perma_url").text()).group(2);
-                    tracks.add(buildTrack(song, identifier));
-                });
-                String creator = playlist.get("more_info").get("firstname").text();
-                if(
-                    !playlist.get("more_info").get("lastname").isNull() &&
-                    playlist.get("more_info").get("lastname").text().length() > 0
-                ) creator = creator + " " + playlist.get("more_info").get("lastname").text();
-                return new BasicAudioPlaylist(
-                    playlist.get("title").text(),
-                    creator, 
-                    playlist.get("image").text(),
-                    playlist.get("perma_url").text(),
-                    "playlist",
-                    tracks,
-                    null,
-                    false
-                );
-            }
+        Matcher matcher;
+
+        if ((matcher = songPattern.matcher(reference.identifier)).matches()) {
+            return dataLoader.loadTrack(matcher.group(1), this::getTrack);
         }
-        if(allowSearch && reference.identifier.startsWith(SEARCH_PREFIX)) {
-            List<AudioTrack> tracks = new ArrayList<>();
-            String query = reference.identifier.substring(SEARCH_PREFIX.length()).trim();
-            List<JsonBrowser> results = apiRequester.search(query);
-            results.forEach(song -> {
-                String identifier = regexPattern.matcher(song.get("perma_url").text()).group(2);
-                tracks.add(buildTrack(song, identifier));
-            });
-            return new BasicAudioPlaylist("Search results for: " + query, null, null, null, null, tracks, null, true);
+        if ((matcher = albumPattern.matcher(reference.identifier)).matches()) {
+            return dataLoader.loadAlbum(matcher.group(1), this::getTrack);
         }
+        if ((matcher = playlistPattern.matcher(reference.identifier)).matches()) {
+            return dataLoader.loadPlaylist(matcher.group(1), this::getTrack);
+        }
+        if (allowSearch && reference.identifier.startsWith(SEARCH_PREFIX)) {
+            return dataLoader.loadSearch(reference.identifier.substring(SEARCH_PREFIX.length()).trim(), this::getTrack);
+        }
+
         return null;
     }
 
@@ -145,6 +100,10 @@ public class SaavnAudioSourceManager implements AudioSourceManager, HttpConfigur
         ExceptionTools.closeWithWarnings(httpInterfaceManager);
     }
 
+    public AudioTrack getTrack(AudioTrackInfo trackInfo) {
+        return new SaavnAudioTrack(trackInfo, this);
+    }
+
     /**
      * @return Get an HTTP interface for a playing track.
      */
@@ -160,28 +119,5 @@ public class SaavnAudioSourceManager implements AudioSourceManager, HttpConfigur
     @Override
     public void configureBuilder(Consumer<HttpClientBuilder> configurator) {
         httpInterfaceManager.configureBuilder(configurator);
-    }
-
-    private AudioTrack buildTrack(JsonBrowser metadata, String identifier) {
-        JsonBrowser info = metadata.get("more_info").isNull() ? metadata : metadata.get("more_info");
-        String author;
-
-        if(!info.get("artistMap").get("primary_artists").isNull()) {
-            author = info.get("artistMap").get("primary_artists").values().stream()
-            .map(e -> e.get("name").text())
-            .collect(Collectors.joining(", "));
-        } else {
-            author = metadata.get("primary_artists").text();
-        }
-
-        return new SaavnAudioTrack(new AudioTrackInfo(
-            metadata.get("title").text(),
-            author,
-            (long) (info.get("duration").as(Double.class) * 1000.0),
-            identifier,
-            false,
-            metadata.get("perma_url").text(),
-            metadata.get("image").text()
-        ), this);
     }
 }
