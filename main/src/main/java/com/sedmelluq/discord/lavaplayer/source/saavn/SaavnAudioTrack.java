@@ -43,8 +43,7 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
     @Override
     public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
         try (HttpInterface httpInterface = sourceManager.getHttpInterface()) {
-            String encoded = getEncodedURL(httpInterface);
-            String mediaURL = getUrlWithEncoded(encoded, httpInterface);
+            String mediaURL = getMediaUrl(httpInterface);
             log.debug("Starting saavn track from URL: {}", mediaURL);
             try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(mediaURL), null)) {
                 processDelegate(new Mp3AudioTrack(trackInfo, stream), localExecutor);
@@ -79,7 +78,8 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
         }
     }
 
-    private String getUrlWithEncoded(String encoded, HttpInterface httpInterface) throws IOException {
+    private String getMediaUrl(HttpInterface httpInterface) throws IOException {
+        String encoded = getEncodedURL(httpInterface);
         URI uri = URI.create("https://www.jiosaavn.com/api.php?__call=song.generateAuthToken&_format=json&_marker=0url=" + encoded);
         RequestConfig config = RequestConfig.custom().setCookieSpec(CookieSpecs.IGNORE_COOKIES).build();
         HttpGet get = new HttpGet(uri);
@@ -92,8 +92,7 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
             }
             String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             JsonBrowser json = JsonBrowser.parse(responseText);
-            if(json.get("status").text() != "success" || json.get("auth_url").isNull()) return null;
-            return json.get("auth_url").text();
+            return json.get("auth_url").safeText();
         }
     }
 }
