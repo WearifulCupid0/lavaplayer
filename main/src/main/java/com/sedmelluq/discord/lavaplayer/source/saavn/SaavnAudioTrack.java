@@ -50,9 +50,10 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
         try (HttpInterface httpInterface = sourceManager.getHttpInterface()) {
             String encoded = this.getSongInfo(httpInterface);
             String rawURL = this.getURL(encoded, httpInterface);
-            URI mediaURL = this.getRedirectURL(rawURL, httpInterface);
+            String mediaURL = this.getRedirectURL(rawURL, httpInterface);
+            mediaURL = "https://" + mediaURL;
             log.debug("Starting saavn track from URL: {}", mediaURL);
-            try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, mediaURL, null)) {
+            try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(mediaURL), null)) {
                 processDelegate(new Mp3AudioTrack(trackInfo, stream), localExecutor);
             }
         }
@@ -99,13 +100,13 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
         }
     }
 
-    private URI getRedirectURL(String url, HttpInterface httpInterface) throws Exception {
+    private String getRedirectURL(String url, HttpInterface httpInterface) throws Exception {
         try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(url))) {
             HttpClientTools.assertSuccessWithContent(response, "redirect response");
             HttpClientContext context = httpInterface.getContext();
             List<URI> redirects = context.getRedirectLocations();
             if (redirects != null && !redirects.isEmpty()) {
-                return redirects.get(0).toURL().toURI();
+                return redirects.get(0).toString();
             }
             return null;
         }
