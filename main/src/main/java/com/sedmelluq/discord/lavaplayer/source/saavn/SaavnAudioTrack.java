@@ -13,13 +13,11 @@ import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 
 import org.apache.commons.io.IOUtils;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.protocol.HttpClientContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +30,7 @@ import java.net.URI;
 public class SaavnAudioTrack extends DelegatedAudioTrack {
     private static final Logger log = LoggerFactory.getLogger(SaavnAudioTrack.class);
     private static final String SONGINFO_URL = "https://www.jiosaavn.com/api.php?__call=webapi.get&ctx=wap6dot0&type=song&token=%s&_format=json&_marker=0";
-    private static final String AUTHTOKEN_URL = "https://www.jiosaavn.com/api.php?__call=song.generateAuthToken&url=%s&_format=json&_marker=0";
+    private static final String AUTHTOKEN_URL = "https://www.jiosaavn.com/api.php?__call=song.generateAuthToken&url=%s&ctx=wap6dot0&_format=json&_marker=0";
 
     private final SaavnAudioSourceManager sourceManager;
 
