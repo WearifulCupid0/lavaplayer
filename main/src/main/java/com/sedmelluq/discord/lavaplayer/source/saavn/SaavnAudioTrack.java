@@ -31,6 +31,7 @@ import java.net.URI;
  */
 public class SaavnAudioTrack extends DelegatedAudioTrack {
     private static final Logger log = LoggerFactory.getLogger(SaavnAudioTrack.class);
+    private static final String SONGINFO_URL = "https://www.jiosaavn.com/api.php?__call=webapi.get&ctx=wap6dot0&type=song&token=%s&_format=json&_marker=0";
     private static final String AUTHTOKEN_URL = "https://www.jiosaavn.com/api.php?__call=song.generateAuthToken&url=%s&_format=json&_marker=0";
 
     private final SaavnAudioSourceManager sourceManager;
@@ -47,10 +48,11 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
     @Override
     public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
         try (HttpInterface httpInterface = sourceManager.getHttpInterface()) {
-            String rawURL = this.getURL(httpInterface);
-            String mediaURL = this.getRedirectURL(rawURL, httpInterface);
+            String encoded = this.getSongInfo(httpInterface);
+            String rawURL = this.getURL(encoded, httpInterface);
+            URI mediaURL = this.getRedirectURL(rawURL, httpInterface);
             log.debug("Starting saavn track from URL: {}", mediaURL);
-            try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(mediaURL), null)) {
+            try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, mediaURL, null)) {
                 processDelegate(new Mp3AudioTrack(trackInfo, stream), localExecutor);
             }
         }
@@ -66,8 +68,21 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
         return sourceManager;
     }
 
-    private String getURL(HttpInterface httpInterface) throws IOException {
-        URI uri = URI.create(String.format(AUTHTOKEN_URL, trackInfo.identifier));
+    private String getSongInfo(HttpInterface httpInterface) throws IOException {
+        HttpGet get = new HttpGet(String.format(SONGINFO_URL, trackInfo.identifier));
+        get.setHeader("Accept", "application/json");
+        try (CloseableHttpResponse response = httpInterface.execute(get)) {
+            HttpClientTools.assertSuccessWithContent(response, "song response");
+
+            String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+            JsonBrowser json = JsonBrowser.parse(responseText);
+            String encoded = json.get("songs").index(0).get("encrypted_media_path").text();
+            return encoded;
+        }
+    }
+
+    private String getURL(String encoded, HttpInterface httpInterface) throws IOException {
+        URI uri = URI.create(String.format(AUTHTOKEN_URL, encoded));
         HttpGet get = new HttpGet(uri);
         RequestConfig config = RequestConfig.custom().setCookieSpec(CookieSpecs.IGNORE_COOKIES).build();
         get.setConfig(config);
@@ -82,13 +97,13 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
         }
     }
 
-    private String getRedirectURL(String url, HttpInterface httpInterface) throws IOException {
+    private URI getRedirectURL(String url, HttpInterface httpInterface) throws Exception {
         try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(url))) {
             HttpClientTools.assertSuccessWithContent(response, "redirect response");
             HttpClientContext context = httpInterface.getContext();
             List<URI> redirects = context.getRedirectLocations();
             if (redirects != null && !redirects.isEmpty()) {
-                return redirects.get(0).toString();
+                return redirects.get(0).toURL().toURI();
             }
             return null;
         }
