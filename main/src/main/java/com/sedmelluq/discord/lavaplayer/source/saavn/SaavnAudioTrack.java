@@ -2,6 +2,7 @@ package com.sedmelluq.discord.lavaplayer.source.saavn;
 
 import com.sedmelluq.discord.lavaplayer.container.mp3.Mp3AudioTrack;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.PersistentHttpStream;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -12,11 +13,13 @@ import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 
 import org.apache.commons.io.IOUtils;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.protocol.HttpClientContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +47,8 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
     @Override
     public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
         try (HttpInterface httpInterface = sourceManager.getHttpInterface()) {
-            String mediaURL = this.getURL(httpInterface);
+            String rawURL = this.getURL(httpInterface);
+            String mediaURL = this.getRedirectURL(rawURL, httpInterface);
             log.debug("Starting saavn track from URL: {}", mediaURL);
             try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(mediaURL), null)) {
                 processDelegate(new Mp3AudioTrack(trackInfo, stream), localExecutor);
@@ -69,14 +73,24 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
         get.setConfig(config);
         get.setHeader("Accept", "application/json");
         try (CloseableHttpResponse response = httpInterface.execute(get)) {
-            int statusCode = response.getStatusLine().getStatusCode();
-            if (statusCode != 200) {
-                throw new IOException("Invalid status code: " + statusCode);
-            }
+            HttpClientTools.assertSuccessWithContent(response, "auth response");
+
             String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             JsonBrowser json = JsonBrowser.parse(responseText);
             String mediaURL = json.get("auth_url").safeText();
             return mediaURL;
+        }
+    }
+
+    private String getRedirectURL(String url, HttpInterface httpInterface) throws IOException {
+        try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(url))) {
+            HttpClientTools.assertSuccessWithContent(response, "redirect response");
+            HttpClientContext context = httpInterface.getContext();
+            List<URI> redirects = context.getRedirectLocations();
+            if (redirects != null && !redirects.isEmpty()) {
+                return redirects.get(0).toString();
+            }
+            return null;
         }
     }
 }
