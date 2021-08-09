@@ -43,7 +43,8 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
     @Override
     public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
         try (HttpInterface httpInterface = sourceManager.getHttpInterface()) {
-            String mediaURL = getMediaUrl(httpInterface);
+            String encoded = getEncodedURL(httpInterface);
+            String mediaURL = getUrlWithEncoded(encoded, httpInterface);
             log.debug("Starting saavn track from URL: {}", mediaURL);
             try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(mediaURL), null)) {
                 processDelegate(new Mp3AudioTrack(trackInfo, stream), localExecutor);
@@ -74,12 +75,11 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
             }
             String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             JsonBrowser json = JsonBrowser.parse(responseText);
-            return json.get("songs").index(0).get("encrypted_media_url").text();
+            return json.get("songs").index(0).get("encrypted_media_path").text();
         }
     }
 
-    private String getMediaUrl(HttpInterface httpInterface) throws IOException {
-        String encoded = getEncodedURL(httpInterface);
+    private String getUrlWithEncoded(String encoded, HttpInterface httpInterface) throws IOException {
         URI uri = URI.create("https://www.jiosaavn.com/api.php?__call=song.generateAuthToken&_format=json&_marker=0url=" + encoded);
         RequestConfig config = RequestConfig.custom().setCookieSpec(CookieSpecs.IGNORE_COOKIES).build();
         HttpGet get = new HttpGet(uri);
@@ -92,7 +92,8 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
             }
             String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             JsonBrowser json = JsonBrowser.parse(responseText);
-            return json.get("auth_url").safeText();
+            if(json.get("status").text() != "success" || json.get("auth_url").isNull()) return null;
+            return json.get("auth_url").text();
         }
     }
 }
