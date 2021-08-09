@@ -13,11 +13,13 @@ import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 
 import org.apache.commons.io.IOUtils;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.protocol.HttpClientContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +49,8 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
     public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
         try (HttpInterface httpInterface = sourceManager.getHttpInterface()) {
             String encoded = this.getSongInfo(httpInterface);
-            String mediaURL = this.getURL(encoded, httpInterface);
+            String rawURL = this.getURL(encoded, httpInterface);
+            String mediaURL = this.getRedirectURL(rawURL, httpInterface);
             log.info(mediaURL);
             log.debug("Starting saavn track from URL: {}", mediaURL);
             try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(mediaURL), null)) {
@@ -94,6 +97,18 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
             JsonBrowser json = JsonBrowser.parse(responseText);
             String mediaURL = json.get("auth_url").safeText();
             return mediaURL;
+        }
+    }
+
+    private String getRedirectURL(String url, HttpInterface httpInterface) throws Exception {
+        try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(url))) {
+            HttpClientTools.assertSuccessWithContent(response, "redirect response");
+            HttpClientContext context = httpInterface.getContext();
+            List<URI> redirects = context.getRedirectLocations();
+            if (redirects != null && !redirects.isEmpty()) {
+                return redirects.get(0).toString();
+            }
+            return null;
         }
     }
 }
