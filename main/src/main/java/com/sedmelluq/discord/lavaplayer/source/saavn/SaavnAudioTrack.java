@@ -78,7 +78,7 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
 
             String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             JsonBrowser json = JsonBrowser.parse(responseText);
-            String encoded = json.get("songs").index(0).get("encrypted_media_path").text();
+            String encoded = json.get("songs").index(0).get("encrypted_media_url").text();
             return encoded;
         }
     }
@@ -96,18 +96,6 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
             JsonBrowser json = JsonBrowser.parse(responseText);
             String mediaURL = json.get("auth_url").safeText();
             return mediaURL;
-        }
-    }
-
-    private String getRedirectURL(String url, HttpInterface httpInterface) throws Exception {
-        try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(url))) {
-            HttpClientTools.assertSuccessWithContent(response, "redirect response");
-            HttpClientContext context = httpInterface.getContext();
-            List<URI> redirects = context.getRedirectLocations();
-            if (redirects != null && !redirects.isEmpty()) {
-                return redirects.get(0).toString();
-            }
-            return null;
         }
     }
 }
