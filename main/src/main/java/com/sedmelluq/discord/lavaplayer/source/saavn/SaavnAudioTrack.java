@@ -1,6 +1,6 @@
 package com.sedmelluq.discord.lavaplayer.source.saavn;
 
-import com.sedmelluq.discord.lavaplayer.container.mp3.Mp3AudioTrack;
+import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -37,11 +37,12 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
     private final SaavnAudioSourceManager sourceManager;
 
     /**
-    * @param trackInfo Track info
-    * @param sourceManager Source manager which was used to find this track
-    */
+     * @param trackInfo Track info
+     * @param sourceManager Source manager which was used to find this track
+     */
     public SaavnAudioTrack(AudioTrackInfo trackInfo, SaavnAudioSourceManager sourceManager) {
         super(trackInfo);
+
         this.sourceManager = sourceManager;
     }
 
@@ -51,10 +52,9 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
             String encoded = this.getSongInfo(httpInterface);
             String rawURL = this.getURL(encoded, httpInterface);
             String mediaURL = this.getRedirectURL(rawURL, httpInterface);
-            log.info(mediaURL);
             log.debug("Starting saavn track from URL: {}", mediaURL);
             try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(mediaURL), null)) {
-                processDelegate(new Mp3AudioTrack(trackInfo, stream), localExecutor);
+                processDelegate(new MpegAudioTrack(trackInfo, stream), localExecutor);
             }
         }
     }
