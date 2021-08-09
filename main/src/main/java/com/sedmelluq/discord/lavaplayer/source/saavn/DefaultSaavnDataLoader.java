@@ -63,15 +63,13 @@ public class DefaultSaavnDataLoader extends AbstractSaavnApiLoader implements Sa
     }
 
     private AudioTrackInfo buildInfo(JsonBrowser song) {
-        String url = song.get("perma_url").text();
-        String[] paths = url.split("/");
         return new AudioTrackInfo(
             song.get("song").safeText(),
             song.get("primary_artists").safeText(),
             (long) (song.get("duration").as(Double.class) * 1000.0),
-            paths[paths.length - 1],
+            song.get("encrypted_media_path").text(),
             false,
-            url,
+            song.get("perma_url").text(),
             song.get("image").text().replace("150x150", "500x500")
         );
     }
