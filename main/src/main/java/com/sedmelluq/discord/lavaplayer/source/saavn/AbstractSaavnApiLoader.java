@@ -7,6 +7,8 @@ import com.sedmelluq.discord.lavaplayer.tools.http.ExtendedHttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
+import org.apache.http.client.config.CookieSpecs;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -29,9 +31,11 @@ public abstract class AbstractSaavnApiLoader implements SaavnApiLoader {
   protected <T> T extractFromApi(String caller, String query, ApiExtractor<T> extractor) {
     try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
       String responseText;
+      RequestConfig config = RequestConfig.custom().setCookieSpec(CookieSpecs.IGNORE_COOKIES).build();
       URI uri = URI.create("https://www.jiosaavn.com/api.php?_format=json&_marker=0&__call=" + caller + "&" + query);
       HttpGet get = new HttpGet(uri);
       get.setHeader("Accept", "application/json");
+      get.setConfig(config);
       try (CloseableHttpResponse response = httpInterface.execute(get)) {
         int statusCode = response.getStatusLine().getStatusCode();
         if (statusCode != 200) {

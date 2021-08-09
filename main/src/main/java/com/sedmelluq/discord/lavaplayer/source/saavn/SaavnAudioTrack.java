@@ -12,6 +12,9 @@ import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 
 import org.apache.commons.io.IOUtils;
 import java.nio.charset.StandardCharsets;
+
+import org.apache.http.client.config.CookieSpecs;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.slf4j.Logger;
@@ -62,7 +65,9 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
     private String getEncodedURL(HttpInterface httpInterface) throws IOException {
         URI uri = URI.create("https://www.jiosaavn.com/api.php?__call=webapi.get&type=song&ctx=web6dot0&_format=json&_marker=0&token=" + trackInfo.identifier);
         HttpGet get = new HttpGet(uri);
+        RequestConfig config = RequestConfig.custom().setCookieSpec(CookieSpecs.IGNORE_COOKIES).build();
         get.setHeader("Accept", "application/json");
+        get.setConfig(config);
         try (CloseableHttpResponse response = httpInterface.execute(get)) {
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != 200) {
@@ -76,7 +81,9 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
 
     private String getUrlWithEncoded(String encoded, HttpInterface httpInterface) throws IOException {
         URI uri = URI.create("https://www.jiosaavn.com/api.php?__call=song.generateAuthToken&_format=json&_marker=0url=" + encoded);
+        RequestConfig config = RequestConfig.custom().setCookieSpec(CookieSpecs.IGNORE_COOKIES).build();
         HttpGet get = new HttpGet(uri);
+        get.setConfig(config);
         get.setHeader("Accept", "application/json");
         try (CloseableHttpResponse response = httpInterface.execute(get)) {
             int statusCode = response.getStatusLine().getStatusCode();
