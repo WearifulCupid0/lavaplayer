@@ -70,6 +70,8 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
 
     private String getSongInfo(HttpInterface httpInterface) throws IOException {
         HttpGet get = new HttpGet(String.format(SONGINFO_URL, trackInfo.identifier));
+        RequestConfig config = RequestConfig.custom().setCookieSpec(CookieSpecs.IGNORE_COOKIES).build();
+        get.setConfig(config);
         get.setHeader("Accept", "application/json");
         try (CloseableHttpResponse response = httpInterface.execute(get)) {
             HttpClientTools.assertSuccessWithContent(response, "song response");
