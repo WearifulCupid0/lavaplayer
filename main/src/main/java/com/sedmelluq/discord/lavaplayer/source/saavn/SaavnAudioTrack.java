@@ -2,7 +2,6 @@ package com.sedmelluq.discord.lavaplayer.source.saavn;
 
 import com.sedmelluq.discord.lavaplayer.container.mp3.Mp3AudioTrack;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.PersistentHttpStream;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -11,6 +10,8 @@ import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 
+import org.apache.commons.io.IOUtils;
+import java.nio.charset.StandardCharsets;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.slf4j.Logger;
@@ -63,8 +64,12 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
         HttpGet get = new HttpGet(uri);
         get.setHeader("Accept", "application/json");
         try (CloseableHttpResponse response = httpInterface.execute(get)) {
-            HttpClientTools.assertSuccessWithContent(response, "encoded url");
-            JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != 200) {
+                throw new IOException("Invalid status code: " + statusCode);
+            }
+            String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+            JsonBrowser json = JsonBrowser.parse(responseText);
             return json.get("songs").index(0).get("encrypted_media_url").text();
         }
     }
@@ -74,8 +79,12 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
         HttpGet get = new HttpGet(uri);
         get.setHeader("Accept", "application/json");
         try (CloseableHttpResponse response = httpInterface.execute(get)) {
-            HttpClientTools.assertSuccessWithContent(response, "media url");
-            JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != 200) {
+                throw new IOException("Invalid status code: " + statusCode);
+            }
+            String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+            JsonBrowser json = JsonBrowser.parse(responseText);
             if(json.get("status").text() != "success" || json.get("auth_url").isNull()) return null;
             return json.get("auth_url").text();
         }
