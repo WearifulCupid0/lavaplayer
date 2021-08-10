@@ -50,9 +50,7 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
     public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
         try (HttpInterface httpInterface = sourceManager.getHttpInterface()) {
             String encoded = this.getSongInfo(httpInterface);
-            log.info(encoded);
             String rawURL = this.getURL(encoded, httpInterface);
-            log.info(rawURL);
             String mediaURL = this.getRedirectURL(rawURL, httpInterface);
             log.debug("Starting saavn track from URL: {}", mediaURL);
             try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(mediaURL), null)) {

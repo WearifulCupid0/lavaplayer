@@ -44,6 +44,7 @@ public class SmuleAudioTrack extends DelegatedAudioTrack {
             log.debug("Loading Smule track page from URL: {}", trackInfo.identifier);
 
             String trackMediaUrl = getTrackMediaUrl(httpInterface);
+            log.info(trackMediaUrl);
             log.debug("Starting Smule track from URL: {}", trackMediaUrl);
 
             try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(trackMediaUrl), null)) {
