@@ -32,7 +32,7 @@ import java.net.URI;
 public class SaavnAudioTrack extends DelegatedAudioTrack {
     private static final Logger log = LoggerFactory.getLogger(SaavnAudioTrack.class);
     private static final String SONGINFO_URL = "https://www.jiosaavn.com/api.php?__call=webapi.get&ctx=wap6dot0&type=song&token=%s&_format=json&_marker=0&api_version=4&includeMetaTags=0";
-    private static final String AUTHTOKEN_URL = "https://www.jiosaavn.com/api.php?__call=song.generateAuthToken&url=https://www.jiosaavn.com/api.php?__call=song.generateAuthToken&url=%s&bitrate=128&api_version=4&_format=json&ctx=wap6dot0&_marker=0";
+    private static final String AUTHTOKEN_URL = "https://www.jiosaavn.com/api.php?__call=song.generateAuthToken&url=%s&bitrate=128&api_version=4&_format=json&ctx=wap6dot0&_marker=0";
 
     private final SaavnAudioSourceManager sourceManager;
 
