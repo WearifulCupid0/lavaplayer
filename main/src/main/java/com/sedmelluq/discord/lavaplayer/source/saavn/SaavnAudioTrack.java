@@ -50,6 +50,7 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
     public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
         try (HttpInterface httpInterface = sourceManager.getHttpInterface()) {
             String encoded = this.getSongInfo(httpInterface);
+            log.info(encoded);
             String rawURL = this.getURL(encoded, httpInterface);
             log.info(rawURL);
             String mediaURL = this.getRedirectURL(rawURL, httpInterface);
@@ -77,8 +78,7 @@ public class SaavnAudioTrack extends DelegatedAudioTrack {
         try (CloseableHttpResponse response = httpInterface.execute(get)) {
             HttpClientTools.assertSuccessWithContent(response, "song response");
 
-            String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
-            JsonBrowser json = JsonBrowser.parse(responseText);
+            JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
             String encoded = json.get("songs").index(0).get("more_info").get("encrypted_media_url").text();
             return encoded;
         }
