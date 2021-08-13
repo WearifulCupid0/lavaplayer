@@ -24,9 +24,9 @@ import java.util.regex.Pattern;
 import org.apache.http.client.config.RequestConfig;
 
 public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-    private final String TRACK_REGEX = "^(?:http://|https://|)?(?:(?:www|beta|m)\\.)?mixcloud\\.com/([a-zA-Z-_]+)/([a-zA-Z-_]+)";
-    private final String PLAYLIST_REGEX = "^(?:http://|https://|)?(?:(?:www|beta|m)\\.)?mixcloud\\.com/([a-zA-Z-_]+)/playlists/([a-zA-Z-_]+)";
-    private final String ARTIST_REGEX = "^(?:http://|https://|)?(?:(?:www|beta|m)\\.)?mixcloud\\.com/([a-zA-Z-_]+)";
+    private final String TRACK_REGEX = "(?:http://|https://|)?(?:(?:www|beta|m)\\.)?mixcloud\\.com/([^/]+)/([^/]+)";
+    private final String PLAYLIST_REGEX = "(?:http://|https://|)?(?:(?:www|beta|m)\\.)?mixcloud\\.com/([^/]+)/playlists/([^/]+)";
+    private final String ARTIST_REGEX = "(?:http://|https://|)?(?:(?:www|beta|m)\\.)?mixcloud\\.com/([^/]+)";
     
     private final String SEARCH_PREFIX = "mxsearch:";
 

@@ -22,7 +22,7 @@ import java.util.List;
 public class DefaultMixcloudGraphqlHandler implements MixcloudGraphqlHandler {
     private static final String GRAPHQL_URL = "https://www.mixcloud.com/graphql";
 
-    private static final String TRACK_PAYLOAD = "{\"query\":\"query cloudcastQuery($lookup: CloudcastLookup!) { cloudcast: cloudcastLookup(lookup: $lookup) { url audioLength name isExclusive waveformUrl previewUrl owner { displayName } streamInfo { url dashUrl hlsUrl } pictures(width: 1024, height: 1024) { url } } }\",\"variables\":{\"lookup\":{\"slug\":\"%s\",\"username\":\"%s\"}}}";
+    private static final String TRACK_PAYLOAD = "{\"query\":\"query cloudcastQuery($lookup: CloudcastLookup!) { cloudcast: cloudcastLookup(lookup: $lookup) { url audioLength name isExclusive waveformUrl previewUrl owner { displayName } streamInfo { url dashUrl hlsUrl } picture(width: 1024, height: 1024) { url } } }\",\"variables\":{\"lookup\":{\"slug\":\"%s\",\"username\":\"%s\"}}}";
     private static final String ARTIST_PAYLOAD = "{\"query\":\"query UserUploadsQuery($lookup: UserLookup!) { user: userLookup(lookup: $lookup) { displayName username picture(width: 1024, height: 1024) { url } uploads(first: 100) { edges { node { name isExclusive waveformUrl previewUrl owner { displayName } streamInfo { url dashUrl hlsUrl } url audioLength  picture(width: 1024, height: 1024) { url } } } }  }  }\",\"variables\":{\"lookup\":{\"username\":\"%s\"}}}";
     private static final String PLAYLIST_PAYLOAD = "{\"query\":\"query UserPlaylistQuery($lookup: PlaylistLookup!) { playlist: playlistLookup(lookup: $lookup) { name owner { displayName username } picture(width: 1024, height: 1024) { url } slug items { edges { node { cloudcast { name isExclusive waveformUrl previewUrl owner { displayName } streamInfo { url dashUrl hlsUrl }  url audioLength  picture(width: 1024, height: 1024) { url } } } } } } }\",\"variables\":{\"lookup\":{\"slug\":\"%s\",\"username\":\"%s\"}}}";
     private static final String SEARCH_PAYLOAD = "{\"query\":\"query SearchCloudcastResultsQuery($term: String!) { viewer { search { searchQuery(term: $term) { cloudcasts(first: 100) { edges { node { name isExclusive waveformUrl previewUrl owner { displayName } streamInfo { url dashUrl hlsUrl } url audioLength picture(width: 1024, height: 1024) { url } } } } } } }  }\",\"variables\":{ \"term\": \"%s\" }}";
@@ -40,7 +40,7 @@ public class DefaultMixcloudGraphqlHandler implements MixcloudGraphqlHandler {
     public AudioTrack processAsSigleTrack(String slug, String username) {
         try(HttpInterface httpInterface = sourceManager.getHttpInterface()) {
             HttpPost post = new HttpPost(GRAPHQL_URL);
-            StringEntity payload = new StringEntity(String.format(TRACK_PAYLOAD, slug, username));
+            StringEntity payload = new StringEntity(String.format(TRACK_PAYLOAD, slug, username), "UTF-8");
             post.setEntity(payload);
             post.setHeader("Content-Type", "application/json");
             try(CloseableHttpResponse response = httpInterface.execute(post)) {
@@ -75,7 +75,7 @@ public class DefaultMixcloudGraphqlHandler implements MixcloudGraphqlHandler {
         try(HttpInterface httpInterface = sourceManager.getHttpInterface()) {
             if(slug == null && username != null) return processArtist(username, httpInterface);
             HttpPost post = new HttpPost(GRAPHQL_URL);
-            StringEntity payload = new StringEntity(String.format(PLAYLIST_PAYLOAD, slug, username));
+            StringEntity payload = new StringEntity(String.format(PLAYLIST_PAYLOAD, slug, username), "UTF-8");
             post.setEntity(payload);
             post.setHeader("Content-Type", "application/json");
             try(CloseableHttpResponse response = httpInterface.execute(post)) {
@@ -119,7 +119,7 @@ public class DefaultMixcloudGraphqlHandler implements MixcloudGraphqlHandler {
 
     private AudioPlaylist processArtist(String slug, HttpInterface httpInterface) throws Exception {
         HttpPost post = new HttpPost(GRAPHQL_URL);
-        StringEntity payload = new StringEntity(String.format(ARTIST_PAYLOAD, slug));
+        StringEntity payload = new StringEntity(String.format(ARTIST_PAYLOAD, slug), "UTF-8");
         post.setEntity(payload);
         post.setHeader("Content-Type", "application/json");
         try (CloseableHttpResponse response = httpInterface.execute(post)) {
@@ -162,7 +162,7 @@ public class DefaultMixcloudGraphqlHandler implements MixcloudGraphqlHandler {
     public AudioPlaylist processSearch(String query) {
         try(HttpInterface httpInterface = sourceManager.getHttpInterface()) {
             HttpPost post = new HttpPost(GRAPHQL_URL);
-            StringEntity payload = new StringEntity(String.format(SEARCH_PAYLOAD, query));
+            StringEntity payload = new StringEntity(String.format(SEARCH_PAYLOAD, query), "UTF-8");
             post.setEntity(payload);
             post.setHeader("Content-Type", "application/json");
             try (CloseableHttpResponse response = httpInterface.execute(post)) {
