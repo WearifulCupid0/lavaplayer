@@ -49,16 +49,6 @@ public class DefaultSoundCloudFormatHandler implements SoundCloudFormatHandler {
     return null;
   }
 
-  private static SoundCloudTrackFormat findFormat(List<SoundCloudTrackFormat> formats, FormatType type) {
-    for (SoundCloudTrackFormat format : formats) {
-      if (type.matches(format)) {
-        return format;
-      }
-    }
-
-    return null;
-  }
-
   private enum FormatType {
     TYPE_M3U_OPUS("hls", "audio/ogg", "O:"),
     TYPE_M3U_MP3("hls", "audio/mpeg", "U:"),

@@ -66,7 +66,7 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
   private static final Pattern trackIdPattern = Pattern.compile(TRACK_ID_EXTRACTOR);
 
   private final SoundCloudDataReader dataReader;
-  private final SoundCloudHtmlDataLoader htmlDataLoader;
+  private final SoundCloudDataLoader dataLoader;
   private final SoundCloudFormatHandler formatHandler;
   private final SoundCloudPlaylistLoader playlistLoader;
   private final HttpInterfaceManager httpInterfaceManager;
@@ -75,11 +75,11 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
 
   public static SoundCloudAudioSourceManager createDefault() {
     SoundCloudDataReader dataReader = new DefaultSoundCloudDataReader();
-    SoundCloudHtmlDataLoader htmlDataLoader = new DefaultSoundCloudHtmlDataLoader();
+    SoundCloudDataLoader dataLoader = new DefaultSoundCloudDataLoader();
     SoundCloudFormatHandler formatHandler = new DefaultSoundCloudFormatHandler();
 
-    return new SoundCloudAudioSourceManager(true, dataReader, htmlDataLoader, formatHandler,
-        new DefaultSoundCloudPlaylistLoader(htmlDataLoader, dataReader, formatHandler));
+    return new SoundCloudAudioSourceManager(true, dataReader, dataLoader, formatHandler,
+        new DefaultSoundCloudPlaylistLoader(dataLoader, dataReader, formatHandler));
   }
 
   public static Builder builder() {
@@ -93,13 +93,13 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
   public SoundCloudAudioSourceManager(
       boolean allowSearch,
       SoundCloudDataReader dataReader,
-      SoundCloudHtmlDataLoader htmlDataLoader,
+      SoundCloudDataLoader dataLoader,
       SoundCloudFormatHandler formatHandler,
       SoundCloudPlaylistLoader playlistLoader
   ) {
     this.allowSearch = allowSearch;
     this.dataReader = dataReader;
-    this.htmlDataLoader = htmlDataLoader;
+    this.dataLoader = dataLoader;
     this.formatHandler = formatHandler;
     this.playlistLoader = playlistLoader;
 
@@ -209,7 +209,7 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
 
   public AudioTrack loadFromTrackPage(String trackWebUrl) {
     try (HttpInterface httpInterface = getHttpInterface()) {
-      JsonBrowser rootData = htmlDataLoader.load(httpInterface, trackWebUrl);
+      JsonBrowser rootData = dataLoader.load(httpInterface, trackWebUrl);
       JsonBrowser trackData = dataReader.findTrackData(rootData);
 
       if (trackData == null) {
@@ -411,7 +411,7 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
   public static class Builder {
     private boolean allowSearch = true;
     private SoundCloudDataReader dataReader;
-    private SoundCloudHtmlDataLoader htmlDataLoader;
+    private SoundCloudDataLoader dataLoader;
     private SoundCloudFormatHandler formatHandler;
     private SoundCloudPlaylistLoader playlistLoader;
     private PlaylistLoaderFactory playlistLoaderFactory;
@@ -426,8 +426,8 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
       return this;
     }
 
-    public Builder withHtmlDataLoader(SoundCloudHtmlDataLoader htmlDataLoader) {
-      this.htmlDataLoader = htmlDataLoader;
+    public Builder withdataLoader(SoundCloudDataLoader dataLoader) {
+      this.dataLoader = dataLoader;
       return this;
     }
 
@@ -453,10 +453,10 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
         usedDataReader = new DefaultSoundCloudDataReader();
       }
 
-      SoundCloudHtmlDataLoader usedHtmlDataLoader = htmlDataLoader;
+      SoundCloudDataLoader useddataLoader = dataLoader;
 
-      if (usedHtmlDataLoader == null) {
-        usedHtmlDataLoader = new DefaultSoundCloudHtmlDataLoader();
+      if (useddataLoader == null) {
+        useddataLoader = new DefaultSoundCloudDataLoader();
       }
 
       SoundCloudFormatHandler usedFormatHandler = formatHandler;
@@ -471,18 +471,18 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
         PlaylistLoaderFactory factory = playlistLoaderFactory;
 
         if (factory != null) {
-          usedPlaylistLoader = factory.create(usedDataReader, usedHtmlDataLoader, usedFormatHandler);
+          usedPlaylistLoader = factory.create(usedDataReader, useddataLoader, usedFormatHandler);
         }
       }
 
       if (usedPlaylistLoader == null) {
-        usedPlaylistLoader = new DefaultSoundCloudPlaylistLoader(usedHtmlDataLoader, usedDataReader, usedFormatHandler);
+        usedPlaylistLoader = new DefaultSoundCloudPlaylistLoader(useddataLoader, usedDataReader, usedFormatHandler);
       }
 
       return new SoundCloudAudioSourceManager(
           allowSearch,
           usedDataReader,
-          usedHtmlDataLoader,
+          useddataLoader,
           usedFormatHandler,
           usedPlaylistLoader
       );
@@ -492,7 +492,7 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
     interface PlaylistLoaderFactory {
       SoundCloudPlaylistLoader create(
           SoundCloudDataReader dataReader,
-          SoundCloudHtmlDataLoader htmlDataLoader,
+          SoundCloudDataLoader dataLoader,
           SoundCloudFormatHandler formatHandler
       );
     }

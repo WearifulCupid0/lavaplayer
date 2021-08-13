@@ -3,8 +3,6 @@ package com.sedmelluq.discord.lavaplayer.source.mixcloud;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
-import com.sedmelluq.discord.lavaplayer.tools.http.ExtendedHttpConfigurable;
-import com.sedmelluq.discord.lavaplayer.tools.http.MultiHttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -13,23 +11,22 @@ import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
-import org.apache.http.client.config.RequestConfig;
+
 import org.apache.http.impl.client.HttpClientBuilder;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-/**
- * Audio source manager that implements finding Mixcloud tracks based on URL.
- */
+import org.apache.http.client.config.RequestConfig;
+
 public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-    private final String TRACK_REGEX = "(?:http://|https://|)?(?:(?:www|beta|m)\\.)?mixcloud\\.com/([^/]+)/([^/]+)";
-    private final String PLAYLIST_REGEX = "(?:http://|https://|)?(?:(?:www|beta|m)\\.)?mixcloud\\.com/([^/]+)/playlists/([^/]+)";
-    private final String ARTIST_REGEX = "(?:http://|https://|)?(?:(?:www|beta|m)\\.)?mixcloud\\.com/([^/]+)";
+    private final String TRACK_REGEX = "^(?:http://|https://|)?(?:(?:www|beta|m)\\.)?mixcloud\\.com/([a-zA-Z-_]+)/([a-zA-Z-_]+)";
+    private final String PLAYLIST_REGEX = "^(?:http://|https://|)?(?:(?:www|beta|m)\\.)?mixcloud\\.com/([a-zA-Z-_]+)/playlists/([a-zA-Z-_]+)";
+    private final String ARTIST_REGEX = "^(?:http://|https://|)?(?:(?:www|beta|m)\\.)?mixcloud\\.com/([a-zA-Z-_]+)";
     
     private final String SEARCH_PREFIX = "mxsearch:";
 
@@ -39,39 +36,40 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
 
     private final boolean allowSearch;
 
+    public final MixcloudDataReader dataReader;
+    public final MixcloudFormatHandler formatHandler;
+    private MixcloudGraphqlHandler graphqlHandler = null;
     private final HttpInterfaceManager httpInterfaceManager;
-    private final ExtendedHttpConfigurable combinedHttpConfiguration;
 
-    private final MixcloudDirectUrlLoader directUrlLoader;
-    private final MixcloudSearchProvider searchProvider;
-    private final MixcloudDataLoader dataLoader;
-
+    /**
+     * Create an instance.
+     */
     public MixcloudAudioSourceManager() {
         this(true);
     }
 
     public MixcloudAudioSourceManager(boolean allowSearch) {
-        this(allowSearch, new DefaultMixcloudDirectUrlLoader(), new DefaultMixcloudDataLoader(), new DefaultMixcloudSearchResultLoader());
+        this(allowSearch, new DefaultMixcloudDataReader(), new DefaultMixcloudFormatHandler());
+        this.setGraphqlHandler(new DefaultMixcloudGraphqlHandler(this));
     }
 
     public MixcloudAudioSourceManager(
-            boolean allowSearch,
-            MixcloudDirectUrlLoader directUrlLoader,
-            MixcloudDataLoader dataLoader,
-            MixcloudSearchProvider searchProvider) {
+        boolean allowSearch,
+        MixcloudDataReader dataReader,
+        MixcloudFormatHandler formatHandler
+    ) {
         this.allowSearch = allowSearch;
 
-        this.directUrlLoader = directUrlLoader;
-        this.dataLoader = dataLoader;
-        this.searchProvider = searchProvider;
+        this.dataReader = dataReader;
+        this.formatHandler = formatHandler;
 
         httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
-
-        combinedHttpConfiguration = new MultiHttpConfigurable(Arrays.asList(
-            httpInterfaceManager,
-            dataLoader.getHttpConfiguration()
-        ));
     }
+
+    public void setGraphqlHandler(MixcloudGraphqlHandler graphqlHandler) {
+        this.graphqlHandler = graphqlHandler;
+    }
+
     @Override
     public String getSourceName() {
         return "mixcloud";
@@ -79,19 +77,25 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
 
     @Override
     public AudioItem loadItem(DefaultAudioPlayerManager manager, AudioReference reference) {
+        if(graphqlHandler == null) return null;
         Matcher matcher;
-        if (( matcher = playlistPattern.matcher(reference.identifier) ).find()) {
-            return dataLoader.getPlaylist(matcher.group(2), matcher.group(1), this::getTrack);
+
+        if((matcher = playlistPattern.matcher(reference.identifier)).find()) {
+            return graphqlHandler.processAsSigleTrack(matcher.group(2), matcher.group(1));
         }
-        if (( matcher = trackPattern.matcher(reference.identifier) ).find()) {
-            return dataLoader.getTrack(matcher.group(2), matcher.group(1), this::getTrack);
+
+        if((matcher = trackPattern.matcher(reference.identifier)).find()) {
+            return graphqlHandler.processPlaylist(matcher.group(2), matcher.group(1));
         }
-        if (( matcher = artistPattern.matcher(reference.identifier) ).find()) {
-            return dataLoader.getArtist(matcher.group(1), this::getTrack);
+
+        if((matcher = artistPattern.matcher(reference.identifier)).find()) {
+            return graphqlHandler.processPlaylist(null, matcher.group(1));
         }
-        if (allowSearch && reference.identifier.startsWith(SEARCH_PREFIX)) {
-            return searchProvider.loadSearchResults(reference.identifier.substring(SEARCH_PREFIX.length()).trim(), this::getTrack);
+
+        if(allowSearch && reference.identifier.startsWith(SEARCH_PREFIX)) {
+            return graphqlHandler.processSearch(reference.identifier.substring(SEARCH_PREFIX.length()).trim());
         }
+
         return null;
     }
 
@@ -110,39 +114,25 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
         return new MixcloudAudioTrack(trackInfo, this);
     }
 
-    public AudioTrack getTrack(AudioTrackInfo info) {
-        return new MixcloudAudioTrack(info, this);
-    }
-
-    public MixcloudDirectUrlLoader getDirectUrlLoader() {
-        return this.directUrlLoader;
-    }
-
     @Override
     public void shutdown() {
         ExceptionTools.closeWithWarnings(httpInterfaceManager);
-        dataLoader.shutdown();
     }
 
-    /**
-    * @return Get an HTTP interface for a playing track.
-    */
-
-    @Override
-    public void configureRequests(Function<RequestConfig, RequestConfig> configurator) {
-        combinedHttpConfiguration.configureRequests(configurator);
-    }
-
-    @Override
-    public void configureBuilder(Consumer<HttpClientBuilder> configurator) {
-        combinedHttpConfiguration.configureBuilder(configurator);
-    }
-
+  /**
+   * @return Get an HTTP interface for a playing track.
+   */
     public HttpInterface getHttpInterface() {
         return httpInterfaceManager.getInterface();
     }
 
-    public ExtendedHttpConfigurable getDataLoaderHttpConfiguration() {
-        return dataLoader.getHttpConfiguration();
+    @Override
+    public void configureRequests(Function<RequestConfig, RequestConfig> configurator) {
+        httpInterfaceManager.configureRequests(configurator);
+    }
+
+    @Override
+    public void configureBuilder(Consumer<HttpClientBuilder> configurator) {
+        httpInterfaceManager.configureBuilder(configurator);
     }
 }

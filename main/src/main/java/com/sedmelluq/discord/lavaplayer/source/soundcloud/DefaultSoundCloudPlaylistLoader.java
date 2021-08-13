@@ -36,12 +36,12 @@ public class DefaultSoundCloudPlaylistLoader implements SoundCloudPlaylistLoader
   protected static final String PLAYLIST_URL_REGEX = "^(?:http://|https://|)(?:www\\.|)(?:m\\.|)soundcloud\\.com/([a-zA-Z0-9-_]+)/sets/([a-zA-Z0-9-_]+)(?:\\?.*|)$";
   protected static final Pattern playlistUrlPattern = Pattern.compile(PLAYLIST_URL_REGEX);
 
-  protected final SoundCloudHtmlDataLoader htmlDataLoader;
+  protected final SoundCloudDataLoader htmlDataLoader;
   protected final SoundCloudDataReader dataReader;
   protected final SoundCloudFormatHandler formatHandler;
 
   public DefaultSoundCloudPlaylistLoader(
-      SoundCloudHtmlDataLoader htmlDataLoader,
+      SoundCloudDataLoader htmlDataLoader,
       SoundCloudDataReader dataReader,
       SoundCloudFormatHandler formatHandler
   ) {
@@ -79,7 +79,7 @@ public class DefaultSoundCloudPlaylistLoader implements SoundCloudPlaylistLoader
           playlistData.get("user").get("username").text(),
           PBJUtils.getSoundCloudThumbnail(playlistData),
           playlistData.get("permalink_url").text(),
-          playlistData.get("is_album").as(Boolean.class) ? "album": "playlist",
+          playlistData.get("is_album").asBoolean(false) ? "album": "playlist",
           loadPlaylistTracks(httpInterface, playlistData, trackFactory),
           null,
           false

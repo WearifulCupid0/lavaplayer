@@ -28,7 +28,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
 public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-    private static final Pattern urlRegex = Pattern.compile("^(?:http://|https://|)clyp\\.it/([a-zA-Z0-9-_]+)$");
+    private static final Pattern urlRegex = Pattern.compile("^(?:http://|https://|)(?:www\\.|api\\.|audio\\.|)clyp\\.it/([a-zA-Z0-9-_]+)");
 
     private final HttpInterfaceManager httpInterfaceManager;
 
@@ -46,12 +46,18 @@ public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigura
 
     @Override
     public AudioItem loadItem(DefaultAudioPlayerManager manager, AudioReference reference) {
-        Matcher matcher = urlRegex.matcher(reference.identifier);
-        if(matcher.matches()) {
-            JsonBrowser metadata = getMetadata(matcher.group(1));
-            return parseMetadata(metadata);
+        String id = getIdentifier(reference.identifier);
+        if(id != null) {
+            JsonBrowser metadata = getMetadata(id);
+            return buildTrack(metadata);
         }
 
+        return null;
+    }
+
+    public String getIdentifier(String url) {
+        Matcher matcher = urlRegex.matcher(url);
+        if(matcher.find()) return matcher.group(1);
         return null;
     }
 
@@ -104,12 +110,11 @@ public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigura
         }
     }
 
-    private AudioTrack parseMetadata(JsonBrowser data) {
+    private AudioTrack buildTrack(JsonBrowser data) {
         if(!data.get("AudioFiles").isNull() && data.get("AudioFiles").isList() && !data.get("AudioFiles").index(0).isNull()) {
             JsonBrowser audioFile = data.get("AudioFiles").index(0);
             String title = audioFile.get("Title").text();
-            String identifier = audioFile.get("AudioFileId").text();
-            String uri = audioFile.get("Url").text();
+            String identifier = "https://clyp.it/" + audioFile.get("AudioFileId").text();
             String artwork = audioFile.get("ArtworkPictureUrl").isNull()
             ? audioFile.get("User").get("ProfilePictureUrl").text()
             : audioFile.get("ArtworkPictureUrl").text();
@@ -117,7 +122,7 @@ public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigura
             ? audioFile.get("User").get("FirstName").text()
             : audioFile.get("User").get("FirstName").text() + " " + audioFile.get("User").get("LastName").text();
             
-            return new ClypAudioTrack(new AudioTrackInfo(title, author, (long) (audioFile.get("Duration").as(Double.class) * 1000.0), identifier, false, uri, artwork), this);
+            return new ClypAudioTrack(new AudioTrackInfo(title, author, (long) (audioFile.get("Duration").as(Double.class) * 1000.0), identifier, false, identifier, artwork), this);
         }
 
         return null;
