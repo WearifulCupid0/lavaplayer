@@ -8,14 +8,14 @@ import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.util.EntityUtils;
 
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,10 +42,11 @@ public class DefaultMixcloudGraphqlHandler implements MixcloudGraphqlHandler {
             HttpPost post = new HttpPost(GRAPHQL_URL);
             StringEntity payload = new StringEntity(String.format(TRACK_PAYLOAD, slug, username));
             post.setEntity(payload);
+            post.setHeader("Content-Type", "application/json");
             try(CloseableHttpResponse response = httpInterface.execute(post)) {
                 HttpClientTools.assertSuccessWithContent(response, "track response");
 
-                String responseText = EntityUtils.toString(response.getEntity(), UTF_8);
+                String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
                 JsonBrowser jsonBrowser = JsonBrowser.parse(responseText).get("data");
 
                 if(!jsonBrowser.get("errors").isNull()) {
@@ -76,10 +77,11 @@ public class DefaultMixcloudGraphqlHandler implements MixcloudGraphqlHandler {
             HttpPost post = new HttpPost(GRAPHQL_URL);
             StringEntity payload = new StringEntity(String.format(PLAYLIST_PAYLOAD, slug, username));
             post.setEntity(payload);
+            post.setHeader("Content-Type", "application/json");
             try(CloseableHttpResponse response = httpInterface.execute(post)) {
                 HttpClientTools.assertSuccessWithContent(response, "playlist response");
 
-                String responseText = EntityUtils.toString(response.getEntity(), UTF_8);
+                String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
                 JsonBrowser jsonBrowser = JsonBrowser.parse(responseText).get("data");
                 
                 if(!jsonBrowser.get("errors").isNull()) {
@@ -119,10 +121,11 @@ public class DefaultMixcloudGraphqlHandler implements MixcloudGraphqlHandler {
         HttpPost post = new HttpPost(GRAPHQL_URL);
         StringEntity payload = new StringEntity(String.format(ARTIST_PAYLOAD, slug));
         post.setEntity(payload);
+        post.setHeader("Content-Type", "application/json");
         try (CloseableHttpResponse response = httpInterface.execute(post)) {
             HttpClientTools.assertSuccessWithContent(response, "artist response");
 
-            String responseText = EntityUtils.toString(response.getEntity(), UTF_8);
+            String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             JsonBrowser jsonBrowser = JsonBrowser.parse(responseText).get("data");
                 
             if(!jsonBrowser.get("errors").isNull()) {
@@ -161,10 +164,11 @@ public class DefaultMixcloudGraphqlHandler implements MixcloudGraphqlHandler {
             HttpPost post = new HttpPost(GRAPHQL_URL);
             StringEntity payload = new StringEntity(String.format(SEARCH_PAYLOAD, query));
             post.setEntity(payload);
+            post.setHeader("Content-Type", "application/json");
             try (CloseableHttpResponse response = httpInterface.execute(post)) {
                 HttpClientTools.assertSuccessWithContent(response, "search response");
 
-                String responseText = EntityUtils.toString(response.getEntity(), UTF_8);
+                String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
                 JsonBrowser jsonBrowser = JsonBrowser.parse(responseText).get("data");
                 
                 if(!jsonBrowser.get("errors").isNull()) {

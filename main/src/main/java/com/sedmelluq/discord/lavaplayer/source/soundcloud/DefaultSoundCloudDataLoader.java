@@ -29,7 +29,7 @@ public class DefaultSoundCloudDataLoader implements SoundCloudDataLoader {
 
   @Override
   public JsonBrowser load(HttpInterface httpInterface, String url) throws IOException {
-    URI uri = URI.create("htttps://api-v2.soundcloud.com/resolve?url=" + url);
+    URI uri = URI.create("https://api-v2.soundcloud.com/resolve?url=" + url);
     try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(uri))) {
       JsonBrowser json = null;
       if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
