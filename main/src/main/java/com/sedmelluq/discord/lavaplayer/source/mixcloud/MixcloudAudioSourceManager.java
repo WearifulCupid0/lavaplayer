@@ -81,11 +81,11 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
         Matcher matcher;
 
         if((matcher = playlistPattern.matcher(reference.identifier)).find()) {
-            return graphqlHandler.processAsSigleTrack(matcher.group(2), matcher.group(1));
+            return graphqlHandler.processPlaylist(matcher.group(2), matcher.group(1));
         }
 
         if((matcher = trackPattern.matcher(reference.identifier)).find()) {
-            return graphqlHandler.processPlaylist(matcher.group(2), matcher.group(1));
+            return graphqlHandler.processAsSigleTrack(matcher.group(2), matcher.group(1));
         }
 
         if((matcher = artistPattern.matcher(reference.identifier)).find()) {
