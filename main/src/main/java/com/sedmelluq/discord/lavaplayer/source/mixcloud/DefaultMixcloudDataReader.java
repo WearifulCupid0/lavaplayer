@@ -22,7 +22,7 @@ public class DefaultMixcloudDataReader implements MixcloudDataReader {
 
     private static final String DECRYPTION_KEY = "IFYOUWANTTHEARTISTSTOGETPAIDDONOTDOWNLOADFROMMIXCLOUD";
     //private static final String MANIFEST_AUDIO_URL = "https://audio%s.mixcloud.com/secure/dash2/%s.m4a/manifest.mpd";
-    private static final String HLS_AUDIO_URL = "https://audio%s.mixcloud.com/secure/hls/%s.m4a/index.m3u8";
+    //private static final String HLS_AUDIO_URL = "https://audio%s.mixcloud.com/secure/hls/%s.m4a/index.m3u8";
     private final HttpInterfaceManager httpInterfaceManager;
     
     public DefaultMixcloudDataReader() {
@@ -60,9 +60,9 @@ public class DefaultMixcloudDataReader implements MixcloudDataReader {
             //if(!streamInfo.get("dashUrl").isNull()) {
                 //formats.add(new DefaultMixcloudTrackFormat("segments", decodeStreamInfoUrl(streamInfo.get("dashUrl").text())));
             //}
-            if(!streamInfo.get("hlsUrl").isNull()) {
-                formats.add(new DefaultMixcloudTrackFormat("hls", decodeStreamInfoUrl(streamInfo.get("hlsUrl").text())));
-            }
+            //if(!streamInfo.get("hlsUrl").isNull()) {
+                //formats.add(new DefaultMixcloudTrackFormat("hls", decodeStreamInfoUrl(streamInfo.get("hlsUrl").text())));
+            //}
         } else {
             String url = trackData.get("url").text();
             log.debug("StreamInfo Object not found for Mixcloud track {}, starting loading with waveformUrl or previewUrl fields", url);
@@ -70,8 +70,8 @@ public class DefaultMixcloudDataReader implements MixcloudDataReader {
             if(uuid != null) {
                 //String manifestUrl = getStreamUrl(String.format(MANIFEST_AUDIO_URL, "%s", uuid));
                 //if (manifestUrl != null) formats.add(new DefaultMixcloudTrackFormat("segments", manifestUrl));
-                String hlsUrl = getStreamUrl(String.format(HLS_AUDIO_URL, "%s", uuid));
-                if (hlsUrl != null) formats.add(new DefaultMixcloudTrackFormat("hls", hlsUrl));
+                //String hlsUrl = getStreamUrl(String.format(HLS_AUDIO_URL, "%s", uuid));
+                //if (hlsUrl != null) formats.add(new DefaultMixcloudTrackFormat("hls", hlsUrl));
                 if (formats.isEmpty()) {
                     log.debug("Stream url not found at Mixcloud track {}, skipping", url);
                     return null;
