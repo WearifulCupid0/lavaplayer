@@ -6,6 +6,8 @@ public interface YoutubeLinkRouter {
   interface Routes<T> {
     T track(String videoId);
 
+    T track(String videoId, Long time);
+
     T channel(String channelId);
 
     T playlist(String playlistId, String selectedVideoId);

@@ -206,7 +206,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
    * @param mustExist True if it should throw an exception on missing track, otherwise returns AudioReference.NO_TRACK.
    * @return Loaded YouTube track.
    */
-  public AudioItem loadTrackWithVideoId(String videoId, boolean mustExist) {
+  public AudioItem loadTrackWithVideoId(String videoId, boolean mustExist, Long time) {
     try (HttpInterface httpInterface = getHttpInterface()) {
       YoutubeTrackDetails details = trackDetailsLoader.loadDetails(httpInterface, videoId, false, this);
 
@@ -218,7 +218,9 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
         }
       }
 
-      return new YoutubeAudioTrack(details.getTrackInfo(), this);
+      AudioTrack track = new YoutubeAudioTrack(details.getTrackInfo(), this);
+      if (time != null) track.setPosition(time);
+      return track;
     } catch (Exception e) {
       throw ExceptionTools.wrapUnfriendlyExceptions("Loading information for a YouTube track failed.", FAULT, e);
     }
@@ -232,7 +234,12 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
 
     @Override
     public AudioItem track(String videoId) {
-      return loadTrackWithVideoId(videoId, false);
+      return loadTrackWithVideoId(videoId, false, null);
+    }
+
+    @Override
+    public AudioItem track(String videoId, Long time) {
+      return loadTrackWithVideoId(videoId, false, time);
     }
 
     @Override

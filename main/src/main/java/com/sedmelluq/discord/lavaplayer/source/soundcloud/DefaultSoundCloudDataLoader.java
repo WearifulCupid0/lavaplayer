@@ -23,8 +23,9 @@ public class DefaultSoundCloudDataLoader implements SoundCloudDataLoader {
   private static final Logger log = LoggerFactory.getLogger(DefaultSoundCloudDataLoader.class);
 
   private static final TextRange[] JSON_RANGES = {
-      new TextRange("catch(e){}})},", ");</script>"),
-      new TextRange("){}})},", ");</script>")
+    new TextRange("window.__sc_hydration = ", ";</script>"),
+    new TextRange("catch(e){}})},", ");</script>"),
+    new TextRange("){}})},", ");</script>")
   };
 
   @Override

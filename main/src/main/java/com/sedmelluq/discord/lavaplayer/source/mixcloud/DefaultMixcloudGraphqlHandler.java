@@ -60,7 +60,7 @@ public class DefaultMixcloudGraphqlHandler implements MixcloudGraphqlHandler {
                     List<MixcloudTrackFormat> formats = sourceManager.dataReader.readTrackFormats(trackData);
                     MixcloudTrackFormat bestFormat = sourceManager.formatHandler.chooseBestFormat(formats);
                     String identifier = sourceManager.formatHandler.buildFormatIdentifier(bestFormat);
-                    return new MixcloudAudioTrack(sourceManager.dataReader.readTrackInfo(trackData, identifier), sourceManager);
+                    if (identifier != null) return new MixcloudAudioTrack(sourceManager.dataReader.readTrackInfo(trackData, identifier), sourceManager);
                 }
 
                 return null;
@@ -100,7 +100,7 @@ public class DefaultMixcloudGraphqlHandler implements MixcloudGraphqlHandler {
                         List<MixcloudTrackFormat> formats = sourceManager.dataReader.readTrackFormats(trackData);
                         MixcloudTrackFormat bestFormat = sourceManager.formatHandler.chooseBestFormat(formats);
                         String identifier = sourceManager.formatHandler.buildFormatIdentifier(bestFormat);
-                        tracks.add(new MixcloudAudioTrack(sourceManager.dataReader.readTrackInfo(trackData, identifier), sourceManager));
+                        if (identifier != null) tracks.add(new MixcloudAudioTrack(sourceManager.dataReader.readTrackInfo(trackData, identifier), sourceManager));
                     }
                 });
 
@@ -144,7 +144,7 @@ public class DefaultMixcloudGraphqlHandler implements MixcloudGraphqlHandler {
                     List<MixcloudTrackFormat> formats = sourceManager.dataReader.readTrackFormats(trackData);
                     MixcloudTrackFormat bestFormat = sourceManager.formatHandler.chooseBestFormat(formats);
                     String identifier = sourceManager.formatHandler.buildFormatIdentifier(bestFormat);
-                    tracks.add(new MixcloudAudioTrack(sourceManager.dataReader.readTrackInfo(trackData, identifier), sourceManager));
+                    if (identifier != null) tracks.add(new MixcloudAudioTrack(sourceManager.dataReader.readTrackInfo(trackData, identifier), sourceManager));
                 }
             });
 
@@ -187,7 +187,7 @@ public class DefaultMixcloudGraphqlHandler implements MixcloudGraphqlHandler {
                         List<MixcloudTrackFormat> formats = sourceManager.dataReader.readTrackFormats(trackData);
                         MixcloudTrackFormat bestFormat = sourceManager.formatHandler.chooseBestFormat(formats);
                         String identifier = sourceManager.formatHandler.buildFormatIdentifier(bestFormat);
-                        tracks.add(new MixcloudAudioTrack(sourceManager.dataReader.readTrackInfo(trackData, identifier), sourceManager));
+                        if (identifier != null) tracks.add(new MixcloudAudioTrack(sourceManager.dataReader.readTrackInfo(trackData, identifier), sourceManager));
                     }
                 });
 

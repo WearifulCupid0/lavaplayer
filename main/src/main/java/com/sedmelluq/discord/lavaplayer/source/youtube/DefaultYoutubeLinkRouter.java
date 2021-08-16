@@ -78,7 +78,7 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
       String videoIds = urlInfo.parameters.get("video_ids");
       if (videoIds != null) {
         return routes.anonymous(videoIds);
-      } 
+      }
     }
 
     return null;
@@ -101,7 +101,11 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
         return routes.playlist(playlistId, videoId);
       }
     } else {
-      return routes.track(videoId);
+      Long time = null;
+      if (urlInfo.parameters.containsKey("t")) {
+        time = Long.parseLong(urlInfo.parameters.get("t")) * 1000;
+      }
+      return routes.track(videoId, time);
     }
   }
 

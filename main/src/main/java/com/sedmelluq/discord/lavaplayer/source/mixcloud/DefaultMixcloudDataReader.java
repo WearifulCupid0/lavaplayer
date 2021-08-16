@@ -2,11 +2,18 @@ package com.sedmelluq.discord.lavaplayer.source.mixcloud;
 
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
+import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
+import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +22,12 @@ public class DefaultMixcloudDataReader implements MixcloudDataReader {
 
     private static final String DECRYPTION_KEY = "IFYOUWANTTHEARTISTSTOGETPAIDDONOTDOWNLOADFROMMIXCLOUD";
     //private static final String MANIFEST_AUDIO_URL = "https://audio%s.mixcloud.com/secure/dash2/%s.m4a/manifest.mpd";
-    //private static final String HLS_AUDIO_URL = "https://audio%s.mixcloud.com/secure/hls/%s.m4a/index.m3u8";
+    private static final String HLS_AUDIO_URL = "https://audio%s.mixcloud.com/secure/hls/%s.m4a/index.m3u8";
+    private final HttpInterfaceManager httpInterfaceManager;
+    
+    public DefaultMixcloudDataReader() {
+        httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
+    }
 
     @Override
     public boolean isTrackPlayable(JsonBrowser trackData) {
@@ -44,22 +56,26 @@ public class DefaultMixcloudDataReader implements MixcloudDataReader {
             if(!streamInfo.get("url").isNull()) {
                 formats.add(new DefaultMixcloudTrackFormat("progressive", decodeStreamInfoUrl(streamInfo.get("url").text())));
             }
-            //When I add support for hls and fragmented streams I will add this again okay?
+            //When I add support for fragmented streams I will add this again okay?
             //if(!streamInfo.get("dashUrl").isNull()) {
                 //formats.add(new DefaultMixcloudTrackFormat("segments", decodeStreamInfoUrl(streamInfo.get("dashUrl").text())));
             //}
-            //if(!streamInfo.get("hlsUrl").isNull()) {
-                //formats.add(new DefaultMixcloudTrackFormat("hls", decodeStreamInfoUrl(streamInfo.get("hlsUrl").text())));
-            //}
+            if(!streamInfo.get("hlsUrl").isNull()) {
+                formats.add(new DefaultMixcloudTrackFormat("hls", decodeStreamInfoUrl(streamInfo.get("hlsUrl").text())));
+            }
         } else {
             String url = trackData.get("url").text();
             log.debug("StreamInfo Object not found for Mixcloud track {}, starting loading with waveformUrl or previewUrl fields", url);
             String uuid = getStreamId(trackData);
             if(uuid != null) {
-                //String manifestUrl = String.format(MANIFEST_AUDIO_URL, "[1-18]", uuid);
-                //formats.add(new DefaultMixcloudTrackFormat("segments", manifestUrl));
-                //String hlsUrl = String.format(HLS_AUDIO_URL, "[1-18]", uuid);
-                //formats.add(new DefaultMixcloudTrackFormat("hls", hlsUrl));
+                //String manifestUrl = getStreamUrl(String.format(MANIFEST_AUDIO_URL, "%s", uuid));
+                //if (manifestUrl != null) formats.add(new DefaultMixcloudTrackFormat("segments", manifestUrl));
+                String hlsUrl = getStreamUrl(String.format(HLS_AUDIO_URL, "%s", uuid));
+                if (hlsUrl != null) formats.add(new DefaultMixcloudTrackFormat("hls", hlsUrl));
+                if (formats.isEmpty()) {
+                    log.debug("Stream url not found at Mixcloud track {}, skipping", url);
+                    return null;
+                }
             } else {
                 log.debug("Stream UUID not found at Mixcloud track {}, skipping", url);
                 return null;
@@ -95,5 +111,23 @@ public class DefaultMixcloudDataReader implements MixcloudDataReader {
         } catch(Exception e) {
             return null;
         }
+    }
+
+    private String getStreamUrl(String baseUrl) {
+        int index = 0;
+        String url = null;
+        while (index++ < 18) {
+            try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
+                URI uri = URI.create(String.format(baseUrl, index));
+                try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(uri))) {
+                    HttpClientTools.assertSuccessWithContent(response, "stream response");
+                    url = uri.toString();
+                    break;
+                }
+            } catch(Exception e) {
+                continue;
+            }
+        }
+        return url;
     }
 }

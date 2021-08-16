@@ -50,6 +50,13 @@ public class MixcloudAudioTrack extends DelegatedAudioTrack {
       loadFromMpegUrl(localExecutor, httpInterface, mpegPlaybackUrl);
       return;
     }
+
+    String hlsPlaybackUrl = sourceManager.formatHandler.getHLSPlaybackUrl(identifier);
+
+    if (hlsPlaybackUrl != null) {
+      processDelegate(new MixcloudM3uAudioTrack(trackInfo, httpInterface, hlsPlaybackUrl), localExecutor);
+      return;
+    }
   }
 
   private void loadFromMpegUrl(

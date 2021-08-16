@@ -37,6 +37,16 @@ public class DefaultMixcloudFormatHandler implements MixcloudFormatHandler {
 
         return null;
     }
+
+    @Override
+    public String getHLSPlaybackUrl(String identifier) {
+        if (identifier.startsWith("H:")) {
+            return identifier.substring(2);
+        }
+
+        return null;
+    }
+
     private enum FormatType {
         TYPE_MPEG("progressive", "M:"),
         TYPE_MANIFEST("segments", "S:"),
