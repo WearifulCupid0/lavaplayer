@@ -69,6 +69,7 @@ public class iHeartAudioTrack extends DelegatedAudioTrack {
                 HttpClientTools.assertSuccessWithContent(response, "episode response");
                 JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
                 if (!json.get("episode").isNull() && !json.get("episode").get("mediaUrl").isNull()) return json.get("episode").get("mediaUrl").text();
+                return null;
             }
         } else {
             URI uri = new URIBuilder("https://api.iheart.com/api/v2/content/liveStations").addParameter("id", splitted[2]).build();
@@ -87,9 +88,9 @@ public class iHeartAudioTrack extends DelegatedAudioTrack {
                         : streams.get("secure_pls_stream").text();
                     }
                 }
+                return null;
             }
         }
-        return null;
     }
 
     @Override
