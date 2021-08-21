@@ -68,7 +68,9 @@ public class iHeartAudioTrack extends DelegatedAudioTrack {
             try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(uri))) {
                 HttpClientTools.assertSuccessWithContent(response, "episode response");
                 JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
-                if (!json.get("episode").isNull() && !json.get("episode").get("mediaUrl").isNull()) return json.get("episode").get("mediaUrl").text();
+                if (json.get("error").isNull()) {
+                    return json.get("episode").get("mediaUrl").text();
+                }
                 return null;
             }
         } else {
