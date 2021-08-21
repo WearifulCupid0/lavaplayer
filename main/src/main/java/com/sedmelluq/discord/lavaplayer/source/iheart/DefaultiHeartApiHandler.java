@@ -88,21 +88,12 @@ public class DefaultiHeartApiHandler implements iHeartApiHandler {
                             String podcastName = json.get("title").text();
                             eps.get("data").values()
                             .forEach(ep -> tracks.add(trackFactory.apply(buildEpisode(ep, podcastName))));
-                            AudioTrack selectedTrack = null;
-                            if (episodeId != null) {
-                                for(AudioTrack track: tracks) {
-                                    if (track.getIdentifier() == "iheart:episode:" + episodeId) {
-                                        selectedTrack = track;
-                                        break;
-                                    }
-                                }
-                            }
                             String url = String.format("https://www.iheart.com/podcast/%s/", json.get("slug").text());
                             return new BasicAudioPlaylist(
                                 podcastName, podcastName,
                                 tracks.get(0).getInfo().artwork,
                                 url, "podcast", tracks,
-                                selectedTrack, false
+                                findSelectedTrack(tracks, episodeId), false
                             );
                         }
                     }
@@ -112,6 +103,18 @@ public class DefaultiHeartApiHandler implements iHeartApiHandler {
         } catch (Exception e) {
             throw new FriendlyException("Failed to load iHeart podcast", SUSPICIOUS, e);
         }
+    }
+
+    private AudioTrack findSelectedTrack(List<AudioTrack> tracks, String id) {
+        if (id != null) {
+            for (AudioTrack track : tracks) {
+                if (id.equals(track.getIdentifier())) {
+                    return track;
+                }
+            }
+        }
+    
+        return null;
     }
 
     private AudioTrackInfo buildRadio(JsonBrowser radio) {
