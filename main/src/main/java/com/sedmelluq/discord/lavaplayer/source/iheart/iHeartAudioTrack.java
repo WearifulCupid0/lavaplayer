@@ -22,6 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools.getHeaderValue;
 
@@ -30,6 +32,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools.getHeade
  */
 public class iHeartAudioTrack extends DelegatedAudioTrack {
     private static final Logger log = LoggerFactory.getLogger(iHeartAudioTrack.class);
+    private static final Pattern identifierPattern = Pattern.compile("iheart:(episode|radio):([0-9]+)");
 
     private final iHeartAudioSourceManager sourceManager;
 
@@ -62,10 +65,9 @@ public class iHeartAudioTrack extends DelegatedAudioTrack {
     }
 
     private String getMediaUrl(String identifier, HttpInterface httpInterface) throws Exception {
-        String[] splitted = identifier.split(":");
-        if (splitted[1] == "episode") {
-            log.info(splitted[2]);
-            String uri = "https://api.iheart.com/api/v3/podcast/episodes/" + splitted[2];
+        Matcher matcher = identifierPattern.matcher(identifier);
+        if (matcher.group(1) == "episode") {
+            String uri = "https://api.iheart.com/api/v3/podcast/episodes/" + matcher.group(2);
             try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(uri))) {
                 HttpClientTools.assertSuccessWithContent(response, "episode response");
                 JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
@@ -73,7 +75,7 @@ public class iHeartAudioTrack extends DelegatedAudioTrack {
                 return url;
             }
         } else {
-            URI uri = new URIBuilder("https://api.iheart.com/api/v2/content/liveStations").addParameter("id", splitted[2]).build();
+            URI uri = new URIBuilder("https://api.iheart.com/api/v2/content/liveStations").addParameter("id", matcher.group(2)).build();
             try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(uri))) {
                 HttpClientTools.assertSuccessWithContent(response, "radio response");
                 JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
