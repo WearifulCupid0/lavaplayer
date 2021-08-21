@@ -42,7 +42,7 @@ public class JiosaavnAudioTrack extends DelegatedAudioTrack {
     @Override
     public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
         try (HttpInterface httpInterface = sourceManager.getHttpInterface()) {
-            log.debug("Loading JioSaavn track page from encrypted URL: {}", trackInfo.identifier);
+            log.debug("Loading JioSaavn media URL from encrypted URL: {}", trackInfo.identifier);
 
             String trackMediaUrl = getMediaUrl(trackInfo.identifier, httpInterface);
             log.debug("Starting JioSaavn track from URL: {}", trackMediaUrl);

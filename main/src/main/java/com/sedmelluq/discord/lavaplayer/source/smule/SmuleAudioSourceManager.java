@@ -117,9 +117,8 @@ public class SmuleAudioSourceManager implements AudioSourceManager, HttpConfigur
             if(author == null) author = data.get("artist").text();
             String artwork = data.get("cover_url").text();
             if(artwork == null) artwork = data.get("owner").get("pic_url").text();
-            String identifier = data.get("media_url").text();
             String uri = "https://www.smule.com" + data.get("web_url").safeText();
-            return new SmuleAudioTrack(new AudioTrackInfo(title, author, (long) (data.get("song_length").as(Double.class) * 1000.0), identifier, false, uri, artwork), this);
+            return new SmuleAudioTrack(new AudioTrackInfo(title, author, (long) (data.get("song_length").as(Double.class) * 1000.0), uri, false, uri, artwork), this);
         }
         return null;
     }

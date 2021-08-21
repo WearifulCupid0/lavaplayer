@@ -35,6 +35,7 @@ public class DefaultJiosaavnApiHandler implements JiosaavnApiHandler {
         return httpInterfaceManager;
     }
 
+    @Override
     public AudioTrack track(String id, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
             URI uri = new URIBuilder("https://www.jiosaavn.com/api.php")
@@ -61,6 +62,7 @@ public class DefaultJiosaavnApiHandler implements JiosaavnApiHandler {
         }
     }
 
+    @Override
     public AudioPlaylist album(String id, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
             URI uri = new URIBuilder("https://www.jiosaavn.com/api.php")
@@ -97,6 +99,7 @@ public class DefaultJiosaavnApiHandler implements JiosaavnApiHandler {
         }
     }
 
+    @Override
     public AudioPlaylist playlist(String id, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
             URI uri = new URIBuilder("https://www.jiosaavn.com/api.php")
@@ -135,6 +138,7 @@ public class DefaultJiosaavnApiHandler implements JiosaavnApiHandler {
         }
     }
 
+    @Override
     public AudioPlaylist search(String query, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
             URI uri = new URIBuilder("https://www.jiosaavn.com/api.php")

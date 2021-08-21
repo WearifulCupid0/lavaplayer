@@ -2,13 +2,19 @@ package com.sedmelluq.discord.lavaplayer.source.smule;
 
 import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.PersistentHttpStream;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
-import org.apache.http.client.utils.URIBuilder;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import java.nio.charset.StandardCharsets;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,18 +41,26 @@ public class SmuleAudioTrack extends DelegatedAudioTrack {
   @Override
   public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
     try (HttpInterface httpInterface = sourceManager.getHttpInterface()) {
-      URI trackMediaUrl = getUri(trackInfo.identifier);
-      log.debug("Starting Smule track from URL: {}", trackMediaUrl.toString());
-      try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, trackMediaUrl, null)) {
+      log.debug("Loading Smule track page from URL: {}", trackInfo.identifier);
+
+      String trackMediaUrl = getUri(trackInfo.identifier, httpInterface);
+      log.debug("Starting Smule track from URL: {}", trackMediaUrl);
+
+      try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(trackMediaUrl), null)) {
         processDelegate(new MpegAudioTrack(trackInfo, stream), localExecutor);
       }
     }
   }
 
-  private URI getUri(String mediaUrl) throws Exception {
-    return new URIBuilder("https://www.smule.com/redir")
-    .addParameter("e", "1")
-    .addParameter("url", mediaUrl).build();
+  private String getUri(String identifier, HttpInterface httpInterface) throws Exception {
+    try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(identifier))) {
+      HttpClientTools.assertSuccessWithContent(response, "track page");
+      
+      String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+      Document document = Jsoup.parse(html);
+
+      return document.selectFirst("meta[twitter:player:stream]").attr("content");
+    }
   }
 
   @Override
