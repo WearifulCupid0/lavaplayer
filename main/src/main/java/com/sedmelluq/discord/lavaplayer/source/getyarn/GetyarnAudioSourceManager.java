@@ -50,7 +50,7 @@ public class GetyarnAudioSourceManager implements HttpConfigurable, AudioSourceM
 
   @Override
   public String getSourceName() {
-    return "getyarn.io";
+    return "getyarn";
   }
 
   @Override

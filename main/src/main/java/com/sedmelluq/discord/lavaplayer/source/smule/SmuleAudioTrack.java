@@ -35,7 +35,7 @@ public class SmuleAudioTrack extends DelegatedAudioTrack {
   @Override
   public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
     try (HttpInterface httpInterface = sourceManager.getHttpInterface()) {
-      URI trackMediaUrl = getUri(this.trackInfo.identifier);
+      URI trackMediaUrl = getUri(trackInfo.identifier);
       log.debug("Starting Smule track from URL: {}", trackMediaUrl.toString());
       try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, trackMediaUrl, null)) {
         processDelegate(new MpegAudioTrack(trackInfo, stream), localExecutor);
