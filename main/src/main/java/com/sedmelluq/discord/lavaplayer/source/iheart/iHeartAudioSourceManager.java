@@ -29,7 +29,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 public class iHeartAudioSourceManager implements AudioSourceManager, HttpConfigurable {
     private static final String RADIO_REGEX = "^(?:http://|https://|)(?:www\\.|)iheart\\.com/live/([0-9]+)";
     private static final String PODCAST_REGEX = "^(?:http://|https://|)(?:www\\.|)iheart\\.com/podcast/(?:[a-zA-Z0-9-_]+)-([0-9-_]+)";
-    private static final String EPISODE_REGEX = PODCAST_REGEX + "/episode/(?:[a-zA-Z0-9-_]+)-([0-9-_]+";
+    private static final String EPISODE_REGEX = PODCAST_REGEX + "/episode/(?:[a-zA-Z0-9-_]+)-([0-9-_]+)";
 
     private static final String SEARCH_PREFIX = "ihsearch:";
 
