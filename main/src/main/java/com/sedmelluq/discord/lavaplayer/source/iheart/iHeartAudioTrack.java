@@ -66,6 +66,7 @@ public class iHeartAudioTrack extends DelegatedAudioTrack {
 
     private String getMediaUrl(String identifier, HttpInterface httpInterface) throws Exception {
         Matcher matcher = identifierPattern.matcher(identifier);
+        if (!matcher.find()) return null;
         if (matcher.group(1) == "episode") {
             String uri = "https://api.iheart.com/api/v3/podcast/episodes/" + matcher.group(2);
             try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(uri))) {
