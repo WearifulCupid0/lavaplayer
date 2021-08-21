@@ -89,7 +89,7 @@ public class iHeartAudioTrack extends DelegatedAudioTrack {
                 }
             }
         }
-        throw new Exception("Failed to get media url.");
+        return null;
     }
 
     @Override
