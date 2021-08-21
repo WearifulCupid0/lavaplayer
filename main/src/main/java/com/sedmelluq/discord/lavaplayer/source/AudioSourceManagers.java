@@ -42,7 +42,7 @@ public class AudioSourceManagers {
     playerManager.registerSourceManager(new MixcloudAudioSourceManager(true));
     playerManager.registerSourceManager(new JamendoAudioSourceManager(true));
     playerManager.registerSourceManager(new JiosaavnAudioSourceManager(true));
-    playerManager.registerSourceManager(new iHeartAudioSourceManager(true));
+    playerManager.registerSourceManager(new iHeartAudioSourceManager(true, containerRegistry));
     playerManager.registerSourceManager(SoundCloudAudioSourceManager.createDefault());
     playerManager.registerSourceManager(new BandlabAudioSourceManager());
     playerManager.registerSourceManager(new BandcampAudioSourceManager());

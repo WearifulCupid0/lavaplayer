@@ -52,10 +52,14 @@ public class iHeartAudioSourceManager implements AudioSourceManager, HttpConfigu
     }
 
     public iHeartAudioSourceManager(boolean allowSearch) {
-        this(allowSearch, new DefaultiHeartApiHandler(), MediaContainerRegistry.DEFAULT_REGISTRY);
+        this(allowSearch, MediaContainerRegistry.DEFAULT_REGISTRY);
     }
 
-    public iHeartAudioSourceManager(boolean allowSearch, iHeartApiHandler apiHandler, MediaContainerRegistry containerRegistry) {
+    public iHeartAudioSourceManager(boolean allowSearch, MediaContainerRegistry containerRegistry) {
+        this(allowSearch, containerRegistry, new DefaultiHeartApiHandler());
+    }
+
+    public iHeartAudioSourceManager(boolean allowSearch, MediaContainerRegistry containerRegistry, iHeartApiHandler apiHandler) {
         this.allowSearch = allowSearch;
         this.apiHandler = apiHandler;
         this.containerRegistry = containerRegistry;
