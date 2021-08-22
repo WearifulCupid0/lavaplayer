@@ -23,7 +23,7 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 public class DailyMotionAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-    private static final String BASE_REGEX = "(?:http://|https://|)(?:www\\.|)dailymotion\\.com/(?:embed/)";
+    private static final String BASE_REGEX = "(?:http://|https://|)(?:www\\.|)dailymotion\\.com/(?:embed/|)";
     private static final String VIDEO_REGEX = BASE_REGEX + "video/([a-zA-Z0-9-_]+)";
     private static final String PLAYLIST_REGEX = BASE_REGEX + "playlist/([a-zA-Z0-9-_]+)";
     private static final String CHANNEL_REGEX = "(?:http://|https://|)(?:www\\.|)dailymotion\\.com/([a-zA-Z0-9-_]+)";

@@ -12,6 +12,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
 
+import org.apache.http.util.EntityUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -28,7 +29,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class DailyMotionAudioTrack extends DelegatedAudioTrack {
     private static final Logger log = LoggerFactory.getLogger(DailyMotionAudioTrack.class);
-    private static final Pattern progressivePattern = Pattern.compile("[^_]PROGRESSIVE-URI=\"(.*)\"");
+    private static final Pattern progressivePattern = Pattern.compile(",PROGRESSIVE-URI=\"(.*)\"");
 
     private final DailyMotionAudioSourceManager sourceManager;
 
@@ -73,7 +74,7 @@ public class DailyMotionAudioTrack extends DelegatedAudioTrack {
     private String getProgressiveUrl(String playerUrl, HttpInterface httpInterface) throws Exception {
         try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(new URI(playerUrl)))) {
             HttpClientTools.assertSuccessWithContent(response, "player response");
-            String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+            String responseText = EntityUtils.toString(response.getEntity());
             Matcher matcher = progressivePattern.matcher(responseText);
             if (!matcher.find()) {
                 throw new FriendlyException("Failed to get progressive URL", FriendlyException.Severity.SUSPICIOUS, null);
