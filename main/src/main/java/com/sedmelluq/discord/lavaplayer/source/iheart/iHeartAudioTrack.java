@@ -77,29 +77,11 @@ public class iHeartAudioTrack extends DelegatedAudioTrack {
     }
 
     private String getMediaUrl(JsonBrowser result) {
-        if (!result.get("hits").isNull()) {
-            JsonBrowser hit = result.get("hits").index(0);
-            if (!hit.isNull()) {
-                JsonBrowser streams = hit.get("streams");
-                if(!streams.isNull()) {
-                    return !streams.get("shoutcast_stream").isNull()
-                    ? streams.get("shoutcast_stream").text()
-                    : !streams.get("secure_shoutcast_stream").isNull()
-                    ? streams.get("secure_shoutcast_stream").text()
-                    : !streams.get("pls_stream").isNull()
-                    ? streams.get("pls_stream").text()
-                    : streams.get("secure_pls_stream").text();
-                }
-            }
+        if (trackInfo.isStream) {
+            return result.get("hits").index(0).get("streams").get("shoutcast_stream").text();
+        } else {
+            return result.get("episode").get("mediaUrl").text();
         }
-        if (!result.get("episode").isNull()) {
-            JsonBrowser mediaUrl = result.get("episode").get("mediaUrl");
-            if (!mediaUrl.isNull()) {
-                String url = mediaUrl.safeText();
-                if (url.length() > 0) return url;
-            }
-        }
-        return null;
     }
 
     @Override
