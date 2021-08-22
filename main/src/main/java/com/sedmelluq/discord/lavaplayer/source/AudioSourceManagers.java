@@ -14,6 +14,7 @@ import com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.jamendo.JamendoAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.smule.SmuleAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.iheart.iHeartAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.dailymotion.DailyMotionAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.jiosaavn.JiosaavnAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.yamusic.YandexMusicAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
@@ -42,6 +43,7 @@ public class AudioSourceManagers {
     playerManager.registerSourceManager(new MixcloudAudioSourceManager(true));
     playerManager.registerSourceManager(new JamendoAudioSourceManager(true));
     playerManager.registerSourceManager(new JiosaavnAudioSourceManager(true));
+    playerManager.registerSourceManager(new DailyMotionAudioSourceManager(true));
     playerManager.registerSourceManager(new iHeartAudioSourceManager(true, containerRegistry));
     playerManager.registerSourceManager(SoundCloudAudioSourceManager.createDefault());
     playerManager.registerSourceManager(new BandlabAudioSourceManager());
