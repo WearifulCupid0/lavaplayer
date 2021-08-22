@@ -40,7 +40,8 @@ public class DefaultDailyMotionGraphqlHandler implements DailyMotionGraphqlHandl
     public AudioTrack video(String id, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
             HttpPost post = new HttpPost(GRAPHQL_URL);
-            post.setEntity(new StringEntity(String.format(VIDEO_PAYLOAD, id), "UTF-8"));
+            StringEntity payload = new StringEntity(String.format(VIDEO_PAYLOAD, id), "UTF-8");
+            post.setEntity(payload);
             try (CloseableHttpResponse response = httpInterface.execute(post)) {
                 HttpClientTools.assertSuccessWithContent(response, "video response");
 
@@ -60,7 +61,8 @@ public class DefaultDailyMotionGraphqlHandler implements DailyMotionGraphqlHandl
     public AudioPlaylist similar(String id, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
             HttpPost post = new HttpPost(GRAPHQL_URL);
-            post.setEntity(new StringEntity(String.format(SIMILAR_PAYLOAD, id), "UTF-8"));
+            StringEntity payload = new StringEntity(String.format(SIMILAR_PAYLOAD, id), "UTF-8");
+            post.setEntity(payload);
             try (CloseableHttpResponse response = httpInterface.execute(post)) {
                 HttpClientTools.assertSuccessWithContent(response, "video response");
 
@@ -87,7 +89,8 @@ public class DefaultDailyMotionGraphqlHandler implements DailyMotionGraphqlHandl
     public AudioPlaylist playlist(String id, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
             HttpPost post = new HttpPost(GRAPHQL_URL);
-            post.setEntity(new StringEntity(String.format(PLAYLIST_PAYLOAD, id), "UTF-8"));
+            StringEntity payload = new StringEntity(String.format(PLAYLIST_PAYLOAD, id), "UTF-8");
+            post.setEntity(payload);
             try (CloseableHttpResponse response = httpInterface.execute(post)) {
                 HttpClientTools.assertSuccessWithContent(response, "video response");
 
@@ -119,7 +122,8 @@ public class DefaultDailyMotionGraphqlHandler implements DailyMotionGraphqlHandl
     public AudioPlaylist channel(String slug, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
             HttpPost post = new HttpPost(GRAPHQL_URL);
-            post.setEntity(new StringEntity(String.format(CHANNEL_PAYLOAD, slug), "UTF-8"));
+            StringEntity payload = new StringEntity(String.format(CHANNEL_PAYLOAD, slug), "UTF-8");
+            post.setEntity(payload);
             try (CloseableHttpResponse response = httpInterface.execute(post)) {
                 HttpClientTools.assertSuccessWithContent(response, "video response");
 
@@ -151,7 +155,8 @@ public class DefaultDailyMotionGraphqlHandler implements DailyMotionGraphqlHandl
     public AudioPlaylist search(String query, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
             HttpPost post = new HttpPost(GRAPHQL_URL);
-            post.setEntity(new StringEntity(String.format(SEARCH_PAYLOAD, query), "UTF-8"));
+            StringEntity payload = new StringEntity(String.format(SEARCH_PAYLOAD, query), "UTF-8");
+            post.setEntity(payload);
             try (CloseableHttpResponse response = httpInterface.execute(post)) {
                 HttpClientTools.assertSuccessWithContent(response, "video response");
 

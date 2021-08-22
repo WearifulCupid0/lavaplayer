@@ -40,6 +40,7 @@ public class DailyMotionHttpContextFilter implements HttpContextFilter {
     if (request.getURI().getHost().contains("graphql.api.dailymotion.com")) {
       request.setHeader("Authorization", sourceManager.getAuthorizationManager().getToken());
       request.setHeader("Origin", "https://www.dailymotion.com");
+      request.setHeader("Content-Type", "application/json");
     }
   }
 
