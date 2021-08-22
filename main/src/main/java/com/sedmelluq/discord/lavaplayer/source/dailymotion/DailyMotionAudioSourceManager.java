@@ -3,8 +3,6 @@ package com.sedmelluq.discord.lavaplayer.source.dailymotion;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
-import com.sedmelluq.discord.lavaplayer.tools.http.ExtendedHttpConfigurable;
-import com.sedmelluq.discord.lavaplayer.tools.http.MultiHttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -16,7 +14,6 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -39,12 +36,11 @@ public class DailyMotionAudioSourceManager implements AudioSourceManager, HttpCo
     private static final Pattern channelPattern = Pattern.compile(CHANNEL_REGEX);
 
     private final boolean allowSearch;
-    private final DailyMotionGraphqlHandler graphqlHandler;
+    private DailyMotionGraphqlHandler graphqlHandler = null;
 
     private final DailyMotionAuthorizationManager authorizationManager = new DailyMotionAuthorizationManager();
 
     private final HttpInterfaceManager httpInterfaceManager;
-    private final ExtendedHttpConfigurable combinedHttpConfiguration;
 
     /**
     * Create an instance.
@@ -54,20 +50,16 @@ public class DailyMotionAudioSourceManager implements AudioSourceManager, HttpCo
     }
 
     public DailyMotionAudioSourceManager(boolean allowSearch) {
-        this(allowSearch, new DefaultDailyMotionGraphqlHandler());
-    }
-
-    public DailyMotionAudioSourceManager(boolean allowSearch, DailyMotionGraphqlHandler graphqlHandler) {
         this.allowSearch = allowSearch;
-        this.graphqlHandler = graphqlHandler;
 
         httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
         httpInterfaceManager.setHttpContextFilter(new DailyMotionHttpContextFilter(this));
 
-        combinedHttpConfiguration = new MultiHttpConfigurable(Arrays.asList(
-            httpInterfaceManager,
-            this.graphqlHandler.getHttpConfiguration()
-        ));
+        this.setGraphqlHandler(new DefaultDailyMotionGraphqlHandler(httpInterfaceManager));
+    }
+
+    public void setGraphqlHandler(DailyMotionGraphqlHandler graphqlHandler) {
+        this.graphqlHandler = graphqlHandler;
     }
 
     @Override
@@ -141,13 +133,5 @@ public class DailyMotionAudioSourceManager implements AudioSourceManager, HttpCo
     @Override
     public void configureBuilder(Consumer<HttpClientBuilder> configurator) {
         httpInterfaceManager.configureBuilder(configurator);
-    }
-
-    public ExtendedHttpConfigurable getHttpConfiguration() {
-        return combinedHttpConfiguration;
-    }
-
-    public ExtendedHttpConfigurable getGraphqlHttpConfiguration() {
-        return graphqlHandler.getHttpConfiguration();
     }
 }

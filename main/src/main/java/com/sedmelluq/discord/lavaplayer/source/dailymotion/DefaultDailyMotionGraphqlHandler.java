@@ -2,7 +2,6 @@ package com.sedmelluq.discord.lavaplayer.source.dailymotion;
 
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
-import com.sedmelluq.discord.lavaplayer.tools.http.ExtendedHttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
@@ -33,13 +32,8 @@ public class DefaultDailyMotionGraphqlHandler implements DailyMotionGraphqlHandl
 
     private final HttpInterfaceManager httpInterfaceManager;
 
-    public DefaultDailyMotionGraphqlHandler() {
-        httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
-    }
-
-    @Override
-    public ExtendedHttpConfigurable getHttpConfiguration() {
-        return httpInterfaceManager;
+    public DefaultDailyMotionGraphqlHandler(HttpInterfaceManager httpInterfaceManager) {
+        this.httpInterfaceManager = httpInterfaceManager;
     }
 
     @Override
