@@ -21,8 +21,8 @@ public class DailyMotionAuthorizationManager {
     private static final Logger log = LoggerFactory.getLogger(DailyMotionAuthorizationManager.class);
     private static final String OAUTH_URL = "https://graphql.api.dailymotion.com/oauth/token";
     private static final String OAUTH_PAYLOAD = "client_id=%s&client_secret=%s&grant_type=client_credentials";
-    private static final String CLIENT_ID_REGEX = ",client_id:\"([a-zA-Z0-9-_]+)\"";
-    private static final String CLIENT_SECRET_REGEX = ",client_secret:\"([a-zA-Z0-9-_]+)\"";
+    private static final String CLIENT_ID_REGEX = ",\"client_id\":\"([a-zA-Z0-9-_]+)\"";
+    private static final String CLIENT_SECRET_REGEX = ",\"client_secret\":\"([a-zA-Z0-9-_]+)\"";
 
     private static final Pattern clientIdPattern = Pattern.compile(CLIENT_ID_REGEX);
     private static final Pattern clientSecretPattern = Pattern.compile(CLIENT_SECRET_REGEX);
