@@ -162,7 +162,7 @@ public class DefaultMixcloudGraphqlHandler implements MixcloudGraphqlHandler {
     public AudioPlaylist processSearch(String query) {
         try(HttpInterface httpInterface = sourceManager.getHttpInterface()) {
             HttpPost post = new HttpPost(GRAPHQL_URL);
-            StringEntity payload = new StringEntity(String.format(SEARCH_PAYLOAD, query), "UTF-8");
+            StringEntity payload = new StringEntity(String.format(SEARCH_PAYLOAD, query.replace("\"", "\\\"")), "UTF-8");
             post.setEntity(payload);
             post.setHeader("Content-Type", "application/json");
             try (CloseableHttpResponse response = httpInterface.execute(post)) {
