@@ -4,8 +4,8 @@ import com.sedmelluq.discord.lavaplayer.container.MediaContainerDetection;
 import com.sedmelluq.discord.lavaplayer.container.MediaContainerDetectionResult;
 import com.sedmelluq.discord.lavaplayer.container.MediaContainerHints;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
-import com.sedmelluq.discord.lavaplayer.tools.Units;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.PersistentHttpStream;
@@ -16,6 +16,7 @@ import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.InternalAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.slf4j.Logger;
@@ -24,6 +25,8 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
+import static com.sedmelluq.discord.lavaplayer.container.MediaContainerDetectionResult.refer;
+import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 import static com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools.getHeaderValue;
 
 /**
@@ -53,10 +56,23 @@ public class iHeartAudioTrack extends DelegatedAudioTrack {
 
             String mediaUrl = getMediaUrl(trackInfo.identifier, httpInterface);
             log.debug("Starting iHeart track from URL: {}", mediaUrl);
+            log.info(mediaUrl);
 
-            try (PersistentHttpStream inputStream = new PersistentHttpStream(httpInterface, new URI(mediaUrl), Units.CONTENT_LENGTH_UNKNOWN)) {
-                MediaContainerHints hints = MediaContainerHints.from(getHeaderValue(inputStream.getCurrentResponse(), "Content-Type"), null);
-                MediaContainerDetectionResult result = new MediaContainerDetection(sourceManager.getMediaContainerRegistry(), new AudioReference(mediaUrl, null), inputStream, hints).detectContainer();
+            try (PersistentHttpStream inputStream = new PersistentHttpStream(httpInterface, new URI(mediaUrl), null)) {
+                int statusCode = inputStream.checkStatusCode();
+                String redirectUrl = HttpClientTools.getRedirectLocation(mediaUrl, inputStream.getCurrentResponse());
+
+                MediaContainerDetectionResult result = null;
+                if (redirectUrl != null) {
+                    result = refer(null, new AudioReference(redirectUrl, null));
+                } else if (statusCode == HttpStatus.SC_NOT_FOUND) {
+                    throw new FriendlyException("Invalid URL.", SUSPICIOUS, new IllegalStateException("Status code " + statusCode));
+                } else if (!HttpClientTools.isSuccessWithContent(statusCode)) {
+                    throw new FriendlyException("URL not playable.", SUSPICIOUS, new IllegalStateException("Status code " + statusCode));
+                } else {
+                    MediaContainerHints hints = MediaContainerHints.from(getHeaderValue(inputStream.getCurrentResponse(), "Content-Type"), null);
+                    result = new MediaContainerDetection(sourceManager.getMediaContainerRegistry(), new AudioReference(mediaUrl, null), inputStream, hints).detectContainer();
+                }
                 processDelegate((InternalAudioTrack) result.getContainerDescriptor().createTrack(trackInfo, inputStream), localExecutor);
             }
         }
@@ -77,11 +93,29 @@ public class iHeartAudioTrack extends DelegatedAudioTrack {
     }
 
     private String getMediaUrl(JsonBrowser result) {
-        if (trackInfo.isStream) {
-            return result.get("hits").index(0).get("streams").get("shoutcast_stream").text();
-        } else {
-            return result.get("episode").get("mediaUrl").text();
+        if (!result.get("hits").isNull()) {
+            JsonBrowser hit = result.get("hits").index(0);
+            if (!hit.isNull()) {
+                JsonBrowser streams = hit.get("streams");
+                if(!streams.isNull()) {
+                    return !streams.get("shoutcast_stream").isNull()
+                    ? streams.get("shoutcast_stream").text()
+                    : !streams.get("secure_shoutcast_stream").isNull()
+                    ? streams.get("secure_shoutcast_stream").text()
+                    : !streams.get("pls_stream").isNull()
+                    ? streams.get("pls_stream").text()
+                    : streams.get("secure_pls_stream").text();
+                }
+            }
         }
+        if (!result.get("episode").isNull()) {
+            JsonBrowser mediaUrl = result.get("episode").get("mediaUrl");
+            if (!mediaUrl.isNull()) {
+                String url = mediaUrl.safeText();
+                if (url.length() > 0) return url;
+            }
+        }
+        return null;
     }
 
     @Override
