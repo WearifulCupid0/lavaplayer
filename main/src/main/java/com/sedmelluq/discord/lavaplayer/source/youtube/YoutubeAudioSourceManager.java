@@ -227,7 +227,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
     }
   }
 
-  private YoutubeAudioTrack buildTrackFromInfo(AudioTrackInfo info) {
+  public YoutubeAudioTrack buildTrackFromInfo(AudioTrackInfo info) {
     return new YoutubeAudioTrack(info, this);
   }
 
