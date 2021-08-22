@@ -133,6 +133,10 @@ public class DefaultDailyMotionGraphqlHandler implements DailyMotionGraphqlHandl
                     throw new Exception(getErrorMessage(json));
                 }
 
+                if (json.get("data").get("channel").get("displayName").isNull()) {
+                    return null;
+                }
+
                 List<AudioTrack> tracks = new ArrayList<>();
 
                 JsonBrowser channel = json.get("data").get("channel");
