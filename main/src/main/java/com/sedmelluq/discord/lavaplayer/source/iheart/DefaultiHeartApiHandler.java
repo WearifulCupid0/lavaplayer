@@ -122,7 +122,7 @@ public class DefaultiHeartApiHandler implements iHeartApiHandler {
             radio.get("description").text(),
             radio.get("name").text(),
             Units.DURATION_MS_UNKNOWN,
-            "iheart:radio:" + radio.get("id").text(),
+            radio.get("id").text(),
             true,
             radio.get("link").text(),
             radio.get("logo").text()
@@ -135,7 +135,7 @@ public class DefaultiHeartApiHandler implements iHeartApiHandler {
             episode.get("title").text(),
             podcastName,
             (long) (episode.get("duration").as(Double.class) * 1000.0),
-            "iheart:episode:" + id,
+            id,
             false,
             String.format("https://www.iheart.com/podcast/%s/episode/%s/", episode.get("podcastId").text(), id),
             episode.get("imageUrl").text()

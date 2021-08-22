@@ -23,8 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools.getHeaderValue;
 
@@ -33,7 +31,6 @@ import static com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools.getHeade
  */
 public class iHeartAudioTrack extends DelegatedAudioTrack {
     private static final Logger log = LoggerFactory.getLogger(iHeartAudioTrack.class);
-    private static final Pattern identifierPattern = Pattern.compile("iheart:(episode|radio):([0-9]+)");
 
     private final iHeartAudioSourceManager sourceManager;
 
@@ -66,7 +63,7 @@ public class iHeartAudioTrack extends DelegatedAudioTrack {
     }
 
     private String getMediaUrl(String identifier, HttpInterface httpInterface) throws Exception {
-        try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(URI.create(getRequestUrl(identifier))))) {
+        try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(URI.create(getRequestUrl())))) {
             HttpClientTools.assertSuccessWithContent(response, "media response");
             String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             JsonBrowser json = JsonBrowser.parse(responseText);
@@ -74,15 +71,9 @@ public class iHeartAudioTrack extends DelegatedAudioTrack {
         }
     }
 
-    private String getRequestUrl(String identifier) {
-        Matcher matcher = identifierPattern.matcher(identifier);
-        if (matcher.find()) {
-            String type = matcher.group(1);
-            String id = matcher.group(2);
-            if (type == "episode") return "https://api.iheart.com/api/v3/podcast/episodes/" + id;
-            if (type == "radio") return "https://api.iheart.com/api/v2/content/liveStations?id=" + id;
-        }
-        return null;
+    private String getRequestUrl() {
+        if (trackInfo.isStream) return "https://api.iheart.com/api/v2/content/liveStations?id=" + trackInfo.identifier;
+        else return "https://api.iheart.com/api/v3/podcast/episodes/" + trackInfo.identifier;
     }
 
     private String getMediaUrl(JsonBrowser result) {
