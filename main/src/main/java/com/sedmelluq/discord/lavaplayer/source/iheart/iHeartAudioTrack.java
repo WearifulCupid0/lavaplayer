@@ -15,13 +15,14 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.InternalAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
-import org.apache.http.client.utils.URIBuilder;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -65,36 +66,49 @@ public class iHeartAudioTrack extends DelegatedAudioTrack {
     }
 
     private String getMediaUrl(String identifier, HttpInterface httpInterface) throws Exception {
+        try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(URI.create(getRequestUrl(identifier))))) {
+            HttpClientTools.assertSuccessWithContent(response, "media response");
+            String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+            JsonBrowser json = JsonBrowser.parse(responseText);
+            return getMediaUrl(json);
+        }
+    }
+
+    private String getRequestUrl(String identifier) {
         Matcher matcher = identifierPattern.matcher(identifier);
-        if (!matcher.find()) return null;
-        if (matcher.group(1) == "episode") {
-            String uri = "https://api.iheart.com/api/v3/podcast/episodes/" + matcher.group(2);
-            try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(uri))) {
-                HttpClientTools.assertSuccessWithContent(response, "episode response");
-                JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
-                String url = json.get("episode").isNull() ? null : json.get("episode").get("mediaUrl").isNull() ? null : json.get("episode").get("mediaUrl").text();
-                return url;
-            }
-        } else {
-            URI uri = new URIBuilder("https://api.iheart.com/api/v2/content/liveStations").addParameter("id", matcher.group(2)).build();
-            try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(uri))) {
-                HttpClientTools.assertSuccessWithContent(response, "radio response");
-                JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
-                if (!json.get("hits").isNull() && !json.get("hits").index(0).isNull()) {
-                    JsonBrowser streams = json.get("hits").index(0).get("streams");
-                    if (!streams.isNull()) {
-                        return !streams.get("shoutcast_stream").isNull()
-                        ? streams.get("shoutcast_stream").text()
-                        : !streams.get("secure_shoutcast_stream").isNull()
-                        ? streams.get("secure_shoutcast_stream").text()
-                        : !streams.get("pls_stream").isNull()
-                        ? streams.get("pls_stream").text()
-                        : streams.get("secure_pls_stream").text();
-                    }
+        if (matcher.find()) {
+            String type = matcher.group(1);
+            String id = matcher.group(2);
+            if (type == "episode") return "https://api.iheart.com/api/v3/podcast/episodes/" + id;
+            if (type == "radio") return "https://api.iheart.com/api/v2/content/liveStations?id=" + id;
+        }
+        return null;
+    }
+
+    private String getMediaUrl(JsonBrowser result) {
+        if (!result.get("hits").isNull()) {
+            JsonBrowser hit = result.get("hits").index(0);
+            if (!hit.isNull()) {
+                JsonBrowser streams = hit.get("streams");
+                if(!streams.isNull()) {
+                    return !streams.get("shoutcast_stream").isNull()
+                    ? streams.get("shoutcast_stream").text()
+                    : !streams.get("secure_shoutcast_stream").isNull()
+                    ? streams.get("secure_shoutcast_stream").text()
+                    : !streams.get("pls_stream").isNull()
+                    ? streams.get("pls_stream").text()
+                    : streams.get("secure_pls_stream").text();
                 }
-                return null;
             }
         }
+        if (!result.get("episode").isNull()) {
+            JsonBrowser mediaUrl = result.get("episode").get("mediaUrl");
+            if (!mediaUrl.isNull()) {
+                String url = mediaUrl.safeText();
+                if (url.length() > 0) return url;
+            }
+        }
+        return null;
     }
 
     @Override
