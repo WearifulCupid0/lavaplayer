@@ -6,13 +6,12 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
 
-import org.apache.commons.io.IOUtils;
+import org.apache.http.util.EntityUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 
-import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
@@ -22,8 +21,8 @@ public class DailyMotionAuthorizationManager {
     private static final Logger log = LoggerFactory.getLogger(DailyMotionAuthorizationManager.class);
     private static final String OAUTH_URL = "https://graphql.api.dailymotion.com/oauth/token";
     private static final String OAUTH_PAYLOAD = "client_id=%s&client_secret=%s&grant_type=client_credentials";
-    private static final String CLIENT_ID_REGEX = "[^_]client_id:\"([a-zA-Z0-9-_]+)\"";
-    private static final String CLIENT_SECRET_REGEX = "[^_]client_secret:\"([a-zA-Z0-9-_]+)\"";
+    private static final String CLIENT_ID_REGEX = ",client_id:\"([a-zA-Z0-9-_]+)\"";
+    private static final String CLIENT_SECRET_REGEX = ",client_secret:\"([a-zA-Z0-9-_]+)\"";
 
     private static final Pattern clientIdPattern = Pattern.compile(CLIENT_ID_REGEX);
     private static final Pattern clientSecretPattern = Pattern.compile(CLIENT_SECRET_REGEX);
@@ -55,8 +54,7 @@ public class DailyMotionAuthorizationManager {
             try (CloseableHttpResponse response = httpInterface.execute(post)) {
                 int statusCode = response.getStatusLine().getStatusCode();
                 if (statusCode == 400) {
-                    String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
-                    JsonBrowser json = JsonBrowser.parse(responseText);
+                    JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
                     if (json.get("error").text() == "invalid_client") {
                         clientId = null; clientSecret = null;
                         updateAccessToken();
@@ -67,8 +65,7 @@ public class DailyMotionAuthorizationManager {
                 if (statusCode != 200) {
                     throw new FriendlyException("Invalid status code for oauth page", FriendlyException.Severity.COMMON, null);
                 }
-                String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
-                JsonBrowser json = JsonBrowser.parse(responseText);
+                JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
                 if (json.get("access_token").isNull()) {
                     throw new FriendlyException("DailyMotion access token was not present.", FriendlyException.Severity.COMMON, null);
                 }
@@ -86,7 +83,7 @@ public class DailyMotionAuthorizationManager {
         try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
             try (CloseableHttpResponse response = httpInterface.execute(new HttpGet("https://dailymotion.com"))) {
                 HttpClientTools.assertSuccessWithContent(response, "main page response");
-                String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+                String responseText = EntityUtils.toString(response.getEntity());
                 Matcher clientIdMatcher = clientIdPattern.matcher(responseText);
                 if (!clientIdMatcher.find()) {
                     throw new FriendlyException("Failed to find DailyMotion client id from main page.", FriendlyException.Severity.SUSPICIOUS, null);
