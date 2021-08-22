@@ -24,11 +24,11 @@ import java.util.function.Function;
 public class DefaultDailyMotionGraphqlHandler implements DailyMotionGraphqlHandler {
     private static final String GRAPHQL_URL = "https://graphql.api.dailymotion.com/";
     
-    private static final String VIDEO_PAYLOAD = "{\"operationName\": \"WATCHING_VIDEO\",\"query\": \"fragment VIDEO_METADATA on Video { xid title channel { displayName } duration artwork: thumbnailURL(size: \"x1080\") url } query WATCHING_VIDEO($xid: String!) { video: media(xid: $xid) { ... on Video { ...VIDEO_METADATA } } }\",\"variables\": {\"xid\": \"%s\"}}";
-    private static final String SIMILAR_PAYLOAD = "{\"operationName\":\"DISCOVERY_QUEUE_QUERY\",\"variables\":{\"videoXid\":\"%s\"},\"query\":\"query DISCOVERY_QUEUE_QUERY($videoXid: String!, $collectionXid: String, $device: String, $videoCountPerSection: Int) { views { neon { sections(device: $device space: \"watching\"  followingChannelXids: [] followingTopicXids: [] watchedVideoXids: [] context: {mediaXid: $videoXid, collectionXid: $collectionXid} first: 25) { edges { node { components(first: $videoCountPerSection) { edges { node { ... on Video { url xid title duration artwork: thumbnailURL(size: \"x1080\") channel { displayName }}}}}}}}}}}\"}";
-    private static final String PLAYLIST_PAYLOAD = "{\"operationName\":\"PLAYLIST_VIDEO_QUERY\",\"variables\":{\"xid\":\"%s\"},\"query\":\"fragment COLLECTION_FRAGMENT on Collection { name xid channel { displayName } videos(first: 100) { edges { node { xid duration title channel { displayName } url artwork: thumbnailURL(size: \"x1080\") }}}} query PLAYLIST_VIDEO_QUERY($xid: String!) { collection(xid: $xid) { ...COLLECTION_FRAGMENT }}\"}";
-    private static final String CHANNEL_PAYLOAD = "{\"operationName\":\"CHANNEL_QUERY_DESKTOP\",\"variables\":{\"channel_name\":\"%s\"},\"query\":\"fragment VIDEO_FRAGMENT on Video { xid title duration  channel { displayName } url artwork: thumbnailURL(size: \"x1080\")} fragment CHANNEL_MAIN_FRAGMENT on Channel { name displayName avatar: logoURL(size: \"x480\") videos: videos(first: 100) { edges { node { ...VIDEO_FRAGMENT }}}} query CHANNEL_QUERY_DESKTOP($channel_name: String!) { channel(name: $channel_name) { ...CHANNEL_MAIN_FRAGMENT }}\"}";
-    private static final String SEARCH_PAYLOAD = "{\"operationName\":\"SEARCH_QUERY\",\"variables\":{\"query\":\"%s\",\"shouldIncludeVideos\":true,\"page\":1,\"limit\":100},\"query\":\"fragment VIDEO_BASE_FRAGMENT on Video { url xid title channel { displayName } duration artwork: thumbnailURL(size: \"x1080\")} query SEARCH_QUERY($query: String!, $shouldIncludeVideos: Boolean!, $page: Int, $limit: Int, $sortByVideos: SearchVideoSort) { search { videos( query: $query first: $limit  page: $page sort: $sortByVideos) @include(if: $shouldIncludeVideos) { edges { node { ...VIDEO_BASE_FRAGMENT }}}}}\"}";
+    private static final String VIDEO_PAYLOAD = "{\"operationName\": \"WATCHING_VIDEO\",\"query\": \"fragment VIDEO_METADATA on Video { xid title channel { displayName } duration artwork: thumbnailURL(size: \\\"x1080\\\") url } query WATCHING_VIDEO($xid: String!) { video: media(xid: $xid) { ... on Video { ...VIDEO_METADATA } } }\",\"variables\": {\"xid\": \"%s\"}}";
+    private static final String SIMILAR_PAYLOAD = "{\"operationName\":\"DISCOVERY_QUEUE_QUERY\",\"variables\":{\"videoXid\":\"%s\"},\"query\":\"query DISCOVERY_QUEUE_QUERY($videoXid: String!, $collectionXid: String, $device: String, $videoCountPerSection: Int) { views { neon { sections(device: $device space: \\\"watching\\\"  followingChannelXids: [] followingTopicXids: [] watchedVideoXids: [] context: {mediaXid: $videoXid, collectionXid: $collectionXid} first: 25) { edges { node { components(first: $videoCountPerSection) { edges { node { ... on Video { url xid title duration artwork: thumbnailURL(size: \\\"x1080\\\") channel { displayName }}}}}}}}}}}\"}";
+    private static final String PLAYLIST_PAYLOAD = "{\"operationName\":\"PLAYLIST_VIDEO_QUERY\",\"variables\":{\"xid\":\"%s\"},\"query\":\"fragment COLLECTION_FRAGMENT on Collection { name xid channel { displayName } videos(first: 100) { edges { node { xid duration title channel { displayName } url artwork: thumbnailURL(size: \\\"x1080\\\") }}}} query PLAYLIST_VIDEO_QUERY($xid: String!) { collection(xid: $xid) { ...COLLECTION_FRAGMENT }}\"}";
+    private static final String CHANNEL_PAYLOAD = "{\"operationName\":\"CHANNEL_QUERY_DESKTOP\",\"variables\":{\"channel_name\":\"%s\"},\"query\":\"fragment VIDEO_FRAGMENT on Video { xid title duration  channel { displayName } url artwork: thumbnailURL(size: \\\"x1080\\\")} fragment CHANNEL_MAIN_FRAGMENT on Channel { name displayName avatar: logoURL(size: \\\"x480\\\") videos: videos(first: 100) { edges { node { ...VIDEO_FRAGMENT }}}} query CHANNEL_QUERY_DESKTOP($channel_name: String!) { channel(name: $channel_name) { ...CHANNEL_MAIN_FRAGMENT }}\"}";
+    private static final String SEARCH_PAYLOAD = "{\"operationName\":\"SEARCH_QUERY\",\"variables\":{\"query\":\"%s\",\"shouldIncludeVideos\":true,\"page\":1,\"limit\":100},\"query\":\"fragment VIDEO_BASE_FRAGMENT on Video { url xid title channel { displayName } duration artwork: thumbnailURL(size: \\\"x1080\\\")} query SEARCH_QUERY($query: String!, $shouldIncludeVideos: Boolean!, $page: Int, $limit: Int, $sortByVideos: SearchVideoSort) { search { videos( query: $query first: $limit  page: $page sort: $sortByVideos) @include(if: $shouldIncludeVideos) { edges { node { ...VIDEO_BASE_FRAGMENT }}}}}\"}";
 
     private final HttpInterfaceManager httpInterfaceManager;
 
@@ -40,7 +40,7 @@ public class DefaultDailyMotionGraphqlHandler implements DailyMotionGraphqlHandl
     public AudioTrack video(String id, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
             HttpPost post = new HttpPost(GRAPHQL_URL);
-            StringEntity payload = new StringEntity(String.format(VIDEO_PAYLOAD, id));
+            StringEntity payload = new StringEntity(String.format(VIDEO_PAYLOAD, id), "UTF-8");
             post.setEntity(payload);
             try (CloseableHttpResponse response = httpInterface.execute(post)) {
                 HttpClientTools.assertSuccessWithContent(response, "video response");
@@ -61,7 +61,7 @@ public class DefaultDailyMotionGraphqlHandler implements DailyMotionGraphqlHandl
     public AudioPlaylist similar(String id, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
             HttpPost post = new HttpPost(GRAPHQL_URL);
-            StringEntity payload = new StringEntity(String.format(SIMILAR_PAYLOAD, id));
+            StringEntity payload = new StringEntity(String.format(SIMILAR_PAYLOAD, id), "UTF-8");
             post.setEntity(payload);
             try (CloseableHttpResponse response = httpInterface.execute(post)) {
                 HttpClientTools.assertSuccessWithContent(response, "video response");
@@ -89,7 +89,7 @@ public class DefaultDailyMotionGraphqlHandler implements DailyMotionGraphqlHandl
     public AudioPlaylist playlist(String id, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
             HttpPost post = new HttpPost(GRAPHQL_URL);
-            StringEntity payload = new StringEntity(String.format(PLAYLIST_PAYLOAD, id));
+            StringEntity payload = new StringEntity(String.format(PLAYLIST_PAYLOAD, id), "UTF-8");
             post.setEntity(payload);
             try (CloseableHttpResponse response = httpInterface.execute(post)) {
                 HttpClientTools.assertSuccessWithContent(response, "video response");
@@ -122,7 +122,7 @@ public class DefaultDailyMotionGraphqlHandler implements DailyMotionGraphqlHandl
     public AudioPlaylist channel(String slug, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
             HttpPost post = new HttpPost(GRAPHQL_URL);
-            StringEntity payload = new StringEntity(String.format(CHANNEL_PAYLOAD, slug));
+            StringEntity payload = new StringEntity(String.format(CHANNEL_PAYLOAD, slug), "UTF-8");
             post.setEntity(payload);
             try (CloseableHttpResponse response = httpInterface.execute(post)) {
                 HttpClientTools.assertSuccessWithContent(response, "video response");
@@ -155,7 +155,7 @@ public class DefaultDailyMotionGraphqlHandler implements DailyMotionGraphqlHandl
     public AudioPlaylist search(String query, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
             HttpPost post = new HttpPost(GRAPHQL_URL);
-            StringEntity payload = new StringEntity(String.format(SEARCH_PAYLOAD, query.replace("\"", "\\\"")));
+            StringEntity payload = new StringEntity(String.format(SEARCH_PAYLOAD, query), "UTF-8");
             post.setEntity(payload);
             try (CloseableHttpResponse response = httpInterface.execute(post)) {
                 HttpClientTools.assertSuccessWithContent(response, "video response");
