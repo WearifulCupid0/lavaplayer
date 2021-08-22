@@ -56,7 +56,6 @@ public class iHeartAudioTrack extends DelegatedAudioTrack {
 
             String mediaUrl = getMediaUrl(trackInfo.identifier, httpInterface);
             log.debug("Starting iHeart track from URL: {}", mediaUrl);
-            log.info(mediaUrl);
 
             try (PersistentHttpStream inputStream = new PersistentHttpStream(httpInterface, new URI(mediaUrl), null)) {
                 int statusCode = inputStream.checkStatusCode();

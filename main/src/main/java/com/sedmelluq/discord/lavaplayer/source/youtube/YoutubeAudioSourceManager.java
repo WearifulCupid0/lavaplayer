@@ -13,6 +13,7 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
 import com.sedmelluq.discord.lavaplayer.track.AudioItem;
+import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
@@ -280,10 +281,14 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
     @Override
     public AudioItem search(String query) {
       if (allowSearch) {
-        return searchResultLoader.loadSearchResult(
+        AudioPlaylist playlist = searchResultLoader.loadSearchResult(
                 query,
                 YoutubeAudioSourceManager.this::buildTrackFromInfo
         );
+        if (playlist != null) {
+          if(playlist.getTracks().isEmpty()) return AudioReference.NO_TRACK;
+          return playlist;
+        }
       }
       return null;
     }

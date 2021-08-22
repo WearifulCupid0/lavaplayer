@@ -48,7 +48,7 @@ public class YoutubeSearchProvider implements YoutubeSearchResultLoader {
    * @return Playlist of the first page of results.
    */
   @Override
-  public AudioItem loadSearchResult(String query, Function<AudioTrackInfo, AudioTrack> trackFactory) {
+  public AudioPlaylist loadSearchResult(String query, Function<AudioTrackInfo, AudioTrack> trackFactory) {
     log.debug("Performing a search with query {}", query);
 
     try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
@@ -68,7 +68,7 @@ public class YoutubeSearchProvider implements YoutubeSearchResultLoader {
     }
   }
 
-  private AudioItem extractSearchResults(JsonBrowser jsonBrowser, String query,
+  private AudioPlaylist extractSearchResults(JsonBrowser jsonBrowser, String query,
                                          Function<AudioTrackInfo, AudioTrack> trackFactory) {
     List<AudioTrack> tracks;
     log.debug("Attempting to parse results from search page");
@@ -78,11 +78,7 @@ public class YoutubeSearchProvider implements YoutubeSearchResultLoader {
       throw new RuntimeException(e);
     }
 
-    if (tracks.isEmpty()) {
-      return AudioReference.NO_TRACK;
-    } else {
-      return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
-    }
+    return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
   }
 
   private List<AudioTrack> extractSearchPage(JsonBrowser jsonBrowser, Function<AudioTrackInfo, AudioTrack> trackFactory) throws IOException {
