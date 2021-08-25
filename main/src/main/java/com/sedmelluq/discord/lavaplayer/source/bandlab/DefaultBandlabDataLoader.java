@@ -3,6 +3,7 @@ package com.sedmelluq.discord.lavaplayer.source.bandlab;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
+import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 
 import java.util.ArrayList;
@@ -15,15 +16,9 @@ import static com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabConstants.C
 import static com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabConstants.ALBUM_URI;
 
 public class DefaultBandlabDataLoader extends AbstractBandlabApiLoader implements BandlabDataLoader {
-    private BandlabDataReader dataReader;
-
-    public void setDataReader(BandlabDataReader dataReader) {
-        this.dataReader = dataReader;
-    }
-
     public AudioTrack loadTrack(String username, String slug, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         return extractFromApi(String.format(SONG_POST_BANDLAB_API, username, slug), (httpClient, response) -> {
-            return trackFactory.apply(dataReader.readTrackInfo(response, false));
+            return trackFactory.apply(BandlabUtils.buildTrackInfo(response));
         });
     }
 
@@ -33,7 +28,7 @@ public class DefaultBandlabDataLoader extends AbstractBandlabApiLoader implement
 
             response.get("posts").values()
             .forEach(t -> {
-                AudioTrackInfo info = dataReader.readTrackInfo(t, false);
+                AudioTrackInfo info = BandlabUtils.buildTrackInfo(t);
                 if(info != null) {
                     tracks.add(trackFactory.apply(info));
                 }
@@ -46,7 +41,7 @@ public class DefaultBandlabDataLoader extends AbstractBandlabApiLoader implement
             return new BasicAudioPlaylist(
                 response.get("name").text(),
                 response.get("creator").get("name").text(),
-                dataReader.getArtwork(response.get("picture")),
+                PBJUtils.getBandlabPicture(response),
                 String.format(COLLECTION_URI, response.get("creator").get("username").text(), collectionId),
                 "playlist",
                 tracks,
@@ -62,7 +57,7 @@ public class DefaultBandlabDataLoader extends AbstractBandlabApiLoader implement
 
             response.get("posts").values()
             .forEach(t -> {
-                AudioTrackInfo info = dataReader.readTrackInfo(t, true);
+                AudioTrackInfo info = BandlabUtils.buildTrackInfo(t);
                 if(info != null) {
                     tracks.add(trackFactory.apply(info));
                 }
@@ -75,7 +70,7 @@ public class DefaultBandlabDataLoader extends AbstractBandlabApiLoader implement
             return new BasicAudioPlaylist(
                 response.get("name").text(),
                 response.get("creator").get("name").text(),
-                dataReader.getArtwork(response.get("picture")),
+                PBJUtils.getBandlabPicture(response),
                 String.format(ALBUM_URI, response.get("creator").get("username").text(), albumId),
                 "album",
                 tracks,

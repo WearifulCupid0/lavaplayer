@@ -10,5 +10,4 @@ public interface BandlabDataLoader extends BandlabApiLoader {
     public AudioTrack loadTrack(String username, String slug, Function<AudioTrackInfo, AudioTrack> trackFactory);
     public AudioPlaylist loadCollection(String collectionId, Function<AudioTrackInfo, AudioTrack> trackFactory);
     public AudioPlaylist loadAlbum(String albumId, Function<AudioTrackInfo, AudioTrack> trackFactory);
-    public void setDataReader(BandlabDataReader dataReader);
 }

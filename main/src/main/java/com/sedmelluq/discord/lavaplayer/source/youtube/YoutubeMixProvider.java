@@ -101,7 +101,7 @@ public class YoutubeMixProvider implements YoutubeMixLoader {
       long duration = DataFormatTools.durationTextToMillis(durationStr);
       String identifier = renderer.get("videoId").text();
       String uri = WATCH_URL_PREFIX + identifier;
-      String artwork = PBJUtils.getYouTubeThumbnail(identifier);
+      String artwork = PBJUtils.getYouTubeThumbnail(renderer, identifier);
 
       AudioTrackInfo trackInfo = new AudioTrackInfo(title, author, duration, identifier, false, uri, artwork);
       tracks.add(trackFactory.apply(trackInfo));

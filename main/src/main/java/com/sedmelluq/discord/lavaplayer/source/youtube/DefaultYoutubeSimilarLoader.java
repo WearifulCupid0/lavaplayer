@@ -89,7 +89,7 @@ public class DefaultYoutubeSimilarLoader implements YoutubeSimilarLoader {
         String videoId = json.get("videoId").text();
         String title = json.get("title").get("runs").index(0).get("text").text();
         String author = json.get("shortBylineText").get("runs").index(0).get("text").text();
-        String artwork = PBJUtils.getYouTubeThumbnail(videoId);
+        String artwork = PBJUtils.getYouTubeThumbnail(json, videoId);
         if (json.get("lengthText").isNull() || json.get("lengthText").get("runs").isNull()) {
             info = new AudioTrackInfo(title, author, DURATION_MS_UNKNOWN, videoId, true,
             WATCH_URL_PREFIX + videoId, artwork);

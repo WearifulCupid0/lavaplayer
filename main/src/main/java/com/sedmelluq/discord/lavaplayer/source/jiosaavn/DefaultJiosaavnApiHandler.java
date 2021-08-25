@@ -2,6 +2,7 @@ package com.sedmelluq.discord.lavaplayer.source.jiosaavn;
 
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
 import com.sedmelluq.discord.lavaplayer.tools.http.ExtendedHttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -179,7 +180,7 @@ public class DefaultJiosaavnApiHandler implements JiosaavnApiHandler {
             song.get("encrypted_media_url").text(),
             false,
             song.get("perma_url").text(),
-            song.get("image").text().replace("150x150", "500x500")
+            PBJUtils.getJiosaavnArtwork(song)
         );
     }
 }

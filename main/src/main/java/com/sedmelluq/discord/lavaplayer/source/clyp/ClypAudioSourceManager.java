@@ -5,6 +5,7 @@ import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -115,14 +116,19 @@ public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigura
             JsonBrowser audioFile = data.get("AudioFiles").index(0);
             String title = audioFile.get("Title").text();
             String identifier = "https://clyp.it/" + audioFile.get("AudioFileId").text();
-            String artwork = audioFile.get("ArtworkPictureUrl").isNull()
-            ? audioFile.get("User").get("ProfilePictureUrl").text()
-            : audioFile.get("ArtworkPictureUrl").text();
             String author = audioFile.get("User").get("LastName").isNull()
             ? audioFile.get("User").get("FirstName").text()
             : audioFile.get("User").get("FirstName").text() + " " + audioFile.get("User").get("LastName").text();
             
-            return new ClypAudioTrack(new AudioTrackInfo(title, author, (long) (audioFile.get("Duration").as(Double.class) * 1000.0), identifier, false, identifier, artwork), this);
+            return new ClypAudioTrack(new AudioTrackInfo(
+                title,
+                author,
+                (long) (audioFile.get("Duration").as(Double.class) * 1000.0),
+                identifier,
+                false,
+                identifier,
+                PBJUtils.getClypArtwork(audioFile)
+            ), this);
         }
 
         return null;

@@ -138,6 +138,6 @@ public class DefaultYoutubeChannelLoader implements YoutubeChannelLoader {
         String uri = WATCH_URL_PREFIX + videoId;
         long duration = DataFormatTools.durationTextToMillis(videoModel.get("videoData").get("thumbnail").get("timestampText").text());
 
-        return trackFactory.apply(new AudioTrackInfo(title, channelName, duration, videoId, false, uri, PBJUtils.getYouTubeThumbnail(videoId)));
+        return trackFactory.apply(new AudioTrackInfo(title, channelName, duration, videoId, false, uri, PBJUtils.getYouTubeThumbnail(videoModel.get("videoData"), videoId)));
     }
 }

@@ -2,6 +2,7 @@ package com.sedmelluq.discord.lavaplayer.source.jamendo;
 
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
@@ -45,7 +46,7 @@ public class DefaultJamendoApiLoader implements JamendoApiLoader {
                     info.get("id").text(),
                     false,
                     info.get("shareurl").text(),
-                    info.get("image").text().replace("width=200", "width=500")
+                    PBJUtils.getJamendoThumbnail(info)
                 );
                 return new JamendoAudioTrack(trackInfo, sourceManager);
             }
@@ -69,7 +70,7 @@ public class DefaultJamendoApiLoader implements JamendoApiLoader {
 
                 List<AudioTrack> tracks = new ArrayList<>();
                 String author = info.get("artist_name").text();
-                String artwork = info.get("image").text().replace("1.200", "1.500");
+                String artwork = PBJUtils.getJamendoThumbnail(info);
                 info.get("tracks").values()
                 .forEach(track -> {
                     String identifier = track.get("id").text();
@@ -121,7 +122,7 @@ public class DefaultJamendoApiLoader implements JamendoApiLoader {
                         identifier,
                         false,
                         "https://www.jamendo.com/track/" + identifier,
-                        track.get("image").text().replace("width=200", "width=500")
+                        PBJUtils.getJamendoThumbnail(track)
                     );
                     tracks.add(new JamendoAudioTrack(trackInfo, sourceManager));
                 });
@@ -162,7 +163,7 @@ public class DefaultJamendoApiLoader implements JamendoApiLoader {
                         identifier,
                         false,
                         "https://www.jamendo.com/track/" + identifier,
-                        track.get("image").text().replace("width=200", "width=500")
+                        PBJUtils.getJamendoThumbnail(track)
                     );
                     tracks.add(new JamendoAudioTrack(trackInfo, sourceManager));
                 });
@@ -202,7 +203,7 @@ public class DefaultJamendoApiLoader implements JamendoApiLoader {
                         track.get("id").text(),
                         false,
                         track.get("shareurl").text(),
-                        track.get("image").text().replace("width=200", "width=500")
+                        PBJUtils.getJamendoThumbnail(track)
                     );
                     tracks.add(new JamendoAudioTrack(trackInfo, sourceManager));
                 });

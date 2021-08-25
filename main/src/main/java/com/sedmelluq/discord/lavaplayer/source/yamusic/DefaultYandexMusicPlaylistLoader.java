@@ -3,6 +3,7 @@ package com.sedmelluq.discord.lavaplayer.source.yamusic;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.FutureTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
 import com.sedmelluq.discord.lavaplayer.track.*;
 
 import java.util.ArrayList;
@@ -74,7 +75,7 @@ public class DefaultYandexMusicPlaylistLoader extends DefaultYandexMusicTrackLoa
       if (trackProperty.equals("volumes") || trackProperty.equals("tracks")) {
         name = result.get("title").text();
         creator = result.get("owner").get("name").text();
-        image = YandexMusicUtils.getArtwork(result);
+        image = PBJUtils.getYandexMusicArtwork(result);
         uri = String.format(
           "https://music.yandex.com/users/%s/playlists/%s",
           result.get("owner").get("login").text(),
@@ -85,7 +86,7 @@ public class DefaultYandexMusicPlaylistLoader extends DefaultYandexMusicTrackLoa
       } else {
         name = result.get("artist").get("name").text();
         creator = name;
-        image = YandexMusicUtils.getArtwork(result.get("artist"));
+        image = PBJUtils.getYandexMusicArtwork(result.get("artist"));
         uri = String.format("https://music.yandex.com/artist/%s", result.get("artist").get("id").text());
         type = "artist";
       }

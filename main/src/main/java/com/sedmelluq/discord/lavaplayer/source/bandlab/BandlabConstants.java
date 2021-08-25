@@ -9,5 +9,6 @@ public class BandlabConstants {
 
     public static final String COLLECTION_URI = "https://www.bandlab.com/%s/collections/%s";
     public static final String ALBUM_URI = "https://www.bandlab.com/%s/albums/%s";
+    public static final String SINGLE_TRACK_URI = "https://www.bandlab.com/%s/%s";
     public static final String TRACK_URI = ALBUM_URI + "/tracks/%s";
 }

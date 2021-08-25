@@ -30,7 +30,6 @@ public class BandlabAudioSourceManager implements AudioSourceManager, HttpConfig
     private static final Pattern collectionPattern = Pattern.compile(COLLECTION_REGEX);
     private static final Pattern trackPattern = Pattern.compile(TRACK_REGEX);
 
-    private final BandlabDataReader dataReader;
     private final BandlabDataLoader dataLoader;
     private final HttpInterfaceManager httpInterfaceManager;
 
@@ -38,17 +37,13 @@ public class BandlabAudioSourceManager implements AudioSourceManager, HttpConfig
     * Create an instance.
     */
     public BandlabAudioSourceManager() {
-        this(new DefaultBandlabDataReader(), new DefaultBandlabDataLoader());
+        this(new DefaultBandlabDataLoader());
     }
 
     public BandlabAudioSourceManager(
-        BandlabDataReader dataReader,
         BandlabDataLoader dataLoader) {
-        this.dataReader = dataReader;
         this.dataLoader = dataLoader;
         httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
-
-        this.dataLoader.setDataReader(this.dataReader);
     }
 
     @Override

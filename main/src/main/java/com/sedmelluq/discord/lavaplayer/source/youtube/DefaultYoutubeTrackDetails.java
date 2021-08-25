@@ -101,7 +101,7 @@ public class DefaultYoutubeTrackDetails implements YoutubeTrackDetails {
         videoDetails.get("lengthSeconds")
     );
 
-    return buildTrackInfo(videoId, videoDetails.get("title").text(), videoDetails.get("author").text(), temporalInfo);
+    return buildTrackInfo(videoId, videoDetails.get("title").text(), videoDetails.get("author").text(), temporalInfo, PBJUtils.getYouTubeThumbnail(videoDetails, videoId));
   }
 
   private AudioTrackInfo loadLegacyTrackInfo() {
@@ -116,12 +116,12 @@ public class DefaultYoutubeTrackDetails implements YoutubeTrackDetails {
         args.get("length_seconds")
     );
 
-    return buildTrackInfo(videoId, args.get("title").text(), args.get("author").text(), temporalInfo);
+    return buildTrackInfo(videoId, args.get("title").text(), args.get("author").text(), temporalInfo, PBJUtils.getYouTubeThumbnail(args, videoId));
   }
 
-  private AudioTrackInfo buildTrackInfo(String videoId, String title, String uploader, TemporalInfo temporalInfo) {
+  private AudioTrackInfo buildTrackInfo(String videoId, String title, String uploader, TemporalInfo temporalInfo, String artwork) {
     return new AudioTrackInfo(title, uploader, temporalInfo.durationMillis, videoId, temporalInfo.isActiveStream,
-        WATCH_URL_PREFIX + videoId, PBJUtils.getYouTubeThumbnail(videoId));
+        WATCH_URL_PREFIX + videoId, artwork);
   }
 
   private static class TemporalInfo {

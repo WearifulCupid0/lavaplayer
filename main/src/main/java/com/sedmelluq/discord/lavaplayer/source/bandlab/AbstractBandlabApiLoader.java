@@ -18,7 +18,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
 public abstract class AbstractBandlabApiLoader implements BandlabApiLoader {
-    protected HttpInterfaceManager httpInterfaceManager;
+  protected HttpInterfaceManager httpInterfaceManager;
 
   AbstractBandlabApiLoader() {
     httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();

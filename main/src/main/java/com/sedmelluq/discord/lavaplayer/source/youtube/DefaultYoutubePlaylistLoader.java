@@ -189,7 +189,7 @@ public class DefaultYoutubePlaylistLoader implements YoutubePlaylistLoader {
         JsonBrowser lengthSeconds = item.get("lengthSeconds");
         long duration = Units.secondsToMillis(lengthSeconds.asLong(Units.DURATION_SEC_UNKNOWN));
 
-        String artwork = albumImage != null ? albumImage : PBJUtils.getYouTubeThumbnail(videoId);
+        String artwork = albumImage != null ? albumImage : PBJUtils.getYouTubeThumbnail(item, videoId);
 
         AudioTrackInfo info = new AudioTrackInfo(title, author, duration, videoId, false, WATCH_URL_PREFIX + videoId, artwork);
 

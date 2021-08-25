@@ -48,7 +48,7 @@ public class YoutubeSearchProvider implements YoutubeSearchResultLoader {
    * @return Playlist of the first page of results.
    */
   @Override
-  public AudioPlaylist loadSearchResult(String query, Function<AudioTrackInfo, AudioTrack> trackFactory) {
+  public AudioItem loadSearchResult(String query, Function<AudioTrackInfo, AudioTrack> trackFactory) {
     log.debug("Performing a search with query {}", query);
 
     try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
@@ -68,7 +68,7 @@ public class YoutubeSearchProvider implements YoutubeSearchResultLoader {
     }
   }
 
-  private AudioPlaylist extractSearchResults(JsonBrowser jsonBrowser, String query,
+  private AudioItem extractSearchResults(JsonBrowser jsonBrowser, String query,
                                          Function<AudioTrackInfo, AudioTrack> trackFactory) {
     List<AudioTrack> tracks;
     log.debug("Attempting to parse results from search page");
@@ -76,6 +76,10 @@ public class YoutubeSearchProvider implements YoutubeSearchResultLoader {
       tracks = extractSearchPage(jsonBrowser, trackFactory);
     } catch (IOException e) {
       throw new RuntimeException(e);
+    }
+
+    if (tracks.isEmpty()) {
+      return AudioReference.NO_TRACK;
     }
 
     return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
@@ -104,7 +108,7 @@ public class YoutubeSearchProvider implements YoutubeSearchResultLoader {
     String title = json.get("title").get("runs").index(0).get("text").text();
     String author = json.get("longBylineText").get("runs").index(0).get("text").text();
     String videoId = json.get("videoId").text();
-    String artwork = PBJUtils.getYouTubeThumbnail(videoId);
+    String artwork = PBJUtils.getYouTubeThumbnail(json, videoId);
     if (json.get("lengthText").isNull()) {
       info = new AudioTrackInfo(title, author, DURATION_MS_UNKNOWN, videoId, true,
       WATCH_URL_PREFIX + videoId, artwork);

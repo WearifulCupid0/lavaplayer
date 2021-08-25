@@ -6,6 +6,7 @@ import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -38,8 +39,6 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 public class BandcampAudioSourceManager implements AudioSourceManager, HttpConfigurable {
   private static final String URL_REGEX = "^(https?://(?:[^.]+\\.|)bandcamp\\.com)/(track|album)/([a-zA-Z0-9-_]+)/?(?:\\?.*|)$";
   private static final Pattern urlRegex = Pattern.compile(URL_REGEX);
-
-  private static final String ARTWORK_URL_FORMAT = "https://f4.bcbits.com/img/a%s_1.png";
 
   private final HttpInterfaceManager httpInterfaceManager;
 
@@ -84,7 +83,7 @@ public class BandcampAudioSourceManager implements AudioSourceManager, HttpConfi
     return extractFromPage(urlInfo.fullUrl, (httpClient, text) -> {
       JsonBrowser trackListInfo = readTrackListInformation(text);
       String artist = trackListInfo.get("artist").safeText();
-      String artworkUrl = extractArtwork(trackListInfo);
+      String artworkUrl = PBJUtils.getBandcampArtwork(trackListInfo);
 
       return extractTrack(trackListInfo.get("trackinfo").index(0), urlInfo.baseUrl, artist, artworkUrl);
     });
@@ -95,7 +94,7 @@ public class BandcampAudioSourceManager implements AudioSourceManager, HttpConfi
       JsonBrowser trackListInfo = readTrackListInformation(text);
       JsonBrowser albumInfo = readAlbumInformation(text);
       String artist = trackListInfo.get("artist").text();
-      String artworkUrl = extractArtwork(trackListInfo);
+      String artworkUrl = PBJUtils.getBandcampArtwork(trackListInfo);
 
       List<AudioTrack> tracks = new ArrayList<>();
       for (JsonBrowser trackInfo : trackListInfo.get("trackinfo").values()) {
@@ -174,21 +173,6 @@ public class BandcampAudioSourceManager implements AudioSourceManager, HttpConfi
     }
 
     return extractor.extract(httpInterface, responseText);
-  }
-
-  private String extractArtwork(JsonBrowser root) {
-    String artId = root.get("art_id").text();
-    if (artId != null) {
-      if (artId.length() < 10) {
-        StringBuilder builder = new StringBuilder(artId);
-        while (builder.length() < 10) {
-          builder.insert(0, "0");
-        }
-        artId = builder.toString();
-      }
-      return String.format(ARTWORK_URL_FORMAT, artId);
-    }
-    return null;
   }
 
   @Override
