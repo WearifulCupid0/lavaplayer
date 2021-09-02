@@ -332,6 +332,27 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
     }
 
     @Override
+    public AudioItem browse(String browseId) {
+      try (HttpInterface httpInterface = getHttpInterface()) {
+        try (CloseableHttpResponse response = httpInterface.execute(new HttpGet("https://music.youtube.com/browse/" + browseId))) {
+          HttpClientTools.assertSuccessWithContent(response, "playlist response");
+          HttpClientContext context = httpInterface.getContext();
+          // youtube currently transforms watch_video links into a link with a video id and a list id.
+          // because that's what happens, we can simply re-process with the redirected link
+          List<URI> redirects = context.getRedirectLocations();
+          if (redirects != null && !redirects.isEmpty()) {
+            return new AudioReference(redirects.get(0).toString(), null);
+          } else {
+            throw new FriendlyException("Unable to process youtube music browse link", SUSPICIOUS,
+                new IllegalStateException("Expected youtube music to redirect browse link to a playlist?list={list_id} link, but it did not redirect at all"));
+          }
+        }
+      } catch (Exception e) {
+        throw ExceptionTools.wrapUnfriendlyExceptions(e);
+      }
+    }
+
+    @Override
     public AudioItem none() {
       return AudioReference.NO_TRACK;
     }

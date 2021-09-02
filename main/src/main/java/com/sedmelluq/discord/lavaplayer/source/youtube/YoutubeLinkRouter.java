@@ -22,6 +22,8 @@ public interface YoutubeLinkRouter {
 
     T anonymous(String videoIds);
 
+    T browse(String browseId);
+
     T none();
   }
 }
