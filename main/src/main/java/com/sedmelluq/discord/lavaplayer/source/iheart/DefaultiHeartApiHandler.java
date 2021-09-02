@@ -14,6 +14,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
+import org.json.JSONObject;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -42,7 +43,9 @@ public class DefaultiHeartApiHandler implements iHeartApiHandler {
                 HttpClientTools.assertSuccessWithContent(response, "radio response");
                 JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
                 if (!json.get("hits").isNull() && !json.get("hits").index(0).isNull()) {
-                    return trackFactory.apply(buildRadio(json.get("hits").index(0)));
+                    iHeartAudioTrack track = trackFactory.apply(buildRadio(json.get("hits").index(0)));
+                    track.setRichInfo(buildRadioRich(json.get("hits").index(0)));
+                    return track;
                 }
                 return null;
             }
@@ -61,7 +64,11 @@ public class DefaultiHeartApiHandler implements iHeartApiHandler {
                 if (!json.get("hits").isNull() && !json.get("hits").index(0).isNull()) {
                     List<AudioTrack> tracks = new ArrayList<>();
                     json.get("hits").values()
-                    .forEach(hit -> tracks.add(trackFactory.apply(buildRadio(hit))));
+                    .forEach(hit -> {
+                        iHeartAudioTrack track = trackFactory.apply(buildRadio(hit));
+                        track.setRichInfo(buildRadioRich(hit));
+                        tracks.add();
+                    });
                     return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
                 }
                 return null;
@@ -87,7 +94,11 @@ public class DefaultiHeartApiHandler implements iHeartApiHandler {
                             List<AudioTrack> tracks = new ArrayList<>();
                             String podcastName = json.get("title").text();
                             eps.get("data").values()
-                            .forEach(ep -> tracks.add(trackFactory.apply(buildEpisode(ep, podcastName))));
+                            .forEach(ep -> {
+                                iHeartAudioTrack track = trackFactory.apply(buildEpisode(ep, podcastName));
+                                track.setRichInfo(buildEpisodeRich(ep));
+                                tracks.add(track);
+                            });
                             String url = String.format("https://www.iheart.com/podcast/%s/", json.get("slug").text());
                             return new BasicAudioPlaylist(
                                 podcastName, podcastName,
@@ -129,6 +140,19 @@ public class DefaultiHeartApiHandler implements iHeartApiHandler {
         );
     }
 
+    private JSONObject buildRadioRich(JsonBrowser radio) {
+        JSONObject json = new JSONObject();
+
+        if (!radio.get("band").isNull()) json.put("band", radio.get("band").text());
+        if (!radio.get("callLetters").isNull()) json.put("callLetters", radio.get("callLetters").text());
+        if (!radio.get("freq").isNull()) json.put("frequency", radio.get("freq").text());
+        if (!radio.get("cume").isNull()) json.put("cume", radio.get("cume").as(Double.class));
+        if (!radio.get("countries").isNull()) json.put("countryCode", radio.get("countries").text());
+        if (!radio.get("markets").isNull() && !radio.get("markets").values().isEmpty()) json.put("city", radio.get("markets").index(0).get("city").text());
+
+        return json.length() > 0 ? json : null;
+    }
+
     private AudioTrackInfo buildEpisode(JsonBrowser episode, String podcastName) {
         String id = episode.get("id").text();
         return new AudioTrackInfo(
@@ -140,5 +164,14 @@ public class DefaultiHeartApiHandler implements iHeartApiHandler {
             String.format("https://www.iheart.com/podcast/%s/episode/%s/", episode.get("podcastId").text(), id),
             episode.get("imageUrl").text()
         );
+    }
+
+    private JSONObject buildEpisodeRich(JsonBrowser episode) {
+        JSONObject json = new JSONObject();
+
+        if (!episode.get("isExplicit").isNull()) json.put("explicit", episode.get("isExplicit").as(Boolean.class));
+        if (!episode.get("description").isNull()) json.put("description", episode.get("description").text());
+
+        return json.length() > 0 ? json : null;
     }
 }
