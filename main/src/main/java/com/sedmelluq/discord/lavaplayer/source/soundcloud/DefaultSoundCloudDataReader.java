@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.json.JSONObject;
 
 public class DefaultSoundCloudDataReader implements SoundCloudDataReader {
   private static final Logger log = LoggerFactory.getLogger(DefaultSoundCloudDataReader.class);
@@ -37,6 +38,33 @@ public class DefaultSoundCloudDataReader implements SoundCloudDataReader {
         trackData.get("permalink_url").text(),
         PBJUtils.getSoundCloudThumbnail(trackData)
     );
+  }
+
+  @Override
+  public JSONObject readTrackRichInfo(JsonBrowser trackData) {
+    JSONObject json = new JSONObject();
+
+    if(!trackData.get("playback_count").isNull()) json.put("plays", trackData.get("playback_count").as(Double.class));
+    if(!trackData.get("likes_count").isNull()) json.put("likes", trackData.get("likes_count").as(Double.class));
+    if(!trackData.get("reposts_count").isNull()) json.put("reposts", trackData.get("reposts_count").as(Double.class));
+    if(!trackData.get("comment_count").isNull()) json.put("comments", trackData.get("comment_count").as(Double.class));
+    if(!trackData.get("download_count").isNull()) json.put("downloads", trackData.get("download_count").as(Double.class));
+    if(!trackData.get("created_at").isNull()) json.put("createdAt", trackData.get("created_at").text());
+    if(!trackData.get("last_modified").isNull()) json.put("updatedAt", trackData.get("last_modified").text());
+    if(!trackData.get("release_date").isNull()) json.put("releaseDate", trackData.get("release_date").text());
+
+    JSONObject author = new JSONObject();
+    JsonBrowser user = trackData.get("user");
+
+    if(!user.get("followers_count").isNull()) author.put("followers", user.get("followers_count").as(Double.class));
+    if(!user.get("last_modified").isNull()) author.put("updatedAt", user.get("last_modified").text());
+    if(!user.get("permalink_url").isNull()) author.put("uri", user.get("permalink_url").text());
+    if(!user.get("city").isNull()) author.put("city", user.get("city").text());
+    if(!user.get("country_code").isNull()) author.put("countryCode", user.get("country_code").text());
+
+    if(author.length() > 0) json.put("author", author);
+
+    return json;
   }
 
   @Override

@@ -23,7 +23,7 @@ public abstract class BaseAudioTrack implements InternalAudioTrack {
   protected final AudioTrackInfo trackInfo;
   protected final AtomicLong accurateDuration;
   private volatile Object userData;
-  private volatile JSONObject richInfo;
+  private JSONObject richInfo = null;
 
   /**
    * @param trackInfo Track info

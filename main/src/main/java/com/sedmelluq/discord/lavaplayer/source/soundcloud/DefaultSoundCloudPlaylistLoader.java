@@ -8,7 +8,6 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
 import java.io.IOException;
 import java.net.URI;
@@ -54,7 +53,7 @@ public class DefaultSoundCloudPlaylistLoader implements SoundCloudPlaylistLoader
   public AudioPlaylist load(
       String identifier,
       HttpInterfaceManager httpInterfaceManager,
-      Function<AudioTrackInfo, AudioTrack> trackFactory
+      Function<JsonBrowser, AudioTrack> trackFactory
   ) {
     String url = SoundCloudHelper.nonMobileUrl(identifier);
 
@@ -68,7 +67,7 @@ public class DefaultSoundCloudPlaylistLoader implements SoundCloudPlaylistLoader
   protected AudioPlaylist loadFromSet(
       HttpInterfaceManager httpInterfaceManager,
       String playlistWebUrl,
-      Function<AudioTrackInfo, AudioTrack> trackFactory
+      Function<JsonBrowser, AudioTrack> trackFactory
   ) {
     try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
       JsonBrowser rootData = htmlDataLoader.load(httpInterface, playlistWebUrl);
@@ -92,7 +91,7 @@ public class DefaultSoundCloudPlaylistLoader implements SoundCloudPlaylistLoader
   protected List<AudioTrack> loadPlaylistTracks(
       HttpInterface httpInterface,
       JsonBrowser playlistData,
-      Function<AudioTrackInfo, AudioTrack> trackFactory
+      Function<JsonBrowser, AudioTrack> trackFactory
   ) throws IOException {
     String playlistId = dataReader.readPlaylistIdentifier(playlistData);
 
@@ -125,12 +124,7 @@ public class DefaultSoundCloudPlaylistLoader implements SoundCloudPlaylistLoader
         blockedCount++;
       } else {
         try {
-          tracks.add(trackFactory.apply(dataReader.readTrackInfo(
-              trackData,
-              formatHandler.buildFormatIdentifier(
-                  formatHandler.chooseBestFormat(dataReader.readTrackFormats(trackData))
-              )
-          )));
+          tracks.add(trackFactory.apply(trackData));
         } catch (Exception e) {
           log.error("In soundcloud playlist {}, failed to load track", playlistId, e);
         }

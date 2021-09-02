@@ -34,6 +34,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONObject;
 
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.COMMON;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
@@ -122,7 +123,7 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
     AudioItem track = processAsSingleTrack(reference);
 
     if (track == null) {
-      track = playlistLoader.load(reference.identifier, httpInterfaceManager, this::buildTrackFromInfo);
+      track = playlistLoader.load(reference.identifier, httpInterfaceManager, this::loadFromTrackData);
     }
 
     if (track == null) {
@@ -224,11 +225,14 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
 
   protected AudioTrack loadFromTrackData(JsonBrowser trackData) {
     SoundCloudTrackFormat format = formatHandler.chooseBestFormat(dataReader.readTrackFormats(trackData));
-    return buildTrackFromInfo(dataReader.readTrackInfo(trackData, formatHandler.buildFormatIdentifier(format)));
+    return buildTrackFromInfo(dataReader.readTrackInfo(trackData, formatHandler.buildFormatIdentifier(format)), trackData);
   }
 
-  private AudioTrack buildTrackFromInfo(AudioTrackInfo trackInfo) {
-    return new SoundCloudAudioTrack(trackInfo, this);
+  private AudioTrack buildTrackFromInfo(AudioTrackInfo trackInfo, JsonBrowser trackData) {
+    SoundCloudAudioTrack track = new SoundCloudAudioTrack(trackInfo, this);
+    JSONObject json = dataReader.readTrackRichInfo(trackData);
+    if(json.length() > 0) track.setRichInfo(json);
+    return track;
   }
 
   private AudioItem loadFromLikedTracks(String likedListUrl) {
