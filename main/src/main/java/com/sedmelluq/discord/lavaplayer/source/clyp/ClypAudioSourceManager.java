@@ -25,6 +25,7 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.json.JSONObject;
 
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
@@ -112,7 +113,7 @@ public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigura
     }
 
     private AudioTrack buildTrack(JsonBrowser data) {
-        if(!data.get("AudioFiles").isNull() && data.get("AudioFiles").isList() && !data.get("AudioFiles").index(0).isNull()) {
+        if (!data.get("AudioFiles").isNull() && data.get("AudioFiles").isList() && !data.get("AudioFiles").index(0).isNull()) {
             JsonBrowser audioFile = data.get("AudioFiles").index(0);
             String title = audioFile.get("Title").text();
             String identifier = "https://clyp.it/" + audioFile.get("AudioFileId").text();
@@ -120,7 +121,7 @@ public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigura
             ? audioFile.get("User").get("FirstName").text()
             : audioFile.get("User").get("FirstName").text() + " " + audioFile.get("User").get("LastName").text();
             
-            return new ClypAudioTrack(new AudioTrackInfo(
+            ClypAudioTrack track = new ClypAudioTrack(new AudioTrackInfo(
                 title,
                 author,
                 (long) (audioFile.get("Duration").as(Double.class) * 1000.0),
@@ -129,6 +130,16 @@ public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigura
                 identifier,
                 PBJUtils.getClypArtwork(audioFile)
             ), this);
+
+            JSONObject json = new JSONObject();
+
+            if (!audioFile.get("ListenCount").isNull()) json.put("plays", audioFile.get("ListenCount").as(Double.class));
+            if (!audioFile.get("CommentCount").isNull()) json.put("comments", audioFile.get("CommentCount").as(Double.class));
+            if (!audioFile.get("DateCreated").isNull()) json.put("createdAt", audioFile.get("DateCreated").text());
+
+            if (json.length() > 0) track.setRichInfo(json);
+
+            return track;
         }
 
         return null;

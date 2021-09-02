@@ -64,7 +64,7 @@ public class DefaultSoundCloudDataReader implements SoundCloudDataReader {
 
     if(author.length() > 0) json.put("author", author);
 
-    return json;
+    return json.length() > 0 ? json : null;
   }
 
   @Override
