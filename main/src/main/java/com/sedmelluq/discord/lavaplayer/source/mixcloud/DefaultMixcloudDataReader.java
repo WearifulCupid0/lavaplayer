@@ -58,7 +58,7 @@ public class DefaultMixcloudDataReader implements MixcloudDataReader {
         .put("publishDate", trackData.get("publishDate").text())
         .put("reposts", trackData.get("reposts").get("totalCount").as(Double.class));
         if(!trackData.get("description").isNull()) json.put("description", trackData.get("description").text());
-        return json;
+        return json.length() > 0 ? json : null;
     }
     
     @Override

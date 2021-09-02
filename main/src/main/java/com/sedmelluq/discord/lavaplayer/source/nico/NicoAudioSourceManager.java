@@ -24,6 +24,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
+import org.json.JSONObject;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -104,7 +105,8 @@ public class NicoAudioSourceManager implements AudioSourceManager, HttpConfigura
       String thumbnailUrl = element.select("thumbnail_url").first().text();
       long duration = DataFormatTools.durationTextToMillis(element.select("length").first().text());
 
-      return new NicoAudioTrack(new AudioTrackInfo(title,
+      NicoAudioTrack track = new NicoAudioTrack(new AudioTrackInfo(
+          title,
           uploader,
           duration,
           videoId,
@@ -112,6 +114,16 @@ public class NicoAudioSourceManager implements AudioSourceManager, HttpConfigura
           getWatchUrl(videoId),
           thumbnailUrl      
         ), this);
+
+      JSONObject json = new JSONObject()
+      .put("description", element.select("description").first().text())
+      .put("releaseDate", element.select("first_retrieve").first().text())
+      .put("views", Double.parseDouble(element.select("view_counter").first().text()))
+      .put("comments", Double.parseDouble(element.select("comment_num").first().text()));
+
+      if(json.length() > 0) track.setRichInfo(json);
+      
+      return track;
     }
 
     return null;
