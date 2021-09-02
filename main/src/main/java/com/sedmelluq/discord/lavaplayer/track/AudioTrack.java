@@ -1,6 +1,7 @@
 package com.sedmelluq.discord.lavaplayer.track;
 
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
+import org.json.JSONObject;
 
 /**
  * A playable audio track
@@ -10,6 +11,23 @@ public interface AudioTrack extends AudioItem {
    * @return Track meta information
    */
   AudioTrackInfo getInfo();
+
+  /**
+   * @return Variable information about the track
+   */
+  JSONObject getRichInfo();
+
+  /**
+   * Set richInfo of the track.
+   * 
+   * @param richInfo richInfo of the track. 
+   */
+  void setRichInfo(JSONObject richInfo);
+
+  /**
+   * Clear richInfo for encoding, because if we encode this, base64 will be VERY BIG.
+   */
+  void clearRichInfo();
 
   /**
    * @return The identifier of the track

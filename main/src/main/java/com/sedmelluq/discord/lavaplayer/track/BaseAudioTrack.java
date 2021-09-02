@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import org.json.JSONObject;
 
 /**
  * Abstract base for all audio tracks with an executor
@@ -22,6 +23,7 @@ public abstract class BaseAudioTrack implements InternalAudioTrack {
   protected final AudioTrackInfo trackInfo;
   protected final AtomicLong accurateDuration;
   private volatile Object userData;
+  private volatile JSONObject richInfo;
 
   /**
    * @param trackInfo Track info
@@ -60,6 +62,21 @@ public abstract class BaseAudioTrack implements InternalAudioTrack {
   @Override
   public AudioTrackState getState() {
     return getActiveExecutor().getState();
+  }
+
+  @Override
+  public JSONObject getRichInfo() {
+    return richInfo;
+  }
+
+  @Override
+  public void setRichInfo(JSONObject richInfo) {
+    this.richInfo = richInfo;
+  }
+
+  @Override
+  public void clearRichInfo() {
+    this.richInfo = null;
   }
 
   @Override

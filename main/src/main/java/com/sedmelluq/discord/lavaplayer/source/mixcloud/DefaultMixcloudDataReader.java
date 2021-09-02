@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
+import org.json.JSONObject;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.slf4j.Logger;
@@ -45,6 +46,19 @@ public class DefaultMixcloudDataReader implements MixcloudDataReader {
             trackData.get("url").text(),
             trackData.get("picture").get("url").text()
         );
+    }
+
+    @Override
+    public JSONObject readTrackRichInfo(JsonBrowser trackData) {
+        JSONObject json = new JSONObject();
+        json
+        .put("comments", trackData.get("comments").get("totalCount").as(Double.class))
+        .put("favorites", trackData.get("favorites").get("totalCount").as(Double.class))
+        .put("plays", trackData.get("plays").as(Double.class))
+        .put("publishDate", trackData.get("publishDate").text())
+        .put("reposts", trackData.get("reposts").get("totalCount").as(Double.class));
+        if(!trackData.get("description").isNull()) json.put("description", trackData.get("description").text());
+        return json;
     }
     
     @Override

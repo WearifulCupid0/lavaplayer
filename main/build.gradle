@@ -29,6 +29,7 @@ dependencies {
   compile 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
 
   compile 'org.jsoup:jsoup:1.12.1'
+  compile 'org.json:json:20180813'
 
   compile 'net.iharder:base64:2.3.9'
 
