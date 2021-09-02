@@ -28,6 +28,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.json.JSONObject;
 
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
@@ -106,6 +107,7 @@ public class GetyarnAudioSourceManager implements HttpConfigurable, AudioSourceM
     try (final CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(reference.identifier))) {
       final String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
       final Document document = Jsoup.parse(html);
+      final JSONObject json = new JSONObject();
       final AudioTrackInfo trackInfo = AudioTrackInfoBuilder.empty()
           .setUri(reference.identifier)
           .setAuthor("Unknown")
@@ -115,7 +117,13 @@ public class GetyarnAudioSourceManager implements HttpConfigurable, AudioSourceM
           .setArtworkUrl(document.selectFirst("meta[property=og:image]").attr("content"))
           .build();
 
-      return createTrack(trackInfo);
+      GetyarnAudioTrack track = createTrack(trackInfo);
+
+      json.put("description", document.selectFirst("meta[property=og:description]").attr("content"));
+
+      if (json.length() > 0) track.setRichInfo(json);
+
+      return track;
     } catch (IOException e) {
       throw new FriendlyException("Failed to load info for yarn clip", SUSPICIOUS, null);
     }
