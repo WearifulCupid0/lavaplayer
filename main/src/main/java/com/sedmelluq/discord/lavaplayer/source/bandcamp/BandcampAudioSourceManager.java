@@ -18,7 +18,10 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -85,7 +88,7 @@ public class BandcampAudioSourceManager implements AudioSourceManager, HttpConfi
       String artist = trackListInfo.get("artist").safeText();
       String artworkUrl = PBJUtils.getBandcampArtwork(trackListInfo);
 
-      return extractTrack(trackListInfo.get("trackinfo").index(0), urlInfo.baseUrl, artist, artworkUrl);
+      return extractTrack(trackListInfo.get("trackinfo").index(0), trackListInfo.get("current"), urlInfo.baseUrl, artist, artworkUrl);
     });
   }
 
@@ -93,16 +96,17 @@ public class BandcampAudioSourceManager implements AudioSourceManager, HttpConfi
     return extractFromPage(urlInfo.fullUrl, (httpClient, text) -> {
       JsonBrowser trackListInfo = readTrackListInformation(text);
       JsonBrowser albumInfo = readAlbumInformation(text);
+      JsonBrowser current = albumInfo.get("current");
       String artist = trackListInfo.get("artist").text();
       String artworkUrl = PBJUtils.getBandcampArtwork(trackListInfo);
 
       List<AudioTrack> tracks = new ArrayList<>();
       for (JsonBrowser trackInfo : trackListInfo.get("trackinfo").values()) {
-        tracks.add(extractTrack(trackInfo, urlInfo.baseUrl, artist, artworkUrl));
+        tracks.add(extractTrack(trackInfo, current, urlInfo.baseUrl, artist, artworkUrl));
       }
 
       return new BasicAudioPlaylist(
-          albumInfo.get("current").get("title").text(), 
+          current.get("title").text(), 
           artist,
           artworkUrl,
           albumInfo.get("url").text(),
@@ -114,9 +118,9 @@ public class BandcampAudioSourceManager implements AudioSourceManager, HttpConfi
     });
   }
 
-  private AudioTrack extractTrack(JsonBrowser trackInfo,  String bandUrl, String artist, String artworkUrl) {
+  private AudioTrack extractTrack(JsonBrowser trackInfo, JsonBrowser current, String bandUrl, String artist, String artworkUrl) {
     String trackPageUrl = bandUrl + trackInfo.get("title_link").text();
-    return new BandcampAudioTrack(new AudioTrackInfo(
+    BandcampAudioTrack track = new BandcampAudioTrack(new AudioTrackInfo(
         trackInfo.get("title").text(),
         artist,
         (long) (trackInfo.get("duration").as(Double.class) * 1000.0),
@@ -125,6 +129,33 @@ public class BandcampAudioSourceManager implements AudioSourceManager, HttpConfi
         trackPageUrl,
         artworkUrl
     ), this);
+
+    JSONObject json = new JSONObject();
+
+    if (!trackInfo.get("play_count").isNull()) json.put("plays", trackInfo.get("play_count").as(Double.class));
+    if (!current.get("isrc").isNull()) json.put("isrc", current.get("isrc").text());
+
+    try {
+      SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy HH:mm:ss z");
+      SimpleDateFormat ISOFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+
+      if (!current.get("release_date").isNull()) {
+        Date releaseDate = dateFormat.parse(current.get("release_date").text());
+        json.put("releaseDate", ISOFormat.format(releaseDate));
+      }
+      if (!current.get("publish_date").isNull()) {
+        Date releaseDate = dateFormat.parse(current.get("publish_date").text());
+        json.put("publishDate", ISOFormat.format(releaseDate));
+      }
+      if (!current.get("mod_date").isNull()) {
+        Date releaseDate = dateFormat.parse(current.get("mod_date").text());
+        json.put("updatedAt", ISOFormat.format(releaseDate));
+      }
+    } catch (Exception e) {}
+
+    if (json.length() > 0) track.setRichInfo(json);
+
+    return track;
   }
 
   private JsonBrowser readAlbumInformation(String text) throws IOException {
