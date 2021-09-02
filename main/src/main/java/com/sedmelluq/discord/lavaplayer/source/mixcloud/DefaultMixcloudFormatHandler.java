@@ -30,7 +30,7 @@ public class DefaultMixcloudFormatHandler implements MixcloudFormatHandler {
     }
 
     @Override
-    public String getMpegPlaybackUrl(String identifier) {
+    public String getPlaybackUrl(String identifier) {
         if (identifier.startsWith("M:")) {
             return identifier.substring(2);
         }

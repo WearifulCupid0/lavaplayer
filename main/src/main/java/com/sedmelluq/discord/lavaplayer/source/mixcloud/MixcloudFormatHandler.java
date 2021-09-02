@@ -7,7 +7,7 @@ public interface MixcloudFormatHandler {
 
   String buildFormatIdentifier(MixcloudTrackFormat format);
 
-  String getMpegPlaybackUrl(String identifier);
+  String getPlaybackUrl(String identifier);
 
   String getHLSPlaybackUrl(String identifier);
 }

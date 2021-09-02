@@ -1,6 +1,7 @@
 package com.sedmelluq.discord.lavaplayer.source.mixcloud;
 
 import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack;
+import com.sedmelluq.discord.lavaplayer.container.mp3.Mp3AudioTrack;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -44,10 +45,15 @@ public class MixcloudAudioTrack extends DelegatedAudioTrack {
       String identifier,
       LocalAudioTrackExecutor localExecutor
   ) throws Exception {
-    String mpegPlaybackUrl = sourceManager.formatHandler.getMpegPlaybackUrl(identifier);
+    String playbackUrl = sourceManager.formatHandler.getPlaybackUrl(identifier);
 
-    if (mpegPlaybackUrl != null) {
-      loadFromMpegUrl(localExecutor, httpInterface, mpegPlaybackUrl);
+    if (playbackUrl != null && playbackUrl.contains(".m4a")) {
+      loadFromMpegUrl(localExecutor, httpInterface, playbackUrl);
+      return;
+    }
+
+    if (playbackUrl != null && playbackUrl.contains(".mp3")) {
+      loadFromMp3Url(localExecutor, httpInterface, playbackUrl);
       return;
     }
 
@@ -72,6 +78,22 @@ public class MixcloudAudioTrack extends DelegatedAudioTrack {
       }
 
       processDelegate(new MpegAudioTrack(trackInfo, stream), localExecutor);
+    }
+  }
+
+  private void loadFromMp3Url(
+      LocalAudioTrackExecutor localExecutor,
+      HttpInterface httpInterface,
+      String trackUrl
+  ) throws Exception {
+    log.debug("Starting Mixcloud track from URL: {}", trackUrl);
+
+    try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(trackUrl), null)) {
+      if (!HttpClientTools.isSuccessWithContent(stream.checkStatusCode())) {
+        throw new IOException("Invalid status code for Mixcloud stream: " + stream.checkStatusCode());
+      }
+
+      processDelegate(new Mp3AudioTrack(trackInfo, stream), localExecutor);
     }
   }
 
