@@ -1,6 +1,6 @@
 package com.sedmelluq.discord.lavaplayer.source.clyp;
 
-import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
+import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
@@ -46,7 +46,7 @@ public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigura
     }
 
     @Override
-    public AudioItem loadItem(DefaultAudioPlayerManager manager, AudioReference reference) {
+    public AudioItem loadItem(AudioPlayerManager manager, AudioReference reference) {
         String id = getIdentifier(reference.identifier);
         if(id != null) {
             JsonBrowser metadata = getMetadata(id);
