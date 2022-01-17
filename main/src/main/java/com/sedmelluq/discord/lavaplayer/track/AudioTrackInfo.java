@@ -61,6 +61,6 @@ public class AudioTrackInfo {
    * @param uri URL of the track or path to its file.
    */
   public AudioTrackInfo(String title, String author, long length, String identifier, boolean isStream, String uri) {
-    this(title, author, length, identifier, isStream, uri, null);
+    this(title, author, length, identifier, isStream, uri, System.getProperty("defaultArtworkUrl", null));
   }
 }
