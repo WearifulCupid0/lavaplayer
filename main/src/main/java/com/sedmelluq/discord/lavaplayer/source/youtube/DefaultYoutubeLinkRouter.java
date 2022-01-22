@@ -119,7 +119,8 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
   }
 
   protected <T> T routeFromChannel(Routes<T> routes, String url) {
-     //9
+    UrlInfo urlInfo = getUrlInfo(url, true);
+    return routes.channel(urlInfo.path.substring(9));
   }
 
   private static UrlInfo getUrlInfo(String url, boolean retryValidPart) {

@@ -43,6 +43,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
   private final HttpInterfaceManager httpInterfaceManager;
   private final ExtendedHttpConfigurable combinedHttpConfiguration;
   private final YoutubeMixLoader mixLoader;
+  private final YoutubeChannelLoader channelLoader;
   private final YoutubeAccessTokenTracker accessTokenTracker;
   private final boolean allowSearch;
   private final YoutubeTrackDetailsLoader trackDetailsLoader;
@@ -76,7 +77,8 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
         new YoutubeSignatureCipherManager(),
         new DefaultYoutubePlaylistLoader(),
         new DefaultYoutubeLinkRouter(),
-        new YoutubeMixProvider()
+        new YoutubeMixProvider(),
+        new YoutubeChannelProvider()
     );
   }
 
@@ -90,7 +92,8 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
       YoutubeSignatureResolver signatureResolver,
       YoutubePlaylistLoader playlistLoader,
       YoutubeLinkRouter linkRouter,
-      YoutubeMixLoader mixLoader
+      YoutubeMixLoader mixLoader,
+      YoutubeChannelLoader channelLoader
   ) {
     httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
     accessTokenTracker = new YoutubeAccessTokenTracker(httpInterfaceManager, email, password);
@@ -106,6 +109,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
     this.playlistLoader = playlistLoader;
     this.linkRouter = linkRouter;
     this.mixLoader = mixLoader;
+    this.channelLoader = channelLoader;
     this.loadingRoutes = new LoadingRoutes();
 
     combinedHttpConfiguration = new MultiHttpConfigurable(Arrays.asList(
@@ -238,6 +242,18 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
     public AudioItem track(String videoId) {
       return loadTrackWithVideoId(videoId, false);
     }
+
+    @Override
+    public AudioItem channel(String channelId) {
+      log.debug("Starting to load channel with ID {}", channelId);
+
+      try (HttpInterface httpInterface = getHttpInterface()) {
+        return channelLoader.load(httpInterface, channelId,
+            YoutubeAudioSourceManager.this::buildTrackFromInfo);
+      } catch (Exception e) {
+        throw ExceptionTools.wrapUnfriendlyExceptions(e);
+      }
+    };
 
     @Override
     public AudioItem playlist(String playlistId, String selectedVideoId) {
