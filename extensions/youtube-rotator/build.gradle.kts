@@ -4,7 +4,7 @@ plugins {
 }
 
 val moduleName = "lavaplayer-ext-youtube-rotator"
-version = "0.2.3"
+version = "0.2.4"
 
 dependencies {
   compileOnly(project(":main"))
