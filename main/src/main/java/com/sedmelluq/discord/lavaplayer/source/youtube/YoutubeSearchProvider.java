@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+import static com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.SEARCH_URL;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.SEARCH_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.WATCH_URL_PREFIX;
@@ -62,7 +63,7 @@ public class YoutubeSearchProvider implements YoutubeSearchResultLoader {
         String responseText = EntityUtils.toString(response.getEntity(), UTF_8);
 
         JsonBrowser jsonBrowser = JsonBrowser.parse(responseText);
-        return extractSearchResults(jsonBrowser, query, trackFactory);
+        return extractSearchResults(jsonBrowser, query, allowSearchLivestream, trackFactory);
       }
     } catch (Exception e) {
       throw ExceptionTools.wrapUnfriendlyExceptions(e);
@@ -74,7 +75,7 @@ public class YoutubeSearchProvider implements YoutubeSearchResultLoader {
     List<AudioTrack> tracks;
     log.debug("Attempting to parse results from search page");
     try {
-      tracks = extractSearchPage(jsonBrowser, trackFactory);
+      tracks = extractSearchPage(jsonBrowser, allowSearchLivestream, trackFactory);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -96,7 +97,7 @@ public class YoutubeSearchProvider implements YoutubeSearchResultLoader {
         .get("contents")
         .values()
         .forEach(jsonTrack -> {
-          AudioTrack track = extractPolymerData(jsonTrack, trackFactory);
+          AudioTrack track = extractPolymerData(jsonTrack, allowSearchLivestream, trackFactory);
           if (track != null) list.add(track);
         });
     return list;
@@ -108,13 +109,16 @@ public class YoutubeSearchProvider implements YoutubeSearchResultLoader {
 
     String title = json.get("title").get("runs").index(0).get("text").text();
     String author = json.get("longBylineText").get("runs").index(0).get("text").text();
+    long duration = DURATION_MS_UNKNOWN;
+    boolean isStream = false;
     if (json.get("lengthText").isNull()) {
-      return null; // Ignore if the video is a live stream
+      isStream = true;
+    } else {
+      duration = DataFormatTools.durationTextToMillis(json.get("lengthText").get("runs").index(0).get("text").text());
     }
-    long duration = DataFormatTools.durationTextToMillis(json.get("lengthText").get("runs").index(0).get("text").text());
     String videoId = json.get("videoId").text();
 
-    AudioTrackInfo info = new AudioTrackInfo(title, author, duration, videoId, false,
+    AudioTrackInfo info = new AudioTrackInfo(title, author, duration, videoId, isStream,
         WATCH_URL_PREFIX + videoId, PBJUtils.getYouTubeThumbnail(json, videoId));
 
     return trackFactory.apply(info);
