@@ -3,6 +3,7 @@ package com.sedmelluq.discord.lavaplayer.source;
 import com.sedmelluq.discord.lavaplayer.container.MediaContainerRegistry;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.bandcamp.BandcampAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.clyp.ClypAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.getyarn.GetyarnAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.http.HttpAudioSourceManager;
@@ -37,13 +38,14 @@ public class AudioSourceManagers {
   public static void registerRemoteSources(AudioPlayerManager playerManager, MediaContainerRegistry containerRegistry) {
     playerManager.registerSourceManager(new YoutubeAudioSourceManager(true, null, null));
     playerManager.registerSourceManager(new YandexMusicAudioSourceManager(true));
+    playerManager.registerSourceManager(new JamendoAudioSourceManager(true));
+    playerManager.registerSourceManager(new MixcloudAudioSourceManager(true));
     playerManager.registerSourceManager(SoundCloudAudioSourceManager.createDefault());
     playerManager.registerSourceManager(new BandcampAudioSourceManager());
     playerManager.registerSourceManager(new VimeoAudioSourceManager());
     playerManager.registerSourceManager(new TwitchStreamAudioSourceManager());
     playerManager.registerSourceManager(new ClypAudioSourceManager());
-    playerManager.registerSourceManager(new JamendoAudioSourceManager(true));
-    playerManager.registerSourceManager(new MixcloudAudioSourceManager());
+    playerManager.registerSourceManager(new BandlabAudioSourceManager());
     playerManager.registerSourceManager(new NewgroundsAudioSourceManager());
     playerManager.registerSourceManager(new GetyarnAudioSourceManager());
     playerManager.registerSourceManager(new HttpAudioSourceManager(containerRegistry));
