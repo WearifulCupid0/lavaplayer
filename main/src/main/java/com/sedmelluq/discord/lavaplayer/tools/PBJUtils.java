@@ -24,6 +24,31 @@ public class PBJUtils {
         return String.format("https://i.ytimg.com/vi/%s/mqdefault.jpg", videoId);
     }
 
+    public static String getYandexMusicArtwork(JsonBrowser trackData) {
+        String artwork = null;
+
+        JsonBrowser cover = trackData.get("coverUri");
+        if (!cover.isNull()) {
+            artwork = "https://" + cover.text().replace("%%", "1000x1000");
+        }
+
+        if (artwork == null) {
+            JsonBrowser ogImage = trackData.get("ogImage");
+            if (!ogImage.isNull()) {
+                artwork = "https://" + ogImage.text().replace("%%", "1000x1000");
+            }
+        }
+
+        if (artwork == null) {
+            cover = trackData.get("cover");
+            if (!cover.isNull()) {
+                artwork = "https://" + cover.get("uri").text().replace("%%", "1000x1000");
+            }
+        }
+
+        return artwork;
+    }
+
     public static String getSoundCloudThumbnail(JsonBrowser trackData) {
         JsonBrowser thumbnail = trackData.get("artwork_url");
         if (!thumbnail.isNull()) return thumbnail.text().replace("large", "t500x500");

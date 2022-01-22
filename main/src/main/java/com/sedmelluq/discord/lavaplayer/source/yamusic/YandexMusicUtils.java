@@ -1,6 +1,7 @@
 package com.sedmelluq.discord.lavaplayer.source.yamusic;
 
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 
@@ -25,25 +26,6 @@ public class YandexMusicUtils {
 
     String albumId = album.get("id").text();
 
-    String artworkUrl = null;
-    JsonBrowser cover = trackInfo.get("coverUri");
-    if (!cover.isNull()) {
-      artworkUrl = "https://" + cover.text().replace("%%", "1000x1000");
-    }
-    if (artworkUrl == null) {
-      JsonBrowser ogImage = trackInfo.get("ogImage");
-      if (!ogImage.isNull()) {
-        artworkUrl = "https://" + ogImage.text().replace("%%", "1000x1000");
-      }
-    }
-
-    if (artworkUrl == null) {
-      cover = album.get("coverUri");
-      if (!cover.isNull()) {
-        artworkUrl = "https://" + cover.text().replace("%%", "1000x1000");
-      }
-    }
-
     return trackFactory.apply(new AudioTrackInfo(
         trackInfo.get("title").text(),
         artists,
@@ -51,7 +33,7 @@ public class YandexMusicUtils {
         trackInfo.get("id").text(),
         false,
         String.format(TRACK_URL_FORMAT, albumId, trackId),
-        artworkUrl
+        PBJUtils.getYandexMusicArtwork(trackInfo)
     ));
   }
 }
