@@ -34,13 +34,13 @@ public class NewgroundsAudioTrack extends DelegatedAudioTrack {
 
     private static final String[] SOURCE_RESOLUTIONS = new String[]{"1080p", "720p", "360p"};
 
-    private final NewGroundsAudioSourceManager sourceManager;
+    private final NewgroundsAudioSourceManager sourceManager;
 
     /**
      * @param trackInfo     Track info
      * @param sourceManager Source manager which was used to find this track
      */
-    public NewgroundsAudioTrack(AudioTrackInfo trackInfo, NewGroundsAudioSourceManager sourceManager) {
+    public NewgroundsAudioTrack(AudioTrackInfo trackInfo, NewgroundsAudioSourceManager sourceManager) {
         super(trackInfo);
 
         this.sourceManager = sourceManager;
@@ -60,7 +60,7 @@ public class NewgroundsAudioTrack extends DelegatedAudioTrack {
     }
 
     private String loadPlaybackUrl(HttpInterface httpInterface) throws IOException {
-        Matcher matcher = NewGroundsAudioSourceManager.URL_PATTERN.matcher(trackInfo.uri);
+        Matcher matcher = NewgroundsAudioSourceManager.URL_PATTERN.matcher(trackInfo.uri);
         if(!matcher.matches()) {
             throw new FriendlyException("unknown uri format", SUSPICIOUS, null);
         }

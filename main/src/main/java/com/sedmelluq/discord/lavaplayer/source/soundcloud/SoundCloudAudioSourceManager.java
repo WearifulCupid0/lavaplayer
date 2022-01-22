@@ -214,7 +214,7 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
       }
 
       return loadFromTrackData(trackData);
-    } catch (IOException e) {
+    } catch (Exception e) {
       throw new FriendlyException("Loading track from SoundCloud failed.", SUSPICIOUS, e);
     }
   }

@@ -23,9 +23,17 @@ import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.B
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.WATCH_URL_PREFIX;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.BROWSE_URL;
 
+/**
+ * Handles loading of YouTube channel videos.
+ */
 public class YoutubeChannelProvider implements YoutubeChannelLoader {
-    @Override
-    public AudioPlaylist load(String channelId, HttpInterface httpInterface, Function<AudioTrackInfo, AudioTrack> trackFactory) {
+    /**
+     * Loads tracks from a channel in parallel into a playlist entry.
+     *
+     * @param channelId ID of the channel.
+     * @return Playlist of the tracks in the channel videos.
+     */
+    public AudioPlaylist load(HttpInterface httpInterface, String channelId, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         HttpPost post = new HttpPost(BROWSE_URL);
         StringEntity payload = new StringEntity(String.format(BROWSE_CHANNEL_PAYLOAD, channelId), "UTF-8");
         post.setEntity(payload);

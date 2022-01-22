@@ -63,7 +63,7 @@ public class YoutubeSearchProvider implements YoutubeSearchResultLoader {
         String responseText = EntityUtils.toString(response.getEntity(), UTF_8);
 
         JsonBrowser jsonBrowser = JsonBrowser.parse(responseText);
-        return extractSearchResults(jsonBrowser, query, allowSearchLivestream, trackFactory);
+        return extractSearchResults(jsonBrowser, query, trackFactory);
       }
     } catch (Exception e) {
       throw ExceptionTools.wrapUnfriendlyExceptions(e);
@@ -75,7 +75,7 @@ public class YoutubeSearchProvider implements YoutubeSearchResultLoader {
     List<AudioTrack> tracks;
     log.debug("Attempting to parse results from search page");
     try {
-      tracks = extractSearchPage(jsonBrowser, allowSearchLivestream, trackFactory);
+      tracks = extractSearchPage(jsonBrowser, trackFactory);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -97,7 +97,7 @@ public class YoutubeSearchProvider implements YoutubeSearchResultLoader {
         .get("contents")
         .values()
         .forEach(jsonTrack -> {
-          AudioTrack track = extractPolymerData(jsonTrack, allowSearchLivestream, trackFactory);
+          AudioTrack track = extractPolymerData(jsonTrack, trackFactory);
           if (track != null) list.add(track);
         });
     return list;

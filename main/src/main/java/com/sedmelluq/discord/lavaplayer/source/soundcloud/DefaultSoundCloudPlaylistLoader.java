@@ -2,6 +2,7 @@ package com.sedmelluq.discord.lavaplayer.source.soundcloud;
 
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
@@ -84,7 +85,7 @@ public class DefaultSoundCloudPlaylistLoader implements SoundCloudPlaylistLoader
           null,
           false
       );
-    } catch (IOException e) {
+    } catch (Exception e) {
       throw new FriendlyException("Loading playlist from SoundCloud failed.", SUSPICIOUS, e);
     }
   }

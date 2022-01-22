@@ -79,7 +79,7 @@ public class YoutubeMixProvider implements YoutubeMixLoader {
     return new BasicAudioPlaylist(
       playlistTitle,
       playlistCreator,
-      selectedTrack.getInfo().artwork,
+      selectedTrack.getInfo().artworkUrl,
       WATCH_URL_PREFIX + selectedVideoId + "&list=" + mixId,
       "mix",
       tracks,

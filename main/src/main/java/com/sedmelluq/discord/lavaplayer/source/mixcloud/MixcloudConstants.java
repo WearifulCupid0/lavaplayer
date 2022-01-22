@@ -1,7 +1,7 @@
 package com.sedmelluq.discord.lavaplayer.source.mixcloud;
 
 public class MixcloudConstants {
-    static final String ORIGIN_URL = "https://www.mixcloud.com"
+    static final String ORIGIN_URL = "https://www.mixcloud.com";
     static final String ARTIST_URL = ORIGIN_URL + "/%s";
     static final String PLAYLIST_URL = ORIGIN_URL + "/%s/playlists/%s/";
     static final String GRAPHQL_URL = ORIGIN_URL + "/graphql";

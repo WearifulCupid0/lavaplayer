@@ -107,7 +107,7 @@ public class DefaultYoutubePlaylistLoader implements YoutubePlaylistLoader {
     return new BasicAudioPlaylist(
       playlistName,
       header.get("ownerText").get("runs").index(0).get("text").text(),
-      tracks.get(0).getInfo().artwork,
+      tracks.get(0).getInfo().artworkUrl,
       PLAYLIST_URL_PREFIX + header.get("playlistId").text(),
       type,
       tracks,
