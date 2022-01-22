@@ -24,6 +24,15 @@ public class PBJUtils {
         return String.format("https://i.ytimg.com/vi/%s/mqdefault.jpg", videoId);
     }
 
+    public static String getJamendoThumbnail(JsonBrowser trackData) {
+        JsonBrowser image = trackData.get("image");
+        if (image.isNull()) image = trackData.get("album_image");
+        if (image.isNull()) return null;
+        String imageUrl = image.text();
+        if (imageUrl.contains("1.200")) return imageUrl.replace("1.200", "1.500");
+        return imageUrl.replace("width=200", "width=500");
+    }
+
     public static String getYandexMusicArtwork(JsonBrowser trackData) {
         String artwork = null;
 
