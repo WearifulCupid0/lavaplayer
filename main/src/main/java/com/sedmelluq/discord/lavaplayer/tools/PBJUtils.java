@@ -33,6 +33,14 @@ public class PBJUtils {
         return imageUrl.replace("width=200", "width=500");
     }
 
+    public static String getBandlabPicture(JsonBrowser trackData) {
+        JsonBrowser picture = trackData.get("picture");
+        if (picture.isNull()) picture = trackData.get("revision").get("song").get("picture");
+        if (picture.isNull()) picture = trackData.get("track").get("picture");
+        if (picture.isNull()) return null;
+        return picture.get("url").text() + "1024x1024";
+    }
+
     public static String getYandexMusicArtwork(JsonBrowser trackData) {
         String artwork = null;
 
