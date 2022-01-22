@@ -7,18 +7,30 @@ import java.util.List;
  */
 public class BasicAudioPlaylist implements AudioPlaylist {
   private final String name;
+  private final String creator;
+  private final String image;
+  private final String uri;
+  private final String type;
   private final List<AudioTrack> tracks;
   private final AudioTrack selectedTrack;
   private final boolean isSearchResult;
 
   /**
    * @param name Name of the playlist
+   * @param creator Creator of the playlist
+   * @param image Image of the playlist
+   * @param uri URL of the playlist
+   * @param type Type of the playlist
    * @param tracks List of tracks in the playlist
    * @param selectedTrack Track that is explicitly selected
    * @param isSearchResult True if the playlist was created from search results
    */
-  public BasicAudioPlaylist(String name, List<AudioTrack> tracks, AudioTrack selectedTrack, boolean isSearchResult) {
+  public BasicAudioPlaylist(String name, String creator, String image, String uri, String type, List<AudioTrack> tracks, AudioTrack selectedTrack, boolean isSearchResult) {
     this.name = name;
+    this.creator = creator;
+    this.image = image;
+    this.uri = uri;
+    this.type = type;
     this.tracks = tracks;
     this.selectedTrack = selectedTrack;
     this.isSearchResult = isSearchResult;
@@ -27,6 +39,26 @@ public class BasicAudioPlaylist implements AudioPlaylist {
   @Override
   public String getName() {
     return name;
+  }
+
+  @Override
+  public String getCreator() {
+    return creator;
+  }
+
+  @Override
+  public String getImage() {
+    return image;
+  }
+
+  @Override
+  public String getURI() {
+    return uri;
+  }
+
+  @Override
+  public String getType() {
+    return type;
   }
 
   @Override

@@ -23,7 +23,7 @@ import java.util.function.Function;
 
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.MUSIC_SEARCH_URL;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.MUSIC_SEARCH_PAYLOAD;
-import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.WATCH_URL_PREFIX;
+import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.MUSIC_WATCH_URL;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -83,7 +83,7 @@ public class YoutubeSearchMusicProvider implements YoutubeSearchMusicResultLoade
     if (tracks.isEmpty()) {
       return AudioReference.NO_TRACK;
     } else {
-      return new BasicAudioPlaylist("Search results for: " + query, tracks, null, true);
+      return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
     }
   }
 
@@ -156,7 +156,7 @@ public class YoutubeSearchMusicProvider implements YoutubeSearchMusicResultLoade
     long duration = DataFormatTools.durationTextToMillis(lastElement.get("text").text());
 
     AudioTrackInfo info = new AudioTrackInfo(title, author, duration, videoId, false,
-            WATCH_URL_PREFIX + videoId, PBJUtils.getYouTubeMusicThumbnail(thumbnail, videoId));
+        MUSIC_WATCH_URL + videoId, PBJUtils.getYouTubeMusicThumbnail(thumbnail, videoId));
 
     return trackFactory.apply(info);
   }

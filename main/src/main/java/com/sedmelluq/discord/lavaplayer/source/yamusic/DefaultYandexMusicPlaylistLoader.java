@@ -66,13 +66,40 @@ public class DefaultYandexMusicPlaylistLoader extends DefaultYandexMusicTrackLoa
       }
 
       String name;
+      String creator;
+      String image;
+      String uri;
+      String type;
+
       if (trackProperty.equals("volumes") || trackProperty.equals("tracks")) {
         name = result.get("title").text();
+        creator = result.get("owner").get("name").text();
+        image = PBJUtils.getYandexMusicArtwork(result);
+        uri = String.format(
+          "https://music.yandex.com/users/%s/playlists/%s",
+          result.get("owner").get("login").text(),
+          result.get("kind").text()
+        );
+        if(trackProperty.equals("volumes")) type = "album";
+        else type = "playlist";
       } else {
         name = result.get("artist").get("name").text();
+        creator = name;
+        image = PBJUtils.getYandexMusicArtwork(result.get("artist"));
+        uri = String.format("https://music.yandex.com/artist/%s", result.get("artist").get("id").text());
+        type = "artist";
       }
 
-      return new BasicAudioPlaylist(name, tracks, null, false);
+      return new BasicAudioPlaylist(
+          name,
+          creator,
+          image,
+          uri,
+          type,
+          tracks,
+          null,
+          false
+        );
     });
   }
 

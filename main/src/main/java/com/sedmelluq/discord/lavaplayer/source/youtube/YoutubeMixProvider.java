@@ -42,6 +42,7 @@ public class YoutubeMixProvider implements YoutubeMixLoader {
       Function<AudioTrackInfo, AudioTrack> trackFactory
   ) {
     String playlistTitle = "YouTube mix";
+    String playlistCreator = "YouTube";
     List<AudioTrack> tracks = new ArrayList<>();
 
     HttpPost post = new HttpPost(NEXT_URL);
@@ -57,9 +58,12 @@ public class YoutubeMixProvider implements YoutubeMixLoader {
               .get("playlist");
 
       JsonBrowser title = playlist.get("title");
-
+      JsonBrowser creator = playlist.get("ownerText");
       if (!title.isNull()) {
         playlistTitle = title.text();
+      }
+      if(!creator.isNull()) {
+        playlistCreator = creator.get("runs").index(0).get("text").text();
       }
 
       extractPlaylistTracks(playlist.get("contents"), tracks, trackFactory);
@@ -72,7 +76,16 @@ public class YoutubeMixProvider implements YoutubeMixLoader {
     }
 
     AudioTrack selectedTrack = findSelectedTrack(tracks, selectedVideoId);
-    return new BasicAudioPlaylist(playlistTitle, tracks, selectedTrack, false);
+    return new BasicAudioPlaylist(
+      playlistTitle,
+      playlistCreator,
+      selectedTrack.getInfo().artwork,
+      WATCH_URL_PREFIX + selectedVideoId + "&list=" + mixId,
+      "mix",
+      tracks,
+      selectedTrack,
+      false
+    );
   }
 
   private void extractPlaylistTracks(

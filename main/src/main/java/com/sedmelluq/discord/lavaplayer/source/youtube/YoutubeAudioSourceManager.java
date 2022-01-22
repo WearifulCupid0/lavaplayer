@@ -123,13 +123,6 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
     return signatureResolver;
   }
 
-  /**
-   * @param playlistPageCount Maximum number of pages loaded from one playlist. There are 100 tracks per page.
-   */
-  public void setPlaylistPageCount(int playlistPageCount) {
-    playlistLoader.setPlaylistPageCount(playlistPageCount);
-  }
-
   @Override
   public String getSourceName() {
     return "youtube";

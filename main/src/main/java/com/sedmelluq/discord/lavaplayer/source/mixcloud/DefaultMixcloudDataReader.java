@@ -17,12 +17,12 @@ import org.apache.http.client.methods.HttpGet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.sedmelluq.discord.lavaplayer.source.mixcloud.MixcloudConstants.DECRYPTION_KEY;
+//import static com.sedmelluq.discord.lavaplayer.source.mixcloud.MixcloudConstants.MANIFEST_AUDIO_URL;
+//import static com.sedmelluq.discord.lavaplayer.source.mixcloud.MixcloudConstants.HLS_AUDIO_URL;
+
 public class DefaultMixcloudDataReader implements MixcloudDataReader {
     private static final Logger log = LoggerFactory.getLogger(DefaultMixcloudDataReader.class);
-
-    private static final String DECRYPTION_KEY = "IFYOUWANTTHEARTISTSTOGETPAIDDONOTDOWNLOADFROMMIXCLOUD";
-    //private static final String MANIFEST_AUDIO_URL = "https://audio%s.mixcloud.com/secure/dash2/%s.m4a/manifest.mpd";
-    //private static final String HLS_AUDIO_URL = "https://audio%s.mixcloud.com/secure/hls/%s.m4a/index.m3u8";
     private final HttpInterfaceManager httpInterfaceManager;
     
     public DefaultMixcloudDataReader() {

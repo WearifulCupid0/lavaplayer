@@ -6,7 +6,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import java.util.function.Function;
 
-public interface YoutubePlaylistLoader {
-  AudioPlaylist load(HttpInterface httpInterface, String playlistId, String selectedVideoId,
-                     Function<AudioTrackInfo, AudioTrack> trackFactory);
+public interface YoutubeChannelLoader {
+    AudioPlaylist load(HttpInterface httpInterface, String channelId, 
+                    Function<AudioTrackInfo, AudioTrack> trackFactory);
 }

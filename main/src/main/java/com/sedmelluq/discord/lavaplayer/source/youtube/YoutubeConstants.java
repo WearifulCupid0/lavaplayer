@@ -25,15 +25,18 @@ public class YoutubeConstants {
     static final String BROWSE_URL = BASE_URL + "/browse?key=" + INNERTUBE_API_KEY;
     static final String BROWSE_CONTINUATION_PAYLOAD = BASE_PAYLOAD + SCREEN_PART_PAYLOAD + CLOSE_BASE_PAYLOAD + "\"continuation\":\"%s\"}";
     static final String BROWSE_PLAYLIST_PAYLOAD = BASE_PAYLOAD + SCREEN_PART_PAYLOAD + CLOSE_BASE_PAYLOAD + "\"browseId\":\"VL%s\"}";
+    static final String BROWSE_CHANNEL_PAYLOAD = BASE_PAYLOAD + SCREEN_PART_PAYLOAD + CLOSE_BASE_PAYLOAD + "\"params\":\"EgZ2aWRlb3M=\",\"browseId\":\"%s\"}";
     static final String NEXT_URL = BASE_URL + "/next?key=" + INNERTUBE_API_KEY;
     static final String NEXT_PAYLOAD = BASE_PAYLOAD + SCREEN_PART_PAYLOAD + CLOSE_BASE_PAYLOAD + "\"videoId\":\"%s\",\"playlistId\":\"%s\"}";
 
     // YouTube Music constants
+    static final String MUSIC_ORIGIN = "https://music.youtube.com";
     static final String MUSIC_BASE_URL = "https://music.youtube.com/youtubei/v1";
     static final String MUSIC_INNERTUBE_API_KEY = "AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30";
     static final String MUSIC_CLIENT_NAME = "WEB_REMIX";
     static final String MUSIC_CLIENT_VERSION = "0.1";
     static final String MUSIC_BASE_PAYLOAD = "{\"context\":{\"client\":{\"clientName\":\"" + MUSIC_CLIENT_NAME + "\",\"clientVersion\":\"" + MUSIC_CLIENT_VERSION + "\"}},";
+    static final String MUSIC_WATCH_URL = MUSIC_ORIGIN + "/watch?v=";
 
     static final String MUSIC_SEARCH_URL = MUSIC_BASE_URL + "/search?key=" + MUSIC_INNERTUBE_API_KEY;
     static final String MUSIC_SEARCH_PAYLOAD = MUSIC_BASE_PAYLOAD + "\"query\":\"%s\",\"params\":\"Eg-KAQwIARAAGAAgACgAMABqChADEAQQCRAFEAo=\"}";
@@ -45,5 +48,6 @@ public class YoutubeConstants {
     static final String LOGIN_ACCOUNT = BASE_MASTER_TOKEN_URL + "/login";
     static final String MASTER_TOKEN_PAYLOAD = "{\"email\":\"%s\",\"password\":\"%s\"}";
 
+    static final String PLAYLIST_URL_PREFIX = YOUTUBE_ORIGIN + "/playlist?list=";
     static final String WATCH_URL_PREFIX = YOUTUBE_ORIGIN + "/watch?v=";
 }

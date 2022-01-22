@@ -76,6 +76,10 @@ public class DefaultSoundCloudPlaylistLoader implements SoundCloudPlaylistLoader
 
       return new BasicAudioPlaylist(
           dataReader.readPlaylistName(playlistData),
+          playlistData.get("user").get("username").text(),
+          PBJUtils.getSoundCloudThumbnail(playlistData),
+          playlistData.get("permalink_url").text(),
+          playlistData.get("is_album").asBoolean(false) ? "album" : "playlist",
           loadPlaylistTracks(httpInterface, playlistData, trackFactory),
           null,
           false

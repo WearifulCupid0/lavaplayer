@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.PLAYLIST_URL_PREFIX;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.BROWSE_CONTINUATION_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.BROWSE_PLAYLIST_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.BROWSE_URL;
@@ -28,13 +29,6 @@ import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.W
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.COMMON;
 
 public class DefaultYoutubePlaylistLoader implements YoutubePlaylistLoader {
-  private volatile int playlistPageCount = 6;
-
-  @Override
-  public void setPlaylistPageCount(int playlistPageCount) {
-    this.playlistPageCount = playlistPageCount;
-  }
-
   @Override
   public AudioPlaylist load(HttpInterface httpInterface, String playlistId, String selectedVideoId,
                             Function<AudioTrackInfo, AudioTrack> trackFactory) {
@@ -61,14 +55,22 @@ public class DefaultYoutubePlaylistLoader implements YoutubePlaylistLoader {
       throw new FriendlyException(errorAlertMessage, COMMON, null);
     }
 
-    String playlistName = json
+    JsonBrowser header = json
             .get("header")
-            .get("playlistHeaderRenderer")
+            .get("playlistHeaderRenderer");
+
+    String playlistName = header
             .get("title")
             .get("runs")
             .index(0)
             .get("text")
             .text();
+    
+    String type = "playlist";
+    if(playlistName.startsWith("Album")) {
+      type = "album";
+      playlistName = playlistName.replace("Album - ", "");
+    }
 
     JsonBrowser playlistVideoList = json
             .get("contents")
@@ -84,11 +86,9 @@ public class DefaultYoutubePlaylistLoader implements YoutubePlaylistLoader {
 
     List<AudioTrack> tracks = new ArrayList<>();
     String continuationsToken = extractPlaylistTracks(playlistVideoList, tracks, trackFactory);
-    int loadCount = 0;
-    int pageCount = playlistPageCount;
 
     // Also load the next pages, each result gives us a JSON with separate values for list html and next page loader html
-    while (continuationsToken != null && ++loadCount < pageCount) {
+    while (continuationsToken != null) {
       HttpPost post = new HttpPost(BROWSE_URL);
       StringEntity payload = new StringEntity(String.format(BROWSE_CONTINUATION_PAYLOAD, continuationsToken), "UTF-8");
       post.setEntity(payload);
@@ -104,7 +104,16 @@ public class DefaultYoutubePlaylistLoader implements YoutubePlaylistLoader {
       }
     }
 
-    return new BasicAudioPlaylist(playlistName, tracks, findSelectedTrack(tracks, selectedVideoId), false);
+    return new BasicAudioPlaylist(
+      playlistName,
+      header.get("ownerText").get("runs").index(0).get("text").text(),
+      tracks.get(0).getInfo().artwork,
+      PLAYLIST_URL_PREFIX + header.get("playlistId").text(),
+      type,
+      tracks,
+      findSelectedTrack(tracks, selectedVideoId),
+      false
+    );
   }
 
   private String findErrorAlert(JsonBrowser jsonResponse) {

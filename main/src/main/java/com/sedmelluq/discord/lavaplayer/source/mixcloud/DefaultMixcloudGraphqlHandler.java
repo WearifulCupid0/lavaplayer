@@ -13,6 +13,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 
+import static com.sedmelluq.discord.lavaplayer.source.mixcloud.MixcloudConstants.*;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
 import java.nio.charset.StandardCharsets;
@@ -20,16 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DefaultMixcloudGraphqlHandler implements MixcloudGraphqlHandler {
-    private static final String GRAPHQL_URL = "https://www.mixcloud.com/graphql";
-
-    private static final String TRACK_PAYLOAD = "{\"query\":\"query cloudcastQuery($lookup: CloudcastLookup!) { cloudcast: cloudcastLookup(lookup: $lookup) { url audioLength name isExclusive waveformUrl previewUrl comments { totalCount } description favorites { totalCount } plays publishDate reposts { totalCount } owner { displayName } streamInfo { url dashUrl hlsUrl } picture(width: 1024, height: 1024) { url } } }\",\"variables\":{\"lookup\":{\"slug\":\"%s\",\"username\":\"%s\"}}}";
-    private static final String ARTIST_PAYLOAD = "{\"query\":\"query UserUploadsQuery($lookup: UserLookup!) { user: userLookup(lookup: $lookup) { displayName username picture(width: 1024, height: 1024) { url } uploads(first: 100) { edges { node { name isExclusive waveformUrl previewUrl comments { totalCount } description favorites { totalCount } plays publishDate reposts { totalCount } owner { displayName } streamInfo { url dashUrl hlsUrl } url audioLength  picture(width: 1024, height: 1024) { url } } } }  }  }\",\"variables\":{\"lookup\":{\"username\":\"%s\"}}}";
-    private static final String PLAYLIST_PAYLOAD = "{\"query\":\"query UserPlaylistQuery($lookup: PlaylistLookup!) { playlist: playlistLookup(lookup: $lookup) { name owner { displayName username } picture(width: 1024, height: 1024) { url } slug items { edges { node { cloudcast { name isExclusive waveformUrl previewUrl comments { totalCount } description favorites { totalCount } plays publishDate reposts { totalCount } owner { displayName } streamInfo { url dashUrl hlsUrl }  url audioLength  picture(width: 1024, height: 1024) { url } } } } } } }\",\"variables\":{\"lookup\":{\"slug\":\"%s\",\"username\":\"%s\"}}}";
-    private static final String SEARCH_PAYLOAD = "{\"query\":\"query SearchCloudcastResultsQuery($term: String!) { viewer { search { searchQuery(term: $term) { cloudcasts(first: 100) { edges { node { name isExclusive waveformUrl previewUrl comments { totalCount } description favorites { totalCount } plays publishDate reposts { totalCount } owner { displayName } streamInfo { url dashUrl hlsUrl } url audioLength picture(width: 1024, height: 1024) { url } } } } } } }  }\",\"variables\":{ \"term\": \"%s\" }}";
-
-    private static final String ARTIST_URL = "https://www.mixcloud.com/%s";
-    private static final String PLAYLIST_URL = "https://www.mixcloud.com/%s/playlists/%s/";
-
     private final MixcloudAudioSourceManager sourceManager;
 
     public DefaultMixcloudGraphqlHandler(MixcloudAudioSourceManager sourceManager) {
