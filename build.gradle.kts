@@ -1,6 +1,6 @@
 plugins {
-  java
-  `maven-publish`
+  id("java")
+  id("maven-publish")
 }
 
 group = "com.sedmelluq"
