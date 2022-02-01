@@ -5,7 +5,6 @@ import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -56,7 +55,6 @@ public class DefaultYandexMusicDirectUrlLoader extends AbstractYandexMusicApiLoa
       info.host = DataFormatTools.extractBetween(responseText, "<host>", "</host>");
       info.path = DataFormatTools.extractBetween(responseText, "<path>", "</path>");
       info.ts = DataFormatTools.extractBetween(responseText, "<ts>", "</ts>");
-      info.region = DataFormatTools.extractBetween(responseText, "<region>", "</region>");
       info.s = DataFormatTools.extractBetween(responseText, "<s>", "</s>");
       return info;
     } catch (Exception e) {
@@ -68,7 +66,6 @@ public class DefaultYandexMusicDirectUrlLoader extends AbstractYandexMusicApiLoa
     String host;
     String path;
     String ts;
-    String region;
     String s;
   }
 }

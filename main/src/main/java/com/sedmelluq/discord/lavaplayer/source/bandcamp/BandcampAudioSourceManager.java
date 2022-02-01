@@ -24,7 +24,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -40,8 +39,6 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 public class BandcampAudioSourceManager implements AudioSourceManager, HttpConfigurable {
   private static final String URL_REGEX = "^(https?://(?:[^.]+\\.|)bandcamp\\.com)/(track|album)/([a-zA-Z0-9-_]+)/?(?:\\?.*|)$";
   private static final Pattern urlRegex = Pattern.compile(URL_REGEX);
-
-  private static final String ARTWORK_URL_FORMAT = "https://f4.bcbits.com/img/a%s_1.png";
 
   private final HttpInterfaceManager httpInterfaceManager;
 

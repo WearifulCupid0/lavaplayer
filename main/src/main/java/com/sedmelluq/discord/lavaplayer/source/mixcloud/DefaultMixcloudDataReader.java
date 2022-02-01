@@ -112,7 +112,7 @@ public class DefaultMixcloudDataReader implements MixcloudDataReader {
             return null;
         }
     }
-
+    
     private String getStreamUrl(String baseUrl) {
         int index = 0;
         String url = null;
