@@ -1,18 +1,16 @@
 package com.sedmelluq.discord.lavaplayer.source.bilibili;
 
-import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
-import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
-import java.util.ArrayList;
-import java.util.List;
-import java.net.URLEncoder;
-import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
+import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
+import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
+import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -21,27 +19,36 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import java.util.ArrayList;
+import java.util.List;
+import java.net.URLEncoder;
+
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfigurable {
     private static final String SEARCH_PREFIX = "blsearch:";
     private static final String DOMAIN_REGEX = "^(?:http://|https://|)(?:www\\.|m\\.|)bilibili\\.com/(video)[/:]([A-Za-z0-9]+).*";
-    private final HttpInterfaceManager httpInterfaceManager;
     private static final Pattern urlPattern = Pattern.compile(DOMAIN_REGEX);
-    private static final Logger log = LoggerFactory.getLogger(BilibiliAudioSourceManager.class);
+
+    private final boolean allowSearch;
+    private final HttpInterfaceManager httpInterfaceManager;
 
     public BilibiliAudioSourceManager() {
-    httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
+        this(true);
+    }
+
+    public BilibiliAudioSourceManager(boolean allowSearch) {
+        this.allowSearch = allowSearch;
+        httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
     }
 
     @Override
@@ -51,10 +58,10 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
 
     @Override
     public AudioItem loadItem(AudioPlayerManager manager, AudioReference reference) {
-        log.debug("received to load {}", reference.identifier);
-        if(reference.identifier.startsWith(SEARCH_PREFIX)) {
+        if (reference.identifier.startsWith(SEARCH_PREFIX) && allowSearch) {
             return loadSearchResult(reference.identifier.substring(SEARCH_PREFIX.length()).trim());
         }
+
         Matcher urlMatcher = urlPattern.matcher(reference.identifier);
         boolean matchFound = urlMatcher.find();
         if (matchFound) {
@@ -72,12 +79,12 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
                 if (!HttpClientTools.isSuccessWithContent(statusCode)) {
                     throw new IOException("Unexpected response code from video info: " + statusCode);
                 }
-            JsonBrowser trackMeta = JsonBrowser.parse(response.getEntity().getContent());
-            if (Integer.parseInt(trackMeta.get("code").text()) != 0) return null;
-            return extractTrackInfo(trackMeta);
-        }
-    } catch (IOException e) {
-        throw new FriendlyException("Error occurred when extracting video info.", SUSPICIOUS, e);
+                JsonBrowser trackMeta = JsonBrowser.parse(response.getEntity().getContent());
+                if (Integer.parseInt(trackMeta.get("code").text()) != 0) return null;
+                return extractTrackInfo(trackMeta);
+            }
+        } catch (IOException e) {
+            throw new FriendlyException("Error occurred when extracting video info.", SUSPICIOUS, e);
         }
     }
 
@@ -88,23 +95,23 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
                 if (!HttpClientTools.isSuccessWithContent(statusCode)) {
                     throw new IOException("Unexpected response code from video info: " + statusCode);
                 }
-            JsonBrowser apiResponse = JsonBrowser.parse(response.getEntity().getContent());
-            List<JsonBrowser> apiResponseValues = apiResponse.get("data").get("result").values();
-            List<AudioTrack> tracks = new ArrayList<>();
-            for (JsonBrowser item : apiResponseValues) {
-                String title = item.get("title").text();
-                String uploader = item.get("author").text();
-                String thumbnailUrl = "http:" + item.get("pic").text();
-                long duration = DataFormatTools.durationTextToMillis(item.get("duration").text());
-                String videoId = item.get("bvid").text();
-                tracks.add(
-                    new BilibiliAudioTrack(new AudioTrackInfo(title, uploader, duration, videoId, false, getWatchUrl(videoId), thumbnailUrl), this)
-                );
+                JsonBrowser apiResponse = JsonBrowser.parse(response.getEntity().getContent());
+                List<JsonBrowser> apiResponseValues = apiResponse.get("data").get("result").values();
+                List<AudioTrack> tracks = new ArrayList<>();
+                for (JsonBrowser item : apiResponseValues) {
+                    String title = item.get("title").text();
+                    String uploader = item.get("author").text();
+                    String thumbnailUrl = "http:" + item.get("pic").text();
+                    long duration = DataFormatTools.durationTextToMillis(item.get("duration").text());
+                    String videoId = item.get("bvid").text();
+                    tracks.add(
+                        new BilibiliAudioTrack(new AudioTrackInfo(title, uploader, duration, videoId, false, getWatchUrl(videoId), thumbnailUrl), this)
+                    );
+                }
+                return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
             }
-            return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
-        }
-    } catch (IOException e) {
-        throw new FriendlyException("Error occurred when extracting video info.", SUSPICIOUS, e);
+        } catch (IOException e) {
+            throw new FriendlyException("Error occurred when extracting video info.", SUSPICIOUS, e);
         }
     }
 
@@ -115,12 +122,12 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
                 if (!HttpClientTools.isSuccessWithContent(statusCode)) {
                     throw new IOException("Unexpected response code from video info: " + statusCode);
                 }
-            JsonBrowser trackMeta = JsonBrowser.parse(response.getEntity().getContent());
-            if (Integer.parseInt(trackMeta.get("code").text()) != 0) return null;
-            return extractTrackInfo(trackMeta);
-        }
-    } catch (IOException e) {
-        throw new FriendlyException("Error occurred when extracting video info.", SUSPICIOUS, e);
+                JsonBrowser trackMeta = JsonBrowser.parse(response.getEntity().getContent());
+                if (Integer.parseInt(trackMeta.get("code").text()) != 0) return null;
+                return extractTrackInfo(trackMeta);
+            }
+        } catch (IOException e) {
+            throw new FriendlyException("Error occurred when extracting video info.", SUSPICIOUS, e);
         }
     }
 
@@ -131,13 +138,7 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
         String thumbnailUrl = trackMeta.get("pic").text();
         long duration = Integer.parseInt(trackMeta.get("duration").text()) * 1000;
         String videoId = trackMeta.get("bvid").text();
-        return new BilibiliAudioTrack(new AudioTrackInfo(title,
-        uploader,
-        duration,
-        videoId,
-        false,
-        getWatchUrl(videoId),
-        thumbnailUrl), this);
+        return new BilibiliAudioTrack(new AudioTrackInfo(title, uploader, duration, videoId, false, getWatchUrl(videoId), thumbnailUrl), this);
     }
 
     @Override

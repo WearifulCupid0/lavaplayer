@@ -3,6 +3,7 @@ package com.sedmelluq.discord.lavaplayer.source.getyarn;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
+import com.sedmelluq.discord.lavaplayer.tools.Units;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -12,7 +13,6 @@ import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
-import com.sedmelluq.discord.lavaplayer.track.info.AudioTrackInfoBuilder;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -106,14 +106,16 @@ public class GetyarnAudioSourceManager implements HttpConfigurable, AudioSourceM
     try (final CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(reference.identifier))) {
       final String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
       final Document document = Jsoup.parse(html);
-
-      final AudioTrackInfo trackInfo = AudioTrackInfoBuilder.empty()
-          .setUri(reference.identifier)
-          .setAuthor("Unknown")
-          .setIsStream(false)
-          .setIdentifier(document.selectFirst("meta[property=og:video:secure_url]").attr("content"))
-          .setTitle(document.selectFirst("meta[property=og:title]").attr("content"))
-          .build();
+      
+      final AudioTrackInfo trackInfo = new AudioTrackInfo(
+        document.selectFirst("meta[property=og:title]").attr("content"),
+        "Unknown author",
+        Units.DURATION_MS_UNKNOWN,
+        document.selectFirst("meta[property=og:video:secure_url_video/mp4]").attr("content"),
+        false,
+        reference.identifier,
+        document.selectFirst("meta[property=og:image_video.other]").attr("content")
+      );
 
       return createTrack(trackInfo);
     } catch (IOException e) {
