@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.net.URLEncoder;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
-import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
+import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
@@ -17,32 +17,18 @@ import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
-import org.apache.http.Header;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.message.BasicNameValuePair;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.parser.Parser;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
-import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.COMMON;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +50,7 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
     }
 
     @Override
-    public AudioItem loadItem(DefaultAudioPlayerManager manager, AudioReference reference) {
+    public AudioItem loadItem(AudioPlayerManager manager, AudioReference reference) {
         log.debug("received to load {}", reference.identifier);
         if(reference.identifier.startsWith(SEARCH_PREFIX)) {
             return loadSearchResult(reference.identifier.substring(SEARCH_PREFIX.length()).trim());
@@ -115,7 +101,7 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
                     new BilibiliAudioTrack(new AudioTrackInfo(title, uploader, duration, videoId, false, getWatchUrl(videoId), thumbnailUrl), this)
                 );
             }
-            return new BasicAudioPlaylist("Search results for: " + query, tracks, null, true);
+            return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
         }
     } catch (IOException e) {
         throw new FriendlyException("Error occurred when extracting video info.", SUSPICIOUS, e);

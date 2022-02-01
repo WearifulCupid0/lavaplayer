@@ -12,17 +12,11 @@ import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
-
-import static com.sedmelluq.discord.lavaplayer.tools.DataFormatTools.convertToMapLayout;
 
 /**
  * Audio track that handles processing BiliBili tracks.
