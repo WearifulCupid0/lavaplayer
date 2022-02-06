@@ -40,9 +40,9 @@ public class BandlabAudioSourceManager implements AudioSourceManager, HttpConfig
         this(new DefaultBandlabDataLoader());
     }
 
-    public BandlabAudioSourceManager(
-        BandlabDataLoader dataLoader) {
+    public BandlabAudioSourceManager(BandlabDataLoader dataLoader) {
         this.dataLoader = dataLoader;
+        
         httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
     }
 

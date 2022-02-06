@@ -64,10 +64,6 @@ public class GetyarnAudioSourceManager implements HttpConfigurable, AudioSourceM
     return extractVideoUrlFromPage(reference);
   }
 
-  private AudioTrack createTrack(AudioTrackInfo trackInfo) {
-    return new GetyarnAudioTrack(trackInfo, this);
-  }
-
   @Override
   public boolean isTrackEncodable(AudioTrack track) {
     return true;
@@ -117,7 +113,7 @@ public class GetyarnAudioSourceManager implements HttpConfigurable, AudioSourceM
         document.selectFirst("meta[property=og:image_video.other]").attr("content")
       );
 
-      return createTrack(trackInfo);
+      return new GetyarnAudioTrack(trackInfo, this);
     } catch (IOException e) {
       throw new FriendlyException("Failed to load info for yarn clip", SUSPICIOUS, null);
     }

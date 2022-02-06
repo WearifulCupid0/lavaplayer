@@ -9,7 +9,6 @@ import static com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabConstants.S
 import static com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabConstants.TRACK_URI;
 
 public class BandlabUtils {
-
     public static AudioTrackInfo buildTrackInfo(JsonBrowser trackData) {
         JsonBrowser track = trackData.get("track").isNull() ? trackData : trackData.get("track");
         JsonBrowser authorData = trackData.get("author").isNull() ? trackData.get("creator") : trackData.get("author");

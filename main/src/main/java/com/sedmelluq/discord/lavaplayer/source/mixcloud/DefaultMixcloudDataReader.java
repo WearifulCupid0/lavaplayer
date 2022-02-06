@@ -2,18 +2,13 @@ package com.sedmelluq.discord.lavaplayer.source.mixcloud;
 
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,11 +18,6 @@ import static com.sedmelluq.discord.lavaplayer.source.mixcloud.MixcloudConstants
 
 public class DefaultMixcloudDataReader implements MixcloudDataReader {
     private static final Logger log = LoggerFactory.getLogger(DefaultMixcloudDataReader.class);
-    private final HttpInterfaceManager httpInterfaceManager;
-    
-    public DefaultMixcloudDataReader() {
-        httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
-    }
 
     @Override
     public boolean isTrackPlayable(JsonBrowser trackData) {
@@ -48,7 +38,7 @@ public class DefaultMixcloudDataReader implements MixcloudDataReader {
     }
     
     @Override
-    public List<MixcloudTrackFormat> readTrackFormats(JsonBrowser trackData) {
+    public List<MixcloudTrackFormat> readTrackFormats(HttpInterface httpInterface, JsonBrowser trackData) {
         ArrayList<MixcloudTrackFormat> formats = new ArrayList<>();
 
         JsonBrowser streamInfo = trackData.get("streamInfo");
@@ -68,9 +58,9 @@ public class DefaultMixcloudDataReader implements MixcloudDataReader {
             log.debug("StreamInfo Object not found for Mixcloud track {}, starting loading with waveformUrl or previewUrl fields", url);
             String uuid = getStreamId(trackData);
             if(uuid != null) {
-                //String manifestUrl = getStreamUrl(String.format(MANIFEST_AUDIO_URL, "%s", uuid));
+                //String manifestUrl = MixcloudHelper.getStreamUrl(httpInterface, String.format(MANIFEST_AUDIO_URL, "%s", uuid));
                 //if (manifestUrl != null) formats.add(new DefaultMixcloudTrackFormat("segments", manifestUrl));
-                //String hlsUrl = getStreamUrl(String.format(HLS_AUDIO_URL, "%s", uuid));
+                //String hlsUrl = MixcloudHelper.getStreamUrl(httpInterface, String.format(HLS_AUDIO_URL, "%s", uuid));
                 //if (hlsUrl != null) formats.add(new DefaultMixcloudTrackFormat("hls", hlsUrl));
                 if (formats.isEmpty()) {
                     log.debug("Stream url not found at Mixcloud track {}, skipping", url);
@@ -111,23 +101,5 @@ public class DefaultMixcloudDataReader implements MixcloudDataReader {
         } catch(Exception e) {
             return null;
         }
-    }
-    
-    private String getStreamUrl(String baseUrl) {
-        int index = 0;
-        String url = null;
-        while (index++ < 18) {
-            try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
-                URI uri = URI.create(String.format(baseUrl, index));
-                try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(uri))) {
-                    HttpClientTools.assertSuccessWithContent(response, "stream response");
-                    url = uri.toString();
-                    break;
-                }
-            } catch(Exception e) {
-                continue;
-            }
-        }
-        return url;
     }
 }

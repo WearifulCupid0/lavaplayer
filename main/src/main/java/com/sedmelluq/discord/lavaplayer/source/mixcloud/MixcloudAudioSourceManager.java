@@ -3,25 +3,32 @@ package com.sedmelluq.discord.lavaplayer.source.mixcloud;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
+import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
 import com.sedmelluq.discord.lavaplayer.track.AudioItem;
+import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
+import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
 
 import org.apache.http.impl.client.HttpClientBuilder;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.http.client.config.RequestConfig;
+
+import static com.sedmelluq.discord.lavaplayer.source.mixcloud.MixcloudConstants.*;
 
 public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfigurable {
     private final String TRACK_REGEX = "(?:http://|https://|)?(?:(?:www|beta|m)\\.)?mixcloud\\.com/([^/]+)/([^/]+)";
@@ -38,7 +45,6 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
 
     public final MixcloudDataReader dataReader;
     public final MixcloudFormatHandler formatHandler;
-    private MixcloudGraphqlHandler graphqlHandler = null;
     private final HttpInterfaceManager httpInterfaceManager;
 
     /**
@@ -50,7 +56,6 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
 
     public MixcloudAudioSourceManager(boolean allowSearch) {
         this(allowSearch, new DefaultMixcloudDataReader(), new DefaultMixcloudFormatHandler());
-        this.setGraphqlHandler(new DefaultMixcloudGraphqlHandler(this));
     }
 
     public MixcloudAudioSourceManager(
@@ -66,10 +71,6 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
         httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
     }
 
-    public void setGraphqlHandler(MixcloudGraphqlHandler graphqlHandler) {
-        this.graphqlHandler = graphqlHandler;
-    }
-
     @Override
     public String getSourceName() {
         return "mixcloud";
@@ -77,23 +78,22 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
 
     @Override
     public AudioItem loadItem(AudioPlayerManager manager, AudioReference reference) {
-        if(graphqlHandler == null) return null;
         Matcher matcher;
 
         if((matcher = playlistPattern.matcher(reference.identifier)).find()) {
-            return graphqlHandler.processPlaylist(matcher.group(2), matcher.group(1));
+            return loadPlaylist(matcher.group(2), matcher.group(1));
         }
 
         if((matcher = trackPattern.matcher(reference.identifier)).find()) {
-            return graphqlHandler.processAsSigleTrack(matcher.group(2), matcher.group(1));
+            return loadTrack(matcher.group(2), matcher.group(1));
         }
 
         if((matcher = artistPattern.matcher(reference.identifier)).find()) {
-            return graphqlHandler.processPlaylist(null, matcher.group(1));
+            return loadPlaylist(null, matcher.group(1));
         }
 
         if(allowSearch && reference.identifier.startsWith(SEARCH_PREFIX)) {
-            return graphqlHandler.processSearch(reference.identifier.substring(SEARCH_PREFIX.length()).trim());
+            return loadSearch(reference.identifier.substring(SEARCH_PREFIX.length()).trim());
         }
 
         return null;
@@ -134,5 +134,85 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
     @Override
     public void configureBuilder(Consumer<HttpClientBuilder> configurator) {
         httpInterfaceManager.configureBuilder(configurator);
+    }
+
+    private AudioTrack loadTrack(String slug, String username) {
+        JsonBrowser json = MixcloudHelper.requestGraphql(getHttpInterface(), String.format(TRACK_PAYLOAD, slug, username));
+        return buildTrack(json.get("cloudcast"));
+    }
+
+    private AudioPlaylist loadPlaylist(String slug, String username) {
+        if(slug == null && username != null) return loadArtist(username);
+        JsonBrowser json = MixcloudHelper.requestGraphql(getHttpInterface(), String.format(PLAYLIST_PAYLOAD, slug, username));
+        JsonBrowser playlistData = json.get("playlist");
+        if(playlistData.isNull()) return null;
+
+        List<AudioTrack> tracks = new ArrayList<>();
+
+        playlistData.get("items").get("edges").values()
+        .forEach(edge -> {
+            JsonBrowser trackData = edge.get("node").get("cloudcast");
+            AudioTrack track = buildTrack(trackData);
+            if (track != null) tracks.add(track);
+        });
+
+        return new BasicAudioPlaylist(
+            playlistData.get("name").text(),
+            playlistData.get("owner").get("displayName").text(),
+            playlistData.get("picture").get("url").text(),
+            String.format(PLAYLIST_URL, playlistData.get("owner").get("username").text(), playlistData.get("slug").text()),
+            "playlist", tracks, null, false
+        );
+    }
+
+    private AudioPlaylist loadArtist(String username) {
+        JsonBrowser json = MixcloudHelper.requestGraphql(getHttpInterface(), String.format(ARTIST_PAYLOAD, username));
+        JsonBrowser artistData = json.get("user");
+        if(artistData.isNull()) return null;
+
+        List<AudioTrack> tracks = new ArrayList<>();
+
+        artistData.get("uploads").get("edges").values()
+        .forEach(edge -> {
+            JsonBrowser trackData = edge.get("node");
+            AudioTrack track = buildTrack(trackData);
+            if (track != null) tracks.add(track);
+        });
+
+        return new BasicAudioPlaylist(
+            artistData.get("displayName").text(),
+            artistData.get("displayName").text(),
+            artistData.get("picture").get("url").text(),
+            String.format(ARTIST_URL, artistData.get("username").text()),
+            "artist", tracks, null, false
+        );
+    }
+
+    private AudioPlaylist loadSearch(String query) {
+        JsonBrowser json = MixcloudHelper.requestGraphql(getHttpInterface(), String.format(SEARCH_PAYLOAD, query.replaceAll("\"|\\\\", "")));
+        JsonBrowser edges = json.get("viewer").get("search").get("searchQuery").get("cloudcasts").get("edges");
+        if(edges.index(0).isNull()) return null;
+
+        List<AudioTrack> tracks = new ArrayList<>();
+
+        edges.values()
+        .forEach(edge -> {
+            JsonBrowser trackData = edge.get("node");
+            AudioTrack track = buildTrack(trackData);
+            if (track != null) tracks.add(track);
+        });
+
+        return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
+    }
+
+    private AudioTrack buildTrack(JsonBrowser trackData) {
+        if(trackData.isNull()) return null;
+        if(dataReader.isTrackPlayable(trackData)) {
+            List<MixcloudTrackFormat> formats = dataReader.readTrackFormats(getHttpInterface(), trackData);
+            MixcloudTrackFormat bestFormat = formatHandler.chooseBestFormat(formats);
+            String identifier = formatHandler.buildFormatIdentifier(bestFormat);
+            if (identifier != null) return new MixcloudAudioTrack(dataReader.readTrackInfo(trackData, identifier), this);
+        }
+        return null;
     }
 }

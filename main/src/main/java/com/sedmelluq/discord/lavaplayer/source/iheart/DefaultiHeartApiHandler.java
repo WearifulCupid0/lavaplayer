@@ -21,11 +21,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
-import static com.sedmelluq.discord.lavaplayer.source.iheart.iHeartConstants.RADIO_API_URL;
-import static com.sedmelluq.discord.lavaplayer.source.iheart.iHeartConstants.PODCASTS_API_URL;
-import static com.sedmelluq.discord.lavaplayer.source.iheart.iHeartConstants.EPISODES_API_URL;
-import static com.sedmelluq.discord.lavaplayer.source.iheart.iHeartConstants.IHEART_PODCAST_URL;
-import static com.sedmelluq.discord.lavaplayer.source.iheart.iHeartConstants.IHEART_EPISODE_URL;
+import static com.sedmelluq.discord.lavaplayer.source.iheart.iHeartConstants.*;
 
 public class DefaultiHeartApiHandler implements iHeartApiHandler {
     private final HttpInterfaceManager httpInterfaceManager;
@@ -61,10 +57,8 @@ public class DefaultiHeartApiHandler implements iHeartApiHandler {
 
     @Override
     public AudioPlaylist search(String query, Function<AudioTrackInfo, AudioTrack> trackFactory) {
-        query = query.replaceAll("\"|\\\\", "");
-
         try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
-            URI uri = new URIBuilder(RADIO_API_URL).addParameter("q", query).build();
+            URI uri = new URIBuilder(RADIO_API_URL).addParameter("q", query.replaceAll("\"|\\\\", "")).build();
 
             try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(uri))) {
                 HttpClientTools.assertSuccessWithContent(response, "search results response");

@@ -87,14 +87,12 @@ public class TwitchStreamAudioSourceManager implements AudioSourceManager, HttpC
     if (channelInfo == null || channelInfo.get("stream").get("type").isNull()) {
       return AudioReference.NO_TRACK;
     } else {
-      String displayName = streamName;
       String title = channelInfo.get("lastBroadcast").get("title").text();
-
-      final String thumbnail = channelInfo.get("profileImageURL").text().replaceFirst("-70x70", "-300x300");
+      String thumbnail = channelInfo.get("profileImageURL").text().replaceFirst("-70x70", "-300x300");
 
       return new TwitchStreamAudioTrack(new AudioTrackInfo(
           title,
-          displayName,
+          streamName,
           Units.DURATION_MS_UNKNOWN,
           reference.identifier,
           true,

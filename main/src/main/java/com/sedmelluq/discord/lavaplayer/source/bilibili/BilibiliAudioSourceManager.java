@@ -39,6 +39,9 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
     private static final String DOMAIN_REGEX = "^(?:http://|https://|)(?:www\\.|m\\.|)bilibili\\.com/(video)[/:]([A-Za-z0-9]+).*";
     private static final Pattern urlPattern = Pattern.compile(DOMAIN_REGEX);
 
+    private static final String VIEW_API = "https://api.bilibili.com/x/web-interface/view";
+    private static final String SEARCH_API = "https://api.bilibili.com/x/web-interface/search/type";
+
     private final boolean allowSearch;
     private final HttpInterfaceManager httpInterfaceManager;
 
@@ -74,7 +77,7 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
 
     private AudioTrack loadTrackFromAid(String videoId) {
         try (HttpInterface httpInterface = getHttpInterface()) {
-            try (CloseableHttpResponse response = httpInterface.execute(new HttpGet("https://api.bilibili.com/x/web-interface/view?aid=" + videoId))) {
+            try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(VIEW_API + "?aid=" + videoId))) {
                 int statusCode = response.getStatusLine().getStatusCode();
                 if (!HttpClientTools.isSuccessWithContent(statusCode)) {
                     throw new IOException("Unexpected response code from video info: " + statusCode);
@@ -90,7 +93,7 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
 
     private AudioPlaylist loadSearchResult(String query) {
         try (HttpInterface httpInterface = getHttpInterface()) {
-            try (CloseableHttpResponse response = httpInterface.execute(new HttpGet("https://api.bilibili.com/x/web-interface/search/type?keyword=" + URLEncoder.encode(query, "UTF-8") + "&search_type=video"))) {
+            try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(SEARCH_API + "?keyword=" + URLEncoder.encode(query, "UTF-8") + "&search_type=video"))) {
                 int statusCode = response.getStatusLine().getStatusCode();
                 if (!HttpClientTools.isSuccessWithContent(statusCode)) {
                     throw new IOException("Unexpected response code from video info: " + statusCode);
@@ -117,7 +120,7 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
 
     private AudioTrack loadTrack(String videoId) {
         try (HttpInterface httpInterface = getHttpInterface()) {
-            try (CloseableHttpResponse response = httpInterface.execute(new HttpGet("https://api.bilibili.com/x/web-interface/view?bvid=" + videoId))) {
+            try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(VIEW_API + "?bvid=" + videoId))) {
                 int statusCode = response.getStatusLine().getStatusCode();
                 if (!HttpClientTools.isSuccessWithContent(statusCode)) {
                     throw new IOException("Unexpected response code from video info: " + statusCode);

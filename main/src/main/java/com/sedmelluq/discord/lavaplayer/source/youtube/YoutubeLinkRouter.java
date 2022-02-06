@@ -8,8 +8,6 @@ public interface YoutubeLinkRouter {
 
     T playlist(String playlistId, String selectedVideoId);
 
-    T channel(String channelId);
-
     T mix(String mixId, String selectedVideoId);
 
     T search(String query);

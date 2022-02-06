@@ -24,19 +24,21 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.sedmelluq.discord.lavaplayer.source.jamendo.JamendoConstants.DEFAULT_CLIENT_ID;;
+
 /**
  * Audio source manager that implements finding Jamendo tracks based on URL.
  */
 public class JamendoAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-    private static final String TRACK_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/track/([0-9-_]+)(?:/|/([^/]+)|)$";
-    private static final String ALBUM_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/album/([0-9-_]+)(?:/|/([^/]+)|)$";
-    private static final String ARTIST_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/artist/([0-9-_]+)(?:/|/([^/]+)|)$";
-    private static final String PLAYLIST_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/playlist/([0-9-_]+)(?:/|/([^/]+)|)$";
+    private static final String TRACK_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/track/(\\d+)(?:/|/([^/]+)|)$";
+    private static final String ALBUM_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/album/(\\d+)(?:/|/([^/]+)|)$";
+    private static final String ARTIST_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/artist/(\\d+)(?:/|/([^/]+)|)$";
+    private static final String PLAYLIST_REGEX = "^(?:http://|https://|)www\\.jamendo\\.com/playlist/(\\d+)(?:/|/([^/]+)|)$";
 
-    private static final String SHORT_TRACK_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/t/([0-9-_]+)$";
-    private static final String SHORT_ALBUM_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/a/([0-9-_]+)$";
-    private static final String SHORT_ARTIST_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/l/([0-9-_]+)$";
-    private static final String SHORT_PLAYLIST_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/l/p([0-9-_]+)$";
+    private static final String SHORT_TRACK_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/t/(\\d+)$";
+    private static final String SHORT_ALBUM_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/a/(\\d+)$";
+    private static final String SHORT_ARTIST_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/l/(\\d+)$";
+    private static final String SHORT_PLAYLIST_REGEX = "^(?:http://|https://|)www\\.jamen\\.do/l/p(\\d+)$";
 
     private static final String SEARCH_REGEX = "jmsearch:";
 
@@ -62,7 +64,7 @@ public class JamendoAudioSourceManager implements AudioSourceManager, HttpConfig
     }
 
     public JamendoAudioSourceManager(boolean allowSearch) {
-        this("c7b47146", allowSearch);
+        this(DEFAULT_CLIENT_ID, allowSearch);
     }
 
     public JamendoAudioSourceManager(

@@ -40,7 +40,7 @@ public abstract class AbstractBandlabApiLoader implements BandlabApiLoader {
       }
       return extractor.extract(httpInterface, response);
     } catch (Exception e) {
-      throw ExceptionTools.wrapUnfriendlyExceptions("Loading information for a Bandlab track failed.", FAULT, e);
+      throw ExceptionTools.wrapUnfriendlyExceptions("Loading information for a Bandlab request failed.", FAULT, e);
     }
   }
 

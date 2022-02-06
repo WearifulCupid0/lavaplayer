@@ -14,22 +14,29 @@ import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.net.URI;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
+/**
+ * Audio source manager which detects Clyp tracks by URL.
+ */
 public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-    private static final Pattern urlRegex = Pattern.compile("^(?:http://|https://|)(?:www\\.|api\\.|audio\\.|)clyp\\.it/([a-zA-Z0-9-_]+)");
+    private static final String URL_REGEX = "^(?:http://|https://|)(?:www\\.|api\\.|audio\\.|)clyp\\.it/([a-zA-Z0-9-_]+)";
+    private static final Pattern urlPattern = Pattern.compile(URL_REGEX);
+    private static final String API_URL = "https://api.clyp.it/%s/playlist";
 
     private final HttpInterfaceManager httpInterfaceManager;
 
@@ -57,7 +64,7 @@ public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigura
     }
 
     public String getIdentifier(String url) {
-        Matcher matcher = urlRegex.matcher(url);
+        Matcher matcher = urlPattern.matcher(url);
         if(matcher.find()) return matcher.group(1);
         return null;
     }
@@ -100,14 +107,17 @@ public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigura
     }
 
     private JsonBrowser getMetadata(String identifier) {
-        try(CloseableHttpResponse response = getHttpInterface().execute(new HttpGet("https://api.clyp.it/" + identifier + "/playlist"))) {
-            HttpClientTools.assertSuccessWithContent(response, "audio metadata");
+        URI uri = URI.create(String.format(API_URL, identifier));
+        try(CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(uri))) {
+            int statusCode = response.getStatusLine().getStatusCode();
 
-            JsonBrowser metadata = JsonBrowser.parse(response.getEntity().getContent());
+            if(!HttpClientTools.isSuccessWithContent(statusCode)) {
+                throw new IOException("Unexpected status code from Clyp api: " + statusCode);
+            }
 
-            return metadata;
+            return JsonBrowser.parse(response.getEntity().getContent());
         } catch(IOException e) {
-            throw new FriendlyException("Failed to load Clyp metadata", SUSPICIOUS, e);
+            throw new FriendlyException("Failed to fetch Clyp song information", SUSPICIOUS, e);
         }
     }
 

@@ -41,11 +41,9 @@ public class iHeartAudioTrack extends DelegatedAudioTrack {
 
     /**
      * @param trackInfo Track info
-     * @param containerTrackFactory Container track factory - contains the probe with its parameters.
      * @param sourceManager Source manager used to load this track
      */
     public iHeartAudioTrack(AudioTrackInfo trackInfo, iHeartAudioSourceManager sourceManager) {
-
     super(trackInfo);
 
     this.sourceManager = sourceManager;

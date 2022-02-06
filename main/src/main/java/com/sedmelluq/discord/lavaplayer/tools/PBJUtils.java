@@ -30,7 +30,7 @@ public class PBJUtils {
         if (image.isNull()) return null;
         String imageUrl = image.text();
         if (imageUrl.contains("1.200")) return imageUrl.replace("1.200", "1.500");
-        return imageUrl.replace("width=200", "width=500");
+        return imageUrl.replace("width=300", "width=500");
     }
 
     public static String getBandlabPicture(JsonBrowser trackData) {
