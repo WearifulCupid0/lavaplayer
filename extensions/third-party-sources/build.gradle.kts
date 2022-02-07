@@ -8,6 +8,7 @@ version = "0.1.0"
 
 dependencies {
     compileOnly(project(":main"))
+    implementation("commons-io:commons-io:2.6")
     implementation("org.slf4j:slf4j-api:1.7.25")
 }
 
