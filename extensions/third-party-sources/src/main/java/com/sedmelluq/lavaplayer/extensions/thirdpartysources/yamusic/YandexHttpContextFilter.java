@@ -1,4 +1,4 @@
-package com.sedmelluq.discord.lavaplayer.source.yamusic;
+package com.sedmelluq.lavaplayer.extensions.thirdpartysources.yamusic;
 
 import com.sedmelluq.discord.lavaplayer.tools.http.HttpContextFilter;
 import org.apache.http.HttpResponse;

@@ -1,5 +1,6 @@
-package com.sedmelluq.discord.lavaplayer.source.yamusic;
+package com.sedmelluq.lavaplayer.extensions.thirdpartysources.yamusic;
 
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioTrack;
 import com.sedmelluq.discord.lavaplayer.container.mp3.Mp3AudioTrack;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -16,7 +17,7 @@ import java.net.URI;
 /**
  * Audio track that handles processing Yandex Music tracks.
  */
-public class YandexMusicAudioTrack extends DelegatedAudioTrack {
+public class YandexMusicAudioTrack extends ThirdPartyAudioTrack {
   private static final Logger log = LoggerFactory.getLogger(YandexMusicAudioTrack.class);
 
   private final YandexMusicAudioSourceManager sourceManager;
@@ -26,7 +27,7 @@ public class YandexMusicAudioTrack extends DelegatedAudioTrack {
    * @param sourceManager Source manager which was used to find this track
    */
   public YandexMusicAudioTrack(AudioTrackInfo trackInfo, YandexMusicAudioSourceManager sourceManager) {
-    super(trackInfo);
+    super(trackInfo, null, sourceManager);
     this.sourceManager = sourceManager;
   }
 
@@ -34,9 +35,13 @@ public class YandexMusicAudioTrack extends DelegatedAudioTrack {
   public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
     try (HttpInterface httpInterface = sourceManager.getHttpInterface()) {
       String trackMediaUrl = sourceManager.getDirectUrlLoader().getDirectUrl(trackInfo.identifier, "mp3");
-      log.debug("Starting Yandex Music track from URL: {}", trackMediaUrl);
-      try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(trackMediaUrl), null)) {
-        processDelegate(new Mp3AudioTrack(trackInfo, stream), localExecutor);
+      if (trackMediaUrl != null) {
+        log.debug("Starting Yandex Music track from URL: {}", trackMediaUrl);
+        try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(trackMediaUrl), null)) {
+          processDelegate(new Mp3AudioTrack(trackInfo, stream), localExecutor);
+        }
+      } else {
+        process(localExecutor);
       }
     }
   }

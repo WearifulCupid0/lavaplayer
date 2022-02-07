@@ -20,7 +20,6 @@ import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceM
 import com.sedmelluq.discord.lavaplayer.source.tiktok.TiktokAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager;
-import com.sedmelluq.discord.lavaplayer.source.yamusic.YandexMusicAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
 
 /**
@@ -43,7 +42,6 @@ public class AudioSourceManagers {
    */
   public static void registerRemoteSources(AudioPlayerManager playerManager, MediaContainerRegistry containerRegistry) {
     playerManager.registerSourceManager(new YoutubeAudioSourceManager(true, null, null));
-    playerManager.registerSourceManager(new YandexMusicAudioSourceManager(true));
     playerManager.registerSourceManager(new JamendoAudioSourceManager(true));
     playerManager.registerSourceManager(new MixcloudAudioSourceManager(true));
     playerManager.registerSourceManager(new OdyseeAudioSourceManager(true));

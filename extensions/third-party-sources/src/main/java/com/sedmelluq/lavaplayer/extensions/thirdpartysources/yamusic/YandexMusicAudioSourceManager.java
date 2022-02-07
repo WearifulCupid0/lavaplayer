@@ -1,5 +1,6 @@
-package com.sedmelluq.discord.lavaplayer.source.yamusic;
+package com.sedmelluq.lavaplayer.extensions.thirdpartysources.yamusic;
 
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
@@ -28,7 +29,7 @@ import java.util.regex.Pattern;
 /**
  * Audio source manager that implements finding Yandex Music tracks based on URL.
  */
-public class YandexMusicAudioSourceManager implements AudioSourceManager, HttpConfigurable {
+public class YandexMusicAudioSourceManager extends ThirdPartyAudioSourceManager implements HttpConfigurable {
   private static final String TRACK_URL_REGEX = "^https?://music\\.yandex\\.[a-zA-Z]+/album/([0-9]+)/track/([0-9]+)$";
   private static final String ALBUM_URL_REGEX = "^https?://music\\.yandex\\.[a-zA-Z]+/album/([0-9]+)$";
   private static final String PLAYLIST_URL_REGEX = "^https?://music\\.yandex\\.[a-zA-Z]+/users/(.+)/playlists/([0-9]+)$";
@@ -49,17 +50,19 @@ public class YandexMusicAudioSourceManager implements AudioSourceManager, HttpCo
   private final YandexMusicPlaylistLoader playlistLoader;
   private final YandexMusicSearchResultLoader searchResultLoader;
 
-  public YandexMusicAudioSourceManager() {
-    this(true);
+  public YandexMusicAudioSourceManager(AudioPlayerManager playerManager) {
+    this(true, true, playerManager);
   }
 
-  public YandexMusicAudioSourceManager(boolean allowSearch) {
+  public YandexMusicAudioSourceManager(boolean allowSearch, boolean fetchIsrc, AudioPlayerManager playerManager) {
     this(
         allowSearch,
+        fetchIsrc,
         new DefaultYandexMusicTrackLoader(),
         new DefaultYandexMusicPlaylistLoader(),
         new DefaultYandexMusicDirectUrlLoader(),
-        new DefaultYandexSearchProvider()
+        new DefaultYandexSearchProvider(),
+        playerManager
     );
   }
 
@@ -68,10 +71,13 @@ public class YandexMusicAudioSourceManager implements AudioSourceManager, HttpCo
    */
   public YandexMusicAudioSourceManager(
       boolean allowSearch,
+      boolean fetchIsrc,
       YandexMusicTrackLoader trackLoader,
       YandexMusicPlaylistLoader playlistLoader,
       YandexMusicDirectUrlLoader directUrlLoader,
-      YandexMusicSearchResultLoader searchResultLoader) {
+      YandexMusicSearchResultLoader searchResultLoader,
+      AudioPlayerManager playerManager) {
+    super(playerManager, fetchIsrc);
     this.allowSearch = allowSearch;
     this.trackLoader = trackLoader;
     this.playlistLoader = playlistLoader;

@@ -18,9 +18,9 @@ import com.sedmelluq.discord.lavaplayer.source.newgrounds.NewgroundsAudioSourceM
 import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager;
-import com.sedmelluq.discord.lavaplayer.source.yamusic.YandexMusicAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
 import com.sedmelluq.lava.common.tools.DaemonThreadFactory;
+
 import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -54,7 +54,6 @@ public class BotApplicationManager extends ListenerAdapter {
     //playerManager.useRemoteNodes("localhost:8080");
     playerManager.getConfiguration().setResamplingQuality(AudioConfiguration.ResamplingQuality.LOW);
     playerManager.registerSourceManager(new YoutubeAudioSourceManager(true, null, null));
-    playerManager.registerSourceManager(new YandexMusicAudioSourceManager(true));
     playerManager.registerSourceManager(new JamendoAudioSourceManager(true));
     playerManager.registerSourceManager(new MixcloudAudioSourceManager(true));
     playerManager.registerSourceManager(SoundCloudAudioSourceManager.createDefault());
