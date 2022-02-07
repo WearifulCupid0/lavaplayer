@@ -299,6 +299,8 @@ public class Mp3TrackProvider implements AudioTrackInfoProvider {
       return "TIT2";
     } else if ("TP1".equals(shortName)) {
       return "TPE1";
+    } else if ("PIC".equals(shortName)) {
+      return "APIC'";
     } else {
       return shortName;
     }
