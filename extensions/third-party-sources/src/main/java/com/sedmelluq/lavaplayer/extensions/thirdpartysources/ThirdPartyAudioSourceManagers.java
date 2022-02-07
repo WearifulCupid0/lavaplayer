@@ -2,6 +2,7 @@ package com.sedmelluq.lavaplayer.extensions.thirdpartysources;
 
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.applemusic.AppleMusicAudioSourceManager;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.deezer.DeezerAudioSourceManager;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.napster.NapsterAudioSourceManager;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.spotify.SpotifyAudioSourceManager;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.tidal.TidalAudioSourceManager;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.yamusic.YandexMusicAudioSourceManager;
@@ -20,6 +21,7 @@ public class ThirdPartyAudioSourceManagers {
   public static void registerThirdPartySources(AudioPlayerManager playerManager) {
     playerManager.registerSourceManager(new AppleMusicAudioSourceManager(playerManager));
     playerManager.registerSourceManager(new DeezerAudioSourceManager(playerManager));
+    playerManager.registerSourceManager(new NapsterAudioSourceManager(playerManager));
     playerManager.registerSourceManager(new SpotifyAudioSourceManager(playerManager));
     playerManager.registerSourceManager(new TidalAudioSourceManager(playerManager));
     playerManager.registerSourceManager(new YandexMusicAudioSourceManager(playerManager));

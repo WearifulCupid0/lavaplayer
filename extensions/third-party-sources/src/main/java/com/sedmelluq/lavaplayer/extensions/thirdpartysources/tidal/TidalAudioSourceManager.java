@@ -35,7 +35,6 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
 import static com.sedmelluq.lavaplayer.extensions.thirdpartysources.tidal.TidalConstants.*;
-import static com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
 public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implements HttpConfigurable {
