@@ -67,7 +67,7 @@ public class AppleMusicTokenTracker {
             }
 
             Document document = Jsoup.parse(response.getEntity().getContent(), StandardCharsets.UTF_8.name(), "https://music.apple.com/");
-            JsonBrowser decoded = JsonBrowser.parse(URLDecoder.decode(document.selectFirst("meta[name=desktop-music-app/config/environment]").attr("content"), StandardCharsets.UTF_8));
+            JsonBrowser decoded = JsonBrowser.parse(URLDecoder.decode(document.selectFirst("meta[name=desktop-music-app/config/environment]").attr("content"), StandardCharsets.UTF_8.name()));
 
             this.token = decoded.get("MEDIA_API").get("token").text();
             this.tokenType = "Bearer";
