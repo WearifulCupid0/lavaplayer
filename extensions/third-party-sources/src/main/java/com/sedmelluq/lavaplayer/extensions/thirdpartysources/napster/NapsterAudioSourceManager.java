@@ -39,7 +39,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 
 public class NapsterAudioSourceManager extends ThirdPartyAudioSourceManager implements HttpConfigurable {
     private static final String NAPSTER_URL_REGEX = "^(?:https://|http://|)(?:www\\.|app\\.|[a-zA-Z]{2}\\.|)napster\\.com/artist/([a-zA-Z0-9-_]+)(?:/album/([a-zA-Z0-9-_]+)(?:/track/([a-zA-Z0-9-_]+)|)|)";
-    private static final String NAPSTER_APP_REGEX = "^(?:https://|http://|)(?:www\\.|app\\.|[a-zA-Z]{2}\\.|)napster\\.com/(artist|track|album|playlist)/([a-zA-Z0-9-_]+)";
+    private static final String NAPSTER_APP_REGEX = "^(?:https://|http://|)(?:www\\.|app\\.|[a-zA-Z]{2}\\.|)napster\\.com/(artist|track|album|playlist)/([a-zA-Z0-9-_.]+)";
 	
     private static final Pattern napsterUrlPattern = Pattern.compile(NAPSTER_URL_REGEX);
     private static final Pattern napsterAppPattern = Pattern.compile(NAPSTER_APP_REGEX);
