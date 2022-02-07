@@ -17,7 +17,7 @@ public class ThirdPartyAudioSourceManagers {
    *
    * @param playerManager Player manager to register the source managers to
    */
-  public static void registerRemoteSources(AudioPlayerManager playerManager) {
+  public static void registerThirdPartySources(AudioPlayerManager playerManager) {
     playerManager.registerSourceManager(new AppleMusicAudioSourceManager(playerManager));
     playerManager.registerSourceManager(new DeezerAudioSourceManager(playerManager));
     playerManager.registerSourceManager(new SpotifyAudioSourceManager(playerManager));
