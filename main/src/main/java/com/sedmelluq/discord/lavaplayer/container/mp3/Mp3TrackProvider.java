@@ -31,6 +31,7 @@ public class Mp3TrackProvider implements AudioTrackInfoProvider {
 
   private static final String TITLE_TAG = "TIT2";
   private static final String ARTIST_TAG = "TPE1";
+  private static final String ARTWORK_TAG = "APIC";
 
   private static final List<String> knownTextExtensions = Arrays.asList(TITLE_TAG, ARTIST_TAG);
 
@@ -359,7 +360,7 @@ public class Mp3TrackProvider implements AudioTrackInfoProvider {
 
   @Override
   public String getArtworkUrl() {
-    return null;
+    return getIdv3Tag(ARTWORK_TAG);
   }
 
   private static class FrameHeader {
