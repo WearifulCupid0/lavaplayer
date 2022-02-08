@@ -35,7 +35,9 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
  * Audio source manager which detects getyarn.io tracks by URL.
  */
 public class GetyarnAudioSourceManager implements HttpConfigurable, AudioSourceManager {
-  private static final Pattern GETYARN_REGEX = Pattern.compile("(?:http://|https://(?:www\\.)?)?getyarn\\.io/yarn-clip/(.*)");
+  private static final String GETYARN_CLIP_URL = "https://getyarn.io/yarn-clip/";
+  private static final String GETYARN_REGEX = "^(?:http://|https://|)?(?:www\\.)?getyarn\\.io/yarn-clip/([a-zA-Z0-9-_]+)";
+  private static final Pattern getyarnPattern = Pattern.compile(GETYARN_REGEX);
 
   private final HttpInterfaceManager httpInterfaceManager;
 
@@ -55,13 +57,13 @@ public class GetyarnAudioSourceManager implements HttpConfigurable, AudioSourceM
 
   @Override
   public AudioItem loadItem(AudioPlayerManager manager, AudioReference reference) {
-    final Matcher m = GETYARN_REGEX.matcher(reference.identifier);
+    Matcher m = getyarnPattern.matcher(reference.identifier);
 
-    if (!m.matches()) {
-      return null;
+    if (m.find()) {
+      return extractVideoUrlFromPage(GETYARN_CLIP_URL + m.group(1));
     }
 
-    return extractVideoUrlFromPage(reference);
+    return null;
   }
 
   @Override
@@ -98,19 +100,25 @@ public class GetyarnAudioSourceManager implements HttpConfigurable, AudioSourceM
     httpInterfaceManager.configureBuilder(configurator);
   }
 
-  private AudioTrack extractVideoUrlFromPage(AudioReference reference) {
-    try (final CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(reference.identifier))) {
-      final String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
-      final Document document = Jsoup.parse(html);
+  private AudioTrack extractVideoUrlFromPage(String url) {
+    try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(url))) {
+      int statusCode = response.getStatusLine().getStatusCode();
+
+      if(!HttpClientTools.isSuccessWithContent(statusCode)) {
+         throw new IOException("Unexpected status code from yarn clip page: " + statusCode);
+      }
+
+      String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+      Document document = Jsoup.parse(html);
       
-      final AudioTrackInfo trackInfo = new AudioTrackInfo(
+      AudioTrackInfo trackInfo = new AudioTrackInfo(
         document.selectFirst("meta[property=og:title]").attr("content"),
         "Unknown author",
         Units.DURATION_MS_UNKNOWN,
-        document.selectFirst("meta[property=og:video:secure_url_video/mp4]").attr("content"),
+        document.selectFirst("meta[property=og:video:secure_url_video]").attr("content"),
         false,
-        reference.identifier,
-        document.selectFirst("meta[property=og:image_video.other]").attr("content")
+        url,
+        document.selectFirst(".video-js .ab100").attr("poster")
       );
 
       return new GetyarnAudioTrack(trackInfo, this);

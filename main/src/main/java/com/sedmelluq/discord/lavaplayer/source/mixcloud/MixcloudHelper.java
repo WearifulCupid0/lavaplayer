@@ -62,6 +62,6 @@ public class MixcloudHelper {
     }
 
     protected interface ApiResponse<T> {
-        AudioItem extract(JsonBrowser result) throws Exception;
+        AudioItem extract(JsonBrowser result);
     }
 }

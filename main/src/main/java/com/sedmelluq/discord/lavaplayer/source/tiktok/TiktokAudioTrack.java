@@ -22,7 +22,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
  * Audio track that handles processing TikTok tracks.
  */
 public class TiktokAudioTrack extends DelegatedAudioTrack {
-    private static final Logger log = LoggerFactory.getLogger(TiktokAudioTrack.class);
+  private static final Logger log = LoggerFactory.getLogger(TiktokAudioTrack.class);
 
   private final TiktokAudioSourceManager sourceManager;
 
