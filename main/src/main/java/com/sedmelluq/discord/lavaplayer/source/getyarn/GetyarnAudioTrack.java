@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 public class GetyarnAudioTrack extends DelegatedAudioTrack {
   private static final Logger log = LoggerFactory.getLogger(DelegatedAudioTrack.class);
+  private static final String URL = "https://y.yarn.co/%s.mp4";
   private final GetyarnAudioSourceManager sourceManager;
 
   public GetyarnAudioTrack(AudioTrackInfo trackInfo, GetyarnAudioSourceManager sourceManager) {
@@ -25,11 +26,12 @@ public class GetyarnAudioTrack extends DelegatedAudioTrack {
   @Override
   public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
     try (HttpInterface httpInterface = sourceManager.getHttpInterface()) {
-      log.debug("Starting getyarn.io track from URL: {}", trackInfo.identifier);
+      String url = String.format(URL, trackInfo.identifier);
+      log.debug("Starting getyarn.io track from URL: {}", url);
 
       try (PersistentHttpStream inputStream = new PersistentHttpStream(
           httpInterface,
-          new URI(trackInfo.identifier),
+          new URI(url),
           Units.CONTENT_LENGTH_UNKNOWN
       )) {
         processDelegate(new MpegAudioTrack(trackInfo, inputStream), localExecutor);

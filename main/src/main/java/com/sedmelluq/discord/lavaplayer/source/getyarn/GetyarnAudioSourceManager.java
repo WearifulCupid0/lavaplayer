@@ -60,7 +60,7 @@ public class GetyarnAudioSourceManager implements HttpConfigurable, AudioSourceM
     Matcher m = getyarnPattern.matcher(reference.identifier);
 
     if (m.find()) {
-      return extractVideoUrlFromPage(GETYARN_CLIP_URL + m.group(1));
+      return extractVideoUrlFromPage(m.group(1));
     }
 
     return null;
@@ -100,7 +100,8 @@ public class GetyarnAudioSourceManager implements HttpConfigurable, AudioSourceM
     httpInterfaceManager.configureBuilder(configurator);
   }
 
-  private AudioTrack extractVideoUrlFromPage(String url) {
+  private AudioTrack extractVideoUrlFromPage(String identifier) {
+    String url = GETYARN_CLIP_URL + identifier;
     try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(url))) {
       int statusCode = response.getStatusLine().getStatusCode();
 
@@ -115,7 +116,7 @@ public class GetyarnAudioSourceManager implements HttpConfigurable, AudioSourceM
         document.selectFirst("meta[property=og:title]").attr("content"),
         "Unknown author",
         Units.DURATION_MS_UNKNOWN,
-        document.selectFirst("meta[property=og:video:secure_url_video]").attr("content"),
+        identifier,
         false,
         url,
         document.selectFirst(".video-js .ab100").attr("poster")
