@@ -33,7 +33,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN;
 
 public class TuneinAudioSourceManager implements AudioSourceManager, HttpConfigurable {
     private static final String TUNEIN_URL = "https://tunein.com/radio/%s/";
-    private static final String TUNEIN_REGEX = "^(?:http://|https://|)(?:www\\.|)radio\\.com/radio/([a-zA-Z0-9-_]+)";
+    private static final String TUNEIN_REGEX = "^(?:http://|https://|)(?:www\\.|)tunein\\.com/radio/([a-zA-Z0-9-_]+)";
     private static final String RADIO_DATA_REGEX = "window\\.INITIAL_STATE=(.*);";
 
     private static final Pattern tuneinPattern = Pattern.compile(TUNEIN_REGEX);
