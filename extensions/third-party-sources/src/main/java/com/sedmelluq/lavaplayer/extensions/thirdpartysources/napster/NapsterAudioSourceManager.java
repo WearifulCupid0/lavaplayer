@@ -39,7 +39,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 
 public class NapsterAudioSourceManager extends ThirdPartyAudioSourceManager implements HttpConfigurable {
     private static final String NAPSTER_URL_REGEX = "^(?:https://|http://|)(?:www\\.|app\\.|[a-zA-Z]{2}\\.|)napster\\.com/artist/([a-zA-Z0-9-_]+)(?:/album/([a-zA-Z0-9-_]+)(?:/track/([a-zA-Z0-9-_]+)|)|)";
-    private static final String NAPSTER_APP_REGEX = "^(?:https://|http://|)(?:www\\.|app\\.|[a-zA-Z]{2}\\.|)napster\\.com/(artist|track|album|playlist)/([a-zA-Z0-9-_.]+)";
+    private static final String NAPSTER_APP_REGEX = "^(?:https://|http://|)(?:www\\.|app\\.|[a-zA-Z]{2}\\.|)napster\\.com/(track|album|playlist)/([a-zA-Z0-9-_\\.]+)";
 	
     private static final Pattern napsterUrlPattern = Pattern.compile(NAPSTER_URL_REGEX);
     private static final Pattern napsterAppPattern = Pattern.compile(NAPSTER_APP_REGEX);
@@ -90,13 +90,12 @@ public class NapsterAudioSourceManager extends ThirdPartyAudioSourceManager impl
             String artist = m.group(1);
             if (track != null) return this.loadTrack(artist, album, track, null);
             if (album != null) return this.loadAlbum(artist, album, null);
-            if (artist != null) return this.loadArtist(artist, null);
+            if (artist != null) return this.loadArtist(artist);
         }
 
         if ((m = napsterAppPattern.matcher(reference.identifier) ).find()) {
             String id = m.group(2);
             switch (m.group(1)) {
-                case "artist": return this.loadArtist(null, id);
                 case "playlist": return this.loadPlaylist(id);
                 case "track": return this.loadTrack(null, null, null, id);
                 case "album": return this.loadAlbum(null, null, id);
@@ -219,8 +218,8 @@ public class NapsterAudioSourceManager extends ThirdPartyAudioSourceManager impl
         );
     }
 
-    private AudioItem loadArtist(String a, String id) {
-        JsonBrowser artist = this.requestApi(String.format(ARTIST_API_URL, id == null ? a : id)).get("artists").index(0);
+    private AudioItem loadArtist(String id) {
+        JsonBrowser artist = this.requestApi(String.format(ARTIST_API_URL, id)).get("artists").index(0);
         if (artist.isNull()) {
             return AudioReference.NO_TRACK;
         }

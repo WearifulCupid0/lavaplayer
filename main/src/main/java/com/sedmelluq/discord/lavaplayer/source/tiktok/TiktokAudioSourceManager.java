@@ -33,8 +33,11 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
  * Audio source manager which detects Tiktok tracks by URL.
  */
 public class TiktokAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-    private final static String VIDEO_REGEX = "^(?:http://|https://|)(?:www\\.|m\\.|)tiktok\\.com/@\\w+/video/(\\d+)";
-    private final static Pattern videoPattern = Pattern.compile(VIDEO_REGEX);
+    private final static String VIDEO_URL_REGEX = "^(?:http://|https://|)(?:www\\.|m\\.|)tiktok\\.com/@\\w+/video/(\\d+)";
+    private static final String MOBILE_URL_REGEX = "^(?:https?://)?vm\\.tiktok\\.com/\\w+";
+
+    private final static Pattern videoUrlPattern = Pattern.compile(VIDEO_URL_REGEX);
+    private final static Pattern mobileUrlPattern = Pattern.compile(MOBILE_URL_REGEX);
 
     private final static String API_URL = "http://api2.musical.ly/aweme/v1/aweme/detail/?aweme_id=";
     private final static String POST_URL = "https://www.tiktok.com/%s/video/%s";
@@ -55,7 +58,12 @@ public class TiktokAudioSourceManager implements AudioSourceManager, HttpConfigu
 
     @Override
     public AudioItem loadItem(AudioPlayerManager manager, AudioReference reference) {
-        Matcher matcher = videoPattern.matcher(reference.identifier);
+        String url = reference.identifier;
+        if (mobileUrlPattern.matcher(url).find()) {
+            url = this.getVideoUrl(reference.identifier);
+        }
+        
+        Matcher matcher = videoUrlPattern.matcher(url);
         if (matcher.find()) {
             JsonBrowser json = loadFromApi(matcher.group(1));
             if (json != null) {
@@ -137,5 +145,13 @@ public class TiktokAudioSourceManager implements AudioSourceManager, HttpConfigu
         );
 
         return new TiktokAudioTrack(info, this);
+    }
+
+    private String getVideoUrl(String url) {
+        try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(url))) {
+            return HttpClientTools.getRedirectLocation(url, response);
+        } catch (IOException e) {
+            throw new FriendlyException("Failed to get video url from mobile tiktok url", SUSPICIOUS, e);
+        }
     }
 }

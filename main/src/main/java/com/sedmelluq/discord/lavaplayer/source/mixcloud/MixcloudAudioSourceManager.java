@@ -9,7 +9,6 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
 import com.sedmelluq.discord.lavaplayer.track.AudioItem;
-import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
@@ -136,73 +135,78 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
         httpInterfaceManager.configureBuilder(configurator);
     }
 
-    private AudioTrack loadTrack(String slug, String username) {
-        JsonBrowser json = MixcloudHelper.requestGraphql(getHttpInterface(), String.format(TRACK_PAYLOAD, slug, username));
-        return buildTrack(json.get("cloudcast"));
+    private AudioItem loadTrack(String slug, String username) {
+        return MixcloudHelper.requestGraphql(getHttpInterface(), String.format(TRACK_PAYLOAD, slug, username), (json) -> {
+            return buildTrack(json.get("cloudcast"));
+        });
     }
 
-    private AudioPlaylist loadPlaylist(String slug, String username) {
+    private AudioItem loadPlaylist(String slug, String username) {
         if(slug == null && username != null) return loadArtist(username);
-        JsonBrowser json = MixcloudHelper.requestGraphql(getHttpInterface(), String.format(PLAYLIST_PAYLOAD, slug, username));
-        JsonBrowser playlistData = json.get("playlist");
-        if(playlistData.isNull()) return null;
+        return MixcloudHelper.requestGraphql(getHttpInterface(), String.format(PLAYLIST_PAYLOAD, slug, username), (json) -> {
+            JsonBrowser playlistData = json.get("playlist");
+            if(playlistData.isNull()) return AudioReference.NO_TRACK;
 
-        List<AudioTrack> tracks = new ArrayList<>();
+            List<AudioTrack> tracks = new ArrayList<>();
 
-        playlistData.get("items").get("edges").values()
-        .forEach(edge -> {
-            JsonBrowser trackData = edge.get("node").get("cloudcast");
-            AudioTrack track = buildTrack(trackData);
-            if (track != null) tracks.add(track);
+            playlistData.get("items").get("edges").values()
+            .forEach(edge -> {
+                JsonBrowser trackData = edge.get("node").get("cloudcast");
+                AudioTrack track = buildTrack(trackData);
+                if (track != null) tracks.add(track);
+            });
+
+            return new BasicAudioPlaylist(
+                playlistData.get("name").text(),
+                playlistData.get("owner").get("displayName").text(),
+                playlistData.get("picture").get("url").text(),
+                String.format(PLAYLIST_URL, playlistData.get("owner").get("username").text(), playlistData.get("slug").text()),
+                "playlist", tracks, null, false
+            );
         });
-
-        return new BasicAudioPlaylist(
-            playlistData.get("name").text(),
-            playlistData.get("owner").get("displayName").text(),
-            playlistData.get("picture").get("url").text(),
-            String.format(PLAYLIST_URL, playlistData.get("owner").get("username").text(), playlistData.get("slug").text()),
-            "playlist", tracks, null, false
-        );
     }
 
-    private AudioPlaylist loadArtist(String username) {
-        JsonBrowser json = MixcloudHelper.requestGraphql(getHttpInterface(), String.format(ARTIST_PAYLOAD, username));
-        JsonBrowser artistData = json.get("user");
-        if(artistData.isNull()) return null;
+    private AudioItem loadArtist(String username) {
+        return MixcloudHelper.requestGraphql(getHttpInterface(), String.format(ARTIST_PAYLOAD, username), (json) -> {
+            JsonBrowser artistData = json.get("user");
+            if(artistData.isNull()) return AudioReference.NO_TRACK;
 
-        List<AudioTrack> tracks = new ArrayList<>();
+            List<AudioTrack> tracks = new ArrayList<>();
 
-        artistData.get("uploads").get("edges").values()
-        .forEach(edge -> {
-            JsonBrowser trackData = edge.get("node");
-            AudioTrack track = buildTrack(trackData);
-            if (track != null) tracks.add(track);
+            artistData.get("uploads").get("edges").values()
+            .forEach(edge -> {
+                JsonBrowser trackData = edge.get("node");
+                AudioTrack track = buildTrack(trackData);
+                if (track != null) tracks.add(track);
+            });
+
+            return new BasicAudioPlaylist(
+                artistData.get("displayName").text(),
+                artistData.get("displayName").text(),
+                artistData.get("picture").get("url").text(),
+                String.format(ARTIST_URL, artistData.get("username").text()),
+                "artist", tracks, null, false
+            );
         });
-
-        return new BasicAudioPlaylist(
-            artistData.get("displayName").text(),
-            artistData.get("displayName").text(),
-            artistData.get("picture").get("url").text(),
-            String.format(ARTIST_URL, artistData.get("username").text()),
-            "artist", tracks, null, false
-        );
     }
 
-    private AudioPlaylist loadSearch(String query) {
-        JsonBrowser json = MixcloudHelper.requestGraphql(getHttpInterface(), String.format(SEARCH_PAYLOAD, query.replaceAll("\"|\\\\", "")));
-        JsonBrowser edges = json.get("viewer").get("search").get("searchQuery").get("cloudcasts").get("edges");
-        if(edges.index(0).isNull()) return null;
+    private AudioItem loadSearch(String query) {
+        return MixcloudHelper.requestGraphql(getHttpInterface(), String.format(SEARCH_PAYLOAD, query.replaceAll("\"|\\\\", "")), (json) -> {
+            JsonBrowser edges = json.get("viewer").get("search").get("searchQuery").get("cloudcasts").get("edges");
+            
+            if(edges.index(0).isNull()) return AudioReference.NO_TRACK;
 
-        List<AudioTrack> tracks = new ArrayList<>();
+            List<AudioTrack> tracks = new ArrayList<>();
 
-        edges.values()
-        .forEach(edge -> {
-            JsonBrowser trackData = edge.get("node");
-            AudioTrack track = buildTrack(trackData);
-            if (track != null) tracks.add(track);
+            edges.values()
+            .forEach(edge -> {
+                JsonBrowser trackData = edge.get("node");
+                AudioTrack track = buildTrack(trackData);
+                if (track != null) tracks.add(track);
+            });
+
+            return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
         });
-
-        return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
     }
 
     private AudioTrack buildTrack(JsonBrowser trackData) {

@@ -4,6 +4,7 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
+import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -19,26 +20,26 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 import static com.sedmelluq.discord.lavaplayer.source.mixcloud.MixcloudConstants.GRAPHQL_URL;
 
 public class MixcloudHelper {
-    public static JsonBrowser requestGraphql(HttpInterface httpInterface, String body) {
+    public static AudioItem requestGraphql(HttpInterface httpInterface, String body, ApiResponse<AudioItem> response) {
         HttpPost post = new HttpPost(GRAPHQL_URL);
         StringEntity payload = new StringEntity(body, "UTF-8");
         post.setEntity(payload);
         post.setHeader("Content-Type", "application/json");
-        try (CloseableHttpResponse response = httpInterface.execute(post)) {
-            int statusCode = response.getStatusLine().getStatusCode();
+        try (CloseableHttpResponse res = httpInterface.execute(post)) {
+            int statusCode = res.getStatusLine().getStatusCode();
 
             if (!HttpClientTools.isSuccessWithContent(statusCode)) {
                 throw new IOException("Mixcloud graphql request failed with status code: " + statusCode);
             }
 
-            String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+            String responseText = IOUtils.toString(res.getEntity().getContent(), StandardCharsets.UTF_8);
             JsonBrowser json = JsonBrowser.parse(responseText).get("data");
 
             if(!json.get("errors").isNull()) {
                 throw new Exception(json.get("errors").index(0).get("message").text());
             }
 
-            return json;
+            return response.extract(json);
         } catch (Exception e) {
             throw new FriendlyException("Failed to make a request to Mixcloud Graphql", SUSPICIOUS, e);
         }
@@ -58,5 +59,9 @@ public class MixcloudHelper {
             }
         }
         return url;
+    }
+
+    protected interface ApiResponse<T> {
+        AudioItem extract(JsonBrowser result) throws Exception;
     }
 }
