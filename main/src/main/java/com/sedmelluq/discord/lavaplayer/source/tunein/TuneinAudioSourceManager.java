@@ -1,4 +1,4 @@
-package com.sedmelluq.discord.lavaplayer.source.streamable;
+package com.sedmelluq.discord.lavaplayer.source.tunein;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
@@ -29,18 +29,19 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
+import static com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN;
 
-public class StreamableAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-    private static final String STREAMABLE_URL = "https://streamable.com/";
-    private static final String STREAMABLE_REGEX = "^(?:http://|https://|)(?:www\\.|m\\.|)streamable\\.com/([a-zA-Z0-9-_]+)";
-    private static final String VIDEO_DATA_REGEX = "var videoObject\\s*=\\s*(.*);";
+public class TuneinAudioSourceManager implements AudioSourceManager, HttpConfigurable {
+    private static final String TUNEIN_URL = "https://tunein.com/radio/%s/";
+    private static final String TUNEIN_REGEX = "^(?:http://|https://|)(?:www\\.|)radio\\.com/radio/([a-zA-Z0-9-_]+)";
+    private static final String RADIO_DATA_REGEX = "window\\.INITIAL_STATE=(.*);";
 
-    private static final Pattern streamablePattern = Pattern.compile(STREAMABLE_REGEX);
-    private static final Pattern videoDataPattern = Pattern.compile(VIDEO_DATA_REGEX);
+    private static final Pattern tuneinPattern = Pattern.compile(TUNEIN_REGEX);
+    private static final Pattern radioDataPattern = Pattern.compile(RADIO_DATA_REGEX);
 
     private final HttpInterfaceManager httpInterfaceManager;
 
-    public StreamableAudioSourceManager() {
+    public TuneinAudioSourceManager() {
         httpInterfaceManager = new ThreadLocalHttpInterfaceManager(
             HttpClientTools
                 .createSharedCookiesHttpBuilder()
@@ -51,15 +52,15 @@ public class StreamableAudioSourceManager implements AudioSourceManager, HttpCon
 
     @Override
     public String getSourceName() {
-        return "streamable";
+        return "tunein";
     }
 
     @Override
     public AudioItem loadItem(AudioPlayerManager playerManager, AudioReference reference) {
-        Matcher m = streamablePattern.matcher(reference.identifier);
+        Matcher m = tuneinPattern.matcher(reference.identifier);
 
         if (m.find()) {
-            return extractVideoUrlFromPage(STREAMABLE_URL + m.group(1));
+            return extractVideoUrlFromPage(String.format(TUNEIN_URL, m.group(1)));
         }
 
         return null;
@@ -77,7 +78,7 @@ public class StreamableAudioSourceManager implements AudioSourceManager, HttpCon
 
     @Override
     public AudioTrack decodeTrack(AudioTrackInfo trackInfo, DataInput input) {
-        return new StreamableAudioTrack(trackInfo, this);
+        return new TuneinAudioTrack(trackInfo, this);
     }
 
     @Override
@@ -104,33 +105,34 @@ public class StreamableAudioSourceManager implements AudioSourceManager, HttpCon
             int statusCode = response.getStatusLine().getStatusCode();
 
             if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-                throw new IOException("Unexpected status code from Streamable track page: " + statusCode);
+                throw new IOException("Unexpected status code from TuneIn radio page: " + statusCode);
             }
 
             String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
-            Matcher m = videoDataPattern.matcher(html);
+            Matcher m = radioDataPattern.matcher(html);
             if (!m.find()) {
-                throw new IOException("Video data not present on track page");
+                throw new IOException("Radio data not present on radio page");
             }
             JsonBrowser json = JsonBrowser.parse(m.group(1));
+            JsonBrowser radio = json.get("profiles").values().get(0);
 
-            String artwork = json.get("thumbnail_url").isNull()
-            ? json.get("poster_url").text()
-            : json.get("thumbnail_url").text();
+            if (radio.isNull()) {
+                throw new IOException("Radio data info is empty");
+            }
 
             AudioTrackInfo trackInfo = new AudioTrackInfo(
-                json.get("title").safeText(),
+                radio.get("title").safeText(),
                 "Unknown author",
-                (long) (json.get("duration").as(Double.class) * 1000.0),
+                DURATION_MS_UNKNOWN,
+                radio.get("guideId").text(),
+                true,
                 url,
-                false,
-                url,
-                artwork != null ? "https:" + artwork : null
+                radio.get("image").text()
             );
 
-            return new StreamableAudioTrack(trackInfo, this);
+            return new TuneinAudioTrack(trackInfo, this);
         } catch (IOException e) {
-            throw new FriendlyException("Failed to load info for Streamable track", SUSPICIOUS, e);
+            throw new FriendlyException("Failed to load info for Tunein radio", SUSPICIOUS, e);
         }
     }
 }
