@@ -8,7 +8,6 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
-import com.sedmelluq.discord.lavaplayer.tools.io.ThreadLocalHttpInterfaceManager;
 import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -42,12 +41,7 @@ public class TuneinAudioSourceManager implements AudioSourceManager, HttpConfigu
     private final HttpInterfaceManager httpInterfaceManager;
 
     public TuneinAudioSourceManager() {
-        httpInterfaceManager = new ThreadLocalHttpInterfaceManager(
-            HttpClientTools
-                .createSharedCookiesHttpBuilder()
-                .setRedirectStrategy(new HttpClientTools.NoRedirectsStrategy()),
-            HttpClientTools.DEFAULT_REQUEST_CONFIG
-        );
+        httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
     }
 
     @Override
