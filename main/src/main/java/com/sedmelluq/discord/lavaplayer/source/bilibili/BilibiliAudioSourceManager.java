@@ -81,7 +81,7 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
                 
                 JsonBrowser trackMeta = JsonBrowser.parse(response.getEntity().getContent());
                 if (Integer.parseInt(trackMeta.get("code").text()) != 0) return null;
-                return extractTrackInfo(trackMeta);
+                return extractTrackInfo(trackMeta.get("data"));
             }
         } catch (IOException e) {
             throw new FriendlyException("Error occurred when extracting video info.", SUSPICIOUS, e);
@@ -113,28 +113,55 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
         }
     }
 
-    private AudioTrack loadTrack(String videoId) {
+    private AudioItem loadTrack(String videoId) {
         try (HttpInterface httpInterface = getHttpInterface()) {
             try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(VIEW_API + "?'bvid'=" + videoId))) {
                 HttpClientTools.assertSuccessWithContent(response, "video api response");
 
                 JsonBrowser trackMeta = JsonBrowser.parse(response.getEntity().getContent());
-                if (Integer.parseInt(trackMeta.get("code").text()) != 0) return null;
-                return extractTrackInfo(trackMeta);
+                if (trackMeta.get("code").as(Integer.class) != 0) return null;
+                JsonBrowser trackData = trackMeta.get("data");
+                if (trackData.get("videos").as(Integer.class) > 1) return extractTracksFromPage(trackData);
+                return extractTrackInfo(trackData);
             }
         } catch (IOException e) {
             throw new FriendlyException("Error occurred when extracting video info.", SUSPICIOUS, e);
         }
     }
 
-    private AudioTrack extractTrackInfo(JsonBrowser videoMeta) {
-        JsonBrowser trackMeta = videoMeta.get("data");
-        String title = trackMeta.get("title").text();
-        String uploader = trackMeta.get("owner").get("name").text();
-        String thumbnailUrl = trackMeta.get("pic").text();
-        long duration = Integer.parseInt(trackMeta.get("duration").text()) * 1000;
-        String videoId = trackMeta.get("bvid").text();
-        return new BilibiliAudioTrack(new AudioTrackInfo(title, uploader, duration, videoId, false, getWatchUrl(videoId), thumbnailUrl), this);
+    private AudioTrack extractTrackInfo(JsonBrowser videoData) {
+        String title = videoData.get("title").text();
+        String uploader = videoData.get("owner").get("name").text();
+        String thumbnailUrl = videoData.get("pic").text();
+        long duration = Integer.parseInt(videoData.get("duration").text()) * 1000;
+        String videoId = videoData.get("bvid").text();
+        String identifier = videoId + "/" + videoData.get("cid").text();
+        return new BilibiliAudioTrack(new AudioTrackInfo(title, uploader, duration, identifier, false, getWatchUrl(videoId), thumbnailUrl), this);
+    }
+
+    private AudioPlaylist extractTracksFromPage(JsonBrowser videosData) {
+        String uploader = videosData.get("owner").get("name").text();
+        String thumbnailUrl = videosData.get("pic").text();
+        String videoId = videosData.get("bvid").text();
+
+        List<AudioTrack> tracks = new ArrayList<>();
+        List<JsonBrowser> videos = videosData.get("pages").values();
+
+        for(int i = 0; i < videos.size(); i++) {
+            JsonBrowser video = videos.get(i);
+            String title = video.get("part").text();
+            long duration = Integer.parseInt(video.get("duration").text()) * 1000;
+            String cid = video.get("cid").text();
+
+            AudioTrackInfo trackInfo = new AudioTrackInfo(title, uploader, duration, videoId + "/" + cid, false, getWatchUrl(videoId) + "?p=" + (i + 1), thumbnailUrl);
+            tracks.add(new BilibiliAudioTrack(trackInfo, this));
+        }
+
+        return new BasicAudioPlaylist(
+            "Pages for video: " + videosData.get("title").text(),
+            uploader, thumbnailUrl, getWatchUrl(videoId), "pages",
+            tracks, null, false
+        );
     }
 
     @Override

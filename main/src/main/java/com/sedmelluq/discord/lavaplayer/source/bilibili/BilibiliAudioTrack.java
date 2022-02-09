@@ -20,7 +20,6 @@ import java.net.URI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.sedmelluq.discord.lavaplayer.source.bilibili.BilibiliConstants.VIEW_API;
 import static com.sedmelluq.discord.lavaplayer.source.bilibili.BilibiliConstants.PLAYER_API;
 
 /**
@@ -52,26 +51,20 @@ public class BilibiliAudioTrack extends DelegatedAudioTrack {
     }
 
     private String loadPlaybackUrl(HttpInterface httpInterface) throws Exception {
-        try (CloseableHttpResponse trackMetaResponse = httpInterface.execute(new HttpGet(VIEW_API + "?bvid=" + trackInfo.identifier))) {
-            HttpClientTools.assertSuccessWithContent(trackMetaResponse, "video api response");
+        final String[] ids = trackInfo.identifier.split("/");
+        URI uri = new URIBuilder(PLAYER_API)
+        .addParameter("bvid", ids[0])
+        .addParameter("cid", ids[1])
+        .addParameter("qn", "0")
+        .addParameter("fnval", "80")
+        .addParameter("fourk", "1").build();
 
-            JsonBrowser trackMeta = JsonBrowser.parse(trackMetaResponse.getEntity().getContent());
+        try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(uri))) {
+            HttpClientTools.assertSuccessWithContent(response, "player api");
 
-            URI uri = new URIBuilder(PLAYER_API)
-            .addParameter("bvid", trackInfo.identifier)
-            .addParameter("cid", trackMeta.get("data").get("cid").text())
-            .addParameter("qn", "0").addParameter("fnval", "80").addParameter("fourk", "1")
-            .build();
-
-            HttpGet request = new HttpGet(uri);
-
-            try (CloseableHttpResponse response = httpInterface.execute(request)) {
-                HttpClientTools.assertSuccessWithContent(response, "player api");
-
-                JsonBrowser trackMetaData = JsonBrowser.parse(response.getEntity().getContent());
-      
-                return trackMetaData.get("data").get("dash").get("audio").values().get(0).get("base_url").text();
-            }
+            JsonBrowser trackMetaData = JsonBrowser.parse(response.getEntity().getContent());
+            
+            return trackMetaData.get("data").get("dash").get("audio").index(0).get("base_url").text();
         }
     }
 
