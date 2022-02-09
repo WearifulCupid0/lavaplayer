@@ -114,11 +114,7 @@ public class TiktokAudioSourceManager implements AudioSourceManager, HttpConfigu
     public JsonBrowser loadFromApi(String id) {
         URI uri = URI.create(API_URL + id);
         try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(uri))) {
-            int statusCode = response.getStatusLine().getStatusCode();
-
-            if(!HttpClientTools.isSuccessWithContent(statusCode)) {
-                throw new IOException("Unexpected status code from TikTok api: " + statusCode);
-            }
+            HttpClientTools.assertSuccessWithContent(response, "TikTok api");
 
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
             return json;

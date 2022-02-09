@@ -54,11 +54,7 @@ public class StreamableAudioTrack extends DelegatedAudioTrack {
 
     private String loadPlaybackUrl(HttpInterface httpInterface) throws IOException {
         try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(trackInfo.identifier))) {
-            int statusCode = response.getStatusLine().getStatusCode();
-
-            if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-                throw new IOException("Unexpected status code from Streamable track page: " + statusCode);
-            }
+            HttpClientTools.assertSuccessWithContent(response, "video page");
 
             String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             Document document = Jsoup.parse(html);

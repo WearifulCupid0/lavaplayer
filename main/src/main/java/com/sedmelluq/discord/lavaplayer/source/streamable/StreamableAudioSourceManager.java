@@ -101,11 +101,7 @@ public class StreamableAudioSourceManager implements AudioSourceManager, HttpCon
 
     private AudioTrack extractVideoUrlFromPage(String url) {
         try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(url))) {
-            int statusCode = response.getStatusLine().getStatusCode();
-
-            if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-                throw new IOException("Unexpected status code from Streamable track page: " + statusCode);
-            }
+            HttpClientTools.assertSuccessWithContent(response, "track page info");
 
             String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             Matcher m = videoDataPattern.matcher(html);

@@ -108,11 +108,7 @@ public class InstagramAudioSourceManager implements AudioSourceManager, HttpConf
     public JsonBrowser loadFromApi(String url) {
         URI uri = URI.create(url + "?__a=1");
         try(CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(uri))) {
-            int statusCode = response.getStatusLine().getStatusCode();
-
-            if(!HttpClientTools.isSuccessWithContent(statusCode)) {
-                throw new IOException("Unexpected status code from Instagram api: " + statusCode);
-            }
+            HttpClientTools.assertSuccessWithContent(response, "Instagram api");
 
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
             return json;

@@ -65,11 +65,7 @@ public class RedditAudioSourceManager implements AudioSourceManager, HttpConfigu
   private AudioTrack loadTrack(String id) {
     try (HttpInterface httpInterface = getHttpInterface()) {
       try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(API_URL + id))) {
-        int statusCode = response.getStatusLine().getStatusCode();
-
-        if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-          throw new IOException("Unexpected response code from video info: " + statusCode);
-        }
+        HttpClientTools.assertSuccessWithContent(response, "video api response");
 
         JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
 

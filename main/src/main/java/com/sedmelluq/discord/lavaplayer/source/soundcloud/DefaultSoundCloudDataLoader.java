@@ -33,7 +33,7 @@ public class DefaultSoundCloudDataLoader implements SoundCloudDataLoader {
   public JsonBrowser load(HttpInterface httpInterface, String url) throws Exception {
     try {
       JsonBrowser result = loadFromApi(httpInterface, url);
-      if (result == null) return loadFromHTML(httpInterface, url);
+      if (result == null) result = loadFromHTML(httpInterface, url);
       return result;
     } catch(Exception e) {
       return loadFromHTML(httpInterface, url);
@@ -43,14 +43,13 @@ public class DefaultSoundCloudDataLoader implements SoundCloudDataLoader {
   private JsonBrowser loadFromApi(HttpInterface httpInterface, String url) throws Exception {
     URI uri = new URIBuilder("https://api-v2.soundcloud.com/resolve").addParameter("url", url).build();
     try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(uri))) {
-      JsonBrowser json = null;
       if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
         return null;
       }
 
       HttpClientTools.assertSuccessWithContent(response, "video api response");
 
-      json = JsonBrowser.parse(response.getEntity().getContent());
+      JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
 
       if(json.isNull() || json.get("id").isNull()) {
         return null;

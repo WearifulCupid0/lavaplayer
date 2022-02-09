@@ -109,12 +109,8 @@ public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigura
     private JsonBrowser getMetadata(String identifier) {
         URI uri = URI.create(String.format(API_URL, identifier));
         try(CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(uri))) {
-            int statusCode = response.getStatusLine().getStatusCode();
-
-            if(!HttpClientTools.isSuccessWithContent(statusCode)) {
-                throw new IOException("Unexpected status code from Clyp api: " + statusCode);
-            }
-
+            HttpClientTools.assertSuccessWithContent(response, "audio api response");
+            
             return JsonBrowser.parse(response.getEntity().getContent());
         } catch(IOException e) {
             throw new FriendlyException("Failed to fetch Clyp song information", SUSPICIOUS, e);

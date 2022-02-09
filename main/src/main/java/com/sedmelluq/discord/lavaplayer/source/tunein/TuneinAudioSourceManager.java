@@ -96,11 +96,7 @@ public class TuneinAudioSourceManager implements AudioSourceManager, HttpConfigu
 
     private AudioTrack extractVideoUrlFromPage(String url) {
         try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(url))) {
-            int statusCode = response.getStatusLine().getStatusCode();
-
-            if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-                throw new IOException("Unexpected status code from TuneIn radio page: " + statusCode);
-            }
+            HttpClientTools.assertSuccessWithContent(response, "radio info page");
 
             String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             Matcher m = radioDataPattern.matcher(html);

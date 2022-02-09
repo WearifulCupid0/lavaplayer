@@ -103,11 +103,7 @@ public class GetyarnAudioSourceManager implements HttpConfigurable, AudioSourceM
   private AudioTrack extractVideoUrlFromPage(String identifier) {
     String url = GETYARN_CLIP_URL + identifier;
     try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(url))) {
-      int statusCode = response.getStatusLine().getStatusCode();
-
-      if(!HttpClientTools.isSuccessWithContent(statusCode)) {
-         throw new IOException("Unexpected status code from yarn clip page: " + statusCode);
-      }
+      HttpClientTools.assertSuccessWithContent(response, "clip page");
 
       String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
       Document document = Jsoup.parse(html);

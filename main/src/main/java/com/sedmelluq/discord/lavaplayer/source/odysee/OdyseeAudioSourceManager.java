@@ -86,11 +86,7 @@ public class OdyseeAudioSourceManager implements AudioSourceManager, HttpConfigu
       post.setEntity(new StringEntity(String.format(OdyseeConstants.RESOLVE_PAYLOAD, "lbry://" + uploader + "/" + videoName), ContentType.APPLICATION_JSON));
 
       try (CloseableHttpResponse response = httpInterface.execute(post)) {
-        int statusCode = response.getStatusLine().getStatusCode();
-
-        if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-          throw new IOException("Unexpected response code from video info: " + statusCode);
-        }
+        HttpClientTools.assertSuccessWithContent(response, "video api response");
 
         JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
 
@@ -161,11 +157,7 @@ public class OdyseeAudioSourceManager implements AudioSourceManager, HttpConfigu
       post.setEntity(new StringEntity(String.format(OdyseeConstants.RESOLVE_PAYLOAD, String.join("\", \"", urls)), ContentType.APPLICATION_JSON));
 
       try (CloseableHttpResponse response = httpInterface.execute(post)) {
-        int statusCode = response.getStatusLine().getStatusCode();
-
-        if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-          throw new IOException("Unexpected response code from video info: " + statusCode);
-        }
+        HttpClientTools.assertSuccessWithContent(response, "search api response");
 
         List<AudioTrack> tracks = new ArrayList<>();
 

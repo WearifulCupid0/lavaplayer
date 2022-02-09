@@ -50,7 +50,7 @@ public class ClypAudioTrack extends DelegatedAudioTrack {
     private void processAudioTrack(HttpInterface httpInterface, LocalAudioTrackExecutor localExecutor) throws Exception {
         URI url = URI.create("https://api.clyp.it/" + sourceManager.getIdentifier(trackInfo.identifier));
         try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(url))) {
-            HttpClientTools.assertSuccessWithContent(response, "audio page");
+            HttpClientTools.assertSuccessWithContent(response, "audio api response");
 
             JsonBrowser trackInfo = JsonBrowser.parse(response.getEntity().getContent());
 

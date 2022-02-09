@@ -105,11 +105,7 @@ public class OcremixAudioSourceManager implements AudioSourceManager, HttpConfig
     private AudioTrack extractTrackFromIdentifier(String id) {
         String url = OCREMIX_URL + id;
         try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(url + "?view=xml"))) {
-            int statusCode = response.getStatusLine().getStatusCode();
-
-            if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-                throw new IOException("Unexpected status code from Overcloked Remix track page: " + statusCode);
-            }
+            HttpClientTools.assertSuccessWithContent(response, "track page info");
 
             String xml = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             Document document = Jsoup.parse(xml);

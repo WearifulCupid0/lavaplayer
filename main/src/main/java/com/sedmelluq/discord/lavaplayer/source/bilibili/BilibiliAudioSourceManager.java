@@ -32,15 +32,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.net.URLEncoder;
 
+import static com.sedmelluq.discord.lavaplayer.source.bilibili.BilibiliConstants.VIEW_API;
+import static com.sedmelluq.discord.lavaplayer.source.bilibili.BilibiliConstants.SEARCH_API;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
 public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfigurable {
     private static final String SEARCH_PREFIX = "blsearch:";
     private static final String DOMAIN_REGEX = "^(?:http://|https://|)(?:www\\.|m\\.|)bilibili\\.com/(video)[/:]([A-Za-z0-9]+).*";
     private static final Pattern urlPattern = Pattern.compile(DOMAIN_REGEX);
-
-    private static final String VIEW_API = "https://api.bilibili.com/x/web-interface/view";
-    private static final String SEARCH_API = "https://api.bilibili.com/x/web-interface/search/type";
 
     private final boolean allowSearch;
     private final HttpInterfaceManager httpInterfaceManager;
@@ -78,10 +77,8 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
     private AudioTrack loadTrackFromAid(String videoId) {
         try (HttpInterface httpInterface = getHttpInterface()) {
             try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(VIEW_API + "?aid=" + videoId))) {
-                int statusCode = response.getStatusLine().getStatusCode();
-                if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-                    throw new IOException("Unexpected response code from video info: " + statusCode);
-                }
+                HttpClientTools.assertSuccessWithContent(response, "video api response");
+                
                 JsonBrowser trackMeta = JsonBrowser.parse(response.getEntity().getContent());
                 if (Integer.parseInt(trackMeta.get("code").text()) != 0) return null;
                 return extractTrackInfo(trackMeta);
@@ -94,10 +91,8 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
     private AudioPlaylist loadSearchResult(String query) {
         try (HttpInterface httpInterface = getHttpInterface()) {
             try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(SEARCH_API + "?keyword=" + URLEncoder.encode(query, "UTF-8") + "&search_type=video"))) {
-                int statusCode = response.getStatusLine().getStatusCode();
-                if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-                    throw new IOException("Unexpected response code from video info: " + statusCode);
-                }
+                HttpClientTools.assertSuccessWithContent(response, "search api response");
+
                 JsonBrowser apiResponse = JsonBrowser.parse(response.getEntity().getContent());
                 List<JsonBrowser> apiResponseValues = apiResponse.get("data").get("result").values();
                 List<AudioTrack> tracks = new ArrayList<>();
@@ -120,11 +115,9 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
 
     private AudioTrack loadTrack(String videoId) {
         try (HttpInterface httpInterface = getHttpInterface()) {
-            try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(VIEW_API + "?bvid=" + videoId))) {
-                int statusCode = response.getStatusLine().getStatusCode();
-                if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-                    throw new IOException("Unexpected response code from video info: " + statusCode);
-                }
+            try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(VIEW_API + "?'bvid'=" + videoId))) {
+                HttpClientTools.assertSuccessWithContent(response, "video api response");
+
                 JsonBrowser trackMeta = JsonBrowser.parse(response.getEntity().getContent());
                 if (Integer.parseInt(trackMeta.get("code").text()) != 0) return null;
                 return extractTrackInfo(trackMeta);

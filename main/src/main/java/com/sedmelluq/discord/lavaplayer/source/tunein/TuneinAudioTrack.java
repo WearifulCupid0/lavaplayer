@@ -53,11 +53,7 @@ public class TuneinAudioTrack extends DelegatedAudioTrack {
 
     private String loadPlaybackUrl(HttpInterface httpInterface) throws IOException {
         try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(API_URL + trackInfo.identifier))) {
-            int statusCode = response.getStatusLine().getStatusCode();
-
-            if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-                throw new IOException("Unexpected status code from Tunein api: " + statusCode);
-            }
+            HttpClientTools.assertSuccessWithContent(response, "radio api");
 
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
             if (json.isNull() || json.get("body").index(0).isNull()) {

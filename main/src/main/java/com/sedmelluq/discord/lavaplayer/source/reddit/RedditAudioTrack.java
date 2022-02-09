@@ -17,42 +17,42 @@ import java.net.URI;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
 public class RedditAudioTrack extends DelegatedAudioTrack {
-  private static final Logger log = LoggerFactory.getLogger(RedditAudioTrack.class);
+    private static final Logger log = LoggerFactory.getLogger(RedditAudioTrack.class);
 
-  private final RedditAudioSourceManager sourceManager;
+    private final RedditAudioSourceManager sourceManager;
 
-  /**
-   * @param trackInfo Track info
-   * @param sourceManager Source manager which was used to find this track
-   */
-  public RedditAudioTrack(AudioTrackInfo trackInfo, RedditAudioSourceManager sourceManager) {
-    super(trackInfo);
+    /**
+     * @param trackInfo Track info
+     * @param sourceManager Source manager which was used to find this track
+     */
+    public RedditAudioTrack(AudioTrackInfo trackInfo, RedditAudioSourceManager sourceManager) {
+        super(trackInfo);
 
-    this.sourceManager = sourceManager;
-  }
-
-  @Override
-  public void process(LocalAudioTrackExecutor executor) throws Exception {
-    try (HttpInterface httpInterface = sourceManager.getHttpInterface()) {
-      String playbackUrl = "https://v.redd.it/" + trackInfo.identifier + "/DASH_audio.mp4";
-
-      log.debug("Starting Reddit track from URL: {}", playbackUrl);
-
-      try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(playbackUrl), null)) {
-        processDelegate(new MpegAudioTrack(trackInfo, stream), executor);
-      }
-    } catch (IOException e) {
-      throw new FriendlyException("Loading track from Reddit failed.", SUSPICIOUS, e);
+        this.sourceManager = sourceManager;
     }
-  }
 
-  @Override
-  protected AudioTrack makeShallowClone() {
-    return new RedditAudioTrack(trackInfo, sourceManager);
-  }
+    @Override
+    public void process(LocalAudioTrackExecutor executor) throws Exception {
+        try (HttpInterface httpInterface = sourceManager.getHttpInterface()) {
+            String playbackUrl = "https://v.redd.it/" + trackInfo.identifier + "/DASH_audio.mp4";
 
-  @Override
-  public RedditAudioSourceManager getSourceManager() {
-    return sourceManager;
-  }
+            log.debug("Starting Reddit track from URL: {}", playbackUrl);
+
+            try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(playbackUrl), null)) {
+                processDelegate(new MpegAudioTrack(trackInfo, stream), executor);
+            }
+        } catch (IOException e) {
+            throw new FriendlyException("Loading track from Reddit failed.", SUSPICIOUS, e);
+        }
+    }
+
+    @Override
+    protected AudioTrack makeShallowClone() {
+        return new RedditAudioTrack(trackInfo, sourceManager);
+    }
+
+    @Override
+    public RedditAudioSourceManager getSourceManager() {
+        return sourceManager;
+    }
 }

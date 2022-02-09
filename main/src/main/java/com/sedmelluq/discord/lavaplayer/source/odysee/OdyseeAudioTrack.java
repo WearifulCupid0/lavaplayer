@@ -63,11 +63,7 @@ public class OdyseeAudioTrack extends DelegatedAudioTrack {
     post.setEntity(new StringEntity(String.format(OdyseeConstants.GET_PAYLOAD, trackInfo.identifier), ContentType.APPLICATION_JSON));
 
     try (CloseableHttpResponse response = httpInterface.execute(post)) {
-      int statusCode = response.getStatusLine().getStatusCode();
-
-      if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-        throw new IOException("Unexpected status code from playback parameters page: " + statusCode);
-      }
+      HttpClientTools.assertSuccessWithContent(response, "player api response");
 
       JsonBrowser playbackUrl = JsonBrowser.parse(response.getEntity().getContent()).get("result").get("streaming_url");
 
