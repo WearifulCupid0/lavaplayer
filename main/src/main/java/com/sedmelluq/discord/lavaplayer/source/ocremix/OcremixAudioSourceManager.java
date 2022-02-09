@@ -35,7 +35,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 
 public class OcremixAudioSourceManager implements AudioSourceManager, HttpConfigurable {
     private static final String OCREMIX_MAIN_URL = "https://ocremix.org";
-    private static final String OCREMIX_URL = OCREMIX_MAIN_URL + "/remix/%s";
+    private static final String OCREMIX_URL = OCREMIX_MAIN_URL + "/remix/";
 
     private static final String OCREMIX_REGEX = "(?:https?://(?:www\\.)?ocremix\\.org/remix/)?(?<id>OCR[\\d]+)(?:.*)?";
 

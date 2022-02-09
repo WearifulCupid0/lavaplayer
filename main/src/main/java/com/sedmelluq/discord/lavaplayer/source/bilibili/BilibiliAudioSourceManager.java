@@ -115,7 +115,7 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
 
     private AudioItem loadTrack(String videoId) {
         try (HttpInterface httpInterface = getHttpInterface()) {
-            try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(VIEW_API + "?'bvid'=" + videoId))) {
+            try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(VIEW_API + "?bvid=" + videoId))) {
                 HttpClientTools.assertSuccessWithContent(response, "video api response");
 
                 JsonBrowser trackMeta = JsonBrowser.parse(response.getEntity().getContent());
