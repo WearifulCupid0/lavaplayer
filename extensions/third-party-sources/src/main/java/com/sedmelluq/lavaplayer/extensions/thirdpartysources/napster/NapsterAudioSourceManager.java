@@ -251,7 +251,7 @@ public class NapsterAudioSourceManager extends ThirdPartyAudioSourceManager impl
         if (playlist.isNull()) {
             return AudioReference.NO_TRACK;
         }
-        JsonBrowser json = this.requestApi(String.format(ARTIST_TRACK_API_URL, id));
+        JsonBrowser json = this.requestApi(String.format(PLAYLIST_TRACK_API_URL, id));
         if (json.get("tracks").index(0).isNull()) {
             return AudioReference.NO_TRACK;
         }
