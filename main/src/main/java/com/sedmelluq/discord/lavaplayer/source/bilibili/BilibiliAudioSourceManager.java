@@ -104,7 +104,7 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
                     String title = item.get("title").text();
                     title.replace("<em class=\"keyword\">", "").replace("</em>", "");
                     String uploader = item.get("author").text();
-                    String thumbnailUrl = "http:" + item.get("pic").text();
+                    String thumbnailUrl = "https:" + item.get("pic").text();
                     long duration = DataFormatTools.durationTextToMillis(item.get("duration").text());
                     String videoId = item.get("bvid").text();
                     tracks.add(
@@ -114,7 +114,7 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
                 return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
             }
         } catch (Exception e) {
-            throw new FriendlyException("Error occurred when extracting video info.", SUSPICIOUS, e);
+            throw new FriendlyException("Error occurred when extracting search results.", SUSPICIOUS, e);
         }
     }
 
