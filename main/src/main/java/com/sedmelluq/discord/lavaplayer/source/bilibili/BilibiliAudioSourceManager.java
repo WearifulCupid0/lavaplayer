@@ -18,6 +18,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 import java.io.DataInput;
@@ -30,7 +31,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.ArrayList;
 import java.util.List;
-import java.net.URLEncoder;
+import java.net.URI;
 
 import static com.sedmelluq.discord.lavaplayer.source.bilibili.BilibiliConstants.VIEW_API;
 import static com.sedmelluq.discord.lavaplayer.source.bilibili.BilibiliConstants.SEARCH_API;
@@ -90,7 +91,10 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
 
     private AudioPlaylist loadSearchResult(String query) {
         try (HttpInterface httpInterface = getHttpInterface()) {
-            try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(SEARCH_API + "?keyword=" + URLEncoder.encode(query, "UTF-8") + "&search_type=video"))) {
+            URI uri = new URIBuilder(SEARCH_API)
+            .addParameter("keyword", query)
+            .addParameter("search_type", "video").build();
+            try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(uri))) {
                 HttpClientTools.assertSuccessWithContent(response, "search api response");
 
                 JsonBrowser apiResponse = JsonBrowser.parse(response.getEntity().getContent());
@@ -98,6 +102,8 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
                 List<AudioTrack> tracks = new ArrayList<>();
                 for (JsonBrowser item : apiResponseValues) {
                     String title = item.get("title").text();
+                    if (title.contains("<em class=\\\"keyword\\\">")) title.replace("<em class=\\\"keyword\\\">", "");
+                    if (title.contains("</em>")) title.replace("</em>", "");
                     String uploader = item.get("author").text();
                     String thumbnailUrl = "http:" + item.get("pic").text();
                     long duration = DataFormatTools.durationTextToMillis(item.get("duration").text());
@@ -108,7 +114,7 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
                 }
                 return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new FriendlyException("Error occurred when extracting video info.", SUSPICIOUS, e);
         }
     }
