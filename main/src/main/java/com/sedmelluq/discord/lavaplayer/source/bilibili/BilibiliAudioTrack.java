@@ -15,12 +15,14 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 
+import java.io.IOException;
 import java.net.URI;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.sedmelluq.discord.lavaplayer.source.bilibili.BilibiliConstants.PLAYER_API;
+import static com.sedmelluq.discord.lavaplayer.source.bilibili.BilibiliConstants.VIEW_API;
 
 /**
  * Audio track that handles processing BiliBili tracks.
@@ -54,7 +56,7 @@ public class BilibiliAudioTrack extends DelegatedAudioTrack {
         final String[] ids = trackInfo.identifier.split("/");
         URI uri = new URIBuilder(PLAYER_API)
         .addParameter("bvid", ids[0])
-        .addParameter("cid", ids[1])
+        .addParameter("cid", ids[1] == null ? getVideoCid(httpInterface) : ids[1])
         .addParameter("qn", "0")
         .addParameter("fnval", "80")
         .addParameter("fourk", "1").build();
@@ -65,6 +67,18 @@ public class BilibiliAudioTrack extends DelegatedAudioTrack {
             JsonBrowser trackMetaData = JsonBrowser.parse(response.getEntity().getContent());
             
             return trackMetaData.get("data").get("dash").get("audio").index(0).get("base_url").text();
+        }
+    }
+
+    private String getVideoCid(HttpInterface httpInterface) throws IOException {
+        try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(VIEW_API + "?bvid=" + trackInfo.identifier))) {
+            HttpClientTools.assertSuccessWithContent(response, "video api response");
+
+            JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
+            if (json.get("code").as(Integer.class) != 0) {
+                throw new IOException("Video api didn't respond.");
+            }
+            return json.get("data").get("cid").text();
         }
     }
 

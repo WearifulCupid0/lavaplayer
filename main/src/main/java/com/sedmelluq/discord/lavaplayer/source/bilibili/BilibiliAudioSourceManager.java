@@ -102,8 +102,7 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
                 List<AudioTrack> tracks = new ArrayList<>();
                 for (JsonBrowser item : apiResponseValues) {
                     String title = item.get("title").text();
-                    if (title.contains("<em class=\\\"keyword\\\">")) title.replace("<em class=\\\"keyword\\\">", "");
-                    if (title.contains("</em>")) title.replace("</em>", "");
+                    title.replace("<em class=\"keyword\">", "").replace("</em>", "");
                     String uploader = item.get("author").text();
                     String thumbnailUrl = "http:" + item.get("pic").text();
                     long duration = DataFormatTools.durationTextToMillis(item.get("duration").text());
