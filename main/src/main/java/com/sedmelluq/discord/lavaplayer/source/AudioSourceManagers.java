@@ -14,6 +14,7 @@ import com.sedmelluq.discord.lavaplayer.source.jamendo.JamendoAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.local.LocalAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.mixcloud.MixcloudAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.newgrounds.NewgroundsAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.ocremix.OcremixAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.odysee.OdyseeAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.reddit.RedditAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceManager;
@@ -52,6 +53,7 @@ public class AudioSourceManagers {
     playerManager.registerSourceManager(SoundCloudAudioSourceManager.createDefault());
     playerManager.registerSourceManager(new BandcampAudioSourceManager());
     playerManager.registerSourceManager(new StreamableAudioSourceManager());
+    playerManager.registerSourceManager(new OcremixAudioSourceManager());
     playerManager.registerSourceManager(new TuneinAudioSourceManager());
     playerManager.registerSourceManager(new RedditAudioSourceManager());
     playerManager.registerSourceManager(new InstagramAudioSourceManager());

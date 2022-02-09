@@ -27,12 +27,14 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
 
+import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.COMMON;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
 /**
  * Audio source manager which detects Instagram tracks by URL.
  */
 public class InstagramAudioSourceManager implements AudioSourceManager, HttpConfigurable {
+    private final static String INSTAGRAM_URL = "https://instagram.com/p/";
     private final static String POST_REGEX = "^(?:http://|https://|)(?:www\\.|)instagram\\.com/p/([a-zA-Z0-9-_]+)";
     private final static Pattern postPattern = Pattern.compile(POST_REGEX);
 
@@ -55,8 +57,12 @@ public class InstagramAudioSourceManager implements AudioSourceManager, HttpConf
         Matcher matcher = postPattern.matcher(reference.identifier);
 
         if (matcher.find()) {
-            JsonBrowser json = loadFromApi("https://instagram.com/p/" + matcher.group(1));
-            return buildTrack(json.get("graphql").get("shortcode_media"));
+            JsonBrowser json = loadFromApi(INSTAGRAM_URL + matcher.group(1));
+            JsonBrowser data = json.get("graphql").get("shortcode_media");
+            if (!data.get("has_audio").asBoolean(true)) {
+                throw new FriendlyException("Instagram post doesn't contain a video", COMMON, null);
+            }
+            return buildTrack(data);
         }
 
         return null;
