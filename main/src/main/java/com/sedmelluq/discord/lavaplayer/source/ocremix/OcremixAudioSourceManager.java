@@ -104,7 +104,7 @@ public class OcremixAudioSourceManager implements AudioSourceManager, HttpConfig
 
     private AudioTrack extractTrackFromIdentifier(String id) {
         String url = OCREMIX_URL + id;
-        try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(String.format(url + "?view=xml")))) {
+        try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(url + "?view=xml"))) {
             int statusCode = response.getStatusLine().getStatusCode();
 
             if (!HttpClientTools.isSuccessWithContent(statusCode)) {
