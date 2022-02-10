@@ -33,7 +33,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
  * Audio source manager which detects Tiktok tracks by URL.
  */
 public class TiktokAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-    private final static String VIDEO_URL_REGEX = "^(?:http://|https://|)(?:www\\.|m\\.|)tiktok\\.com/@\\w+/video/(\\d+)";
+    private final static String VIDEO_URL_REGEX = "^(?:http://|https://|)(?:www\\.|m\\.|)tiktok\\.com/@[^/]+/video/(\\d+)";
     private static final String MOBILE_URL_REGEX = "^(?:https?://)?vm\\.tiktok\\.com/\\w+";
 
     private final static Pattern videoUrlPattern = Pattern.compile(VIDEO_URL_REGEX);

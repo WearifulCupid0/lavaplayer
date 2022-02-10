@@ -50,9 +50,15 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
   private static final String UNLISTED_URL_REGEX = "^(?:http://|https://|)(?:www\\.|)(?:m\\.|)soundcloud\\.com/([a-zA-Z0-9-_]+)/([a-zA-Z0-9-_]+)/s-([a-zA-Z0-9-_]+)(?:\\?.*|)$";
   private static final String LIKED_URL_REGEX = "^(?:http://|https://|)(?:www\\.|)(?:m\\.|)soundcloud\\.com/([a-zA-Z0-9-_]+)/likes/?(?:\\?.*|)$";
   private static final String LIKED_USER_URN_REGEX = "\"urn\":\"soundcloud:users:([0-9]+)\",\"username\":\"([^\"]+)\"";
+  private static final String CONTENT_REGEX = "\\[([0-9]{1,9}),([0-9]{1,9})\\]:\\s*(.*)\\s*";
+
   private static final String SEARCH_PREFIX = "scsearch";
   private static final String SEARCH_PREFIX_DEFAULT = "scsearch:";
-  private static final String SEARCH_REGEX = SEARCH_PREFIX + "\\[([0-9]{1,9}),([0-9]{1,9})\\]:\\s*(.*)\\s*";
+  private static final String SEARCH_REGEX = SEARCH_PREFIX + CONTENT_REGEX;
+
+  private static final String SIMILAR_PREFIX = "scsimilar";
+  private static final String SIMILAR_PREFIX_DEFAULT = "scsimilar:";
+  private static final String SIMILAR_REGEX = SIMILAR_PREFIX + CONTENT_REGEX;
 
   private static final Pattern mobileUrlPattern = Pattern.compile(MOBILE_URL_REGEX);
   private static final Pattern trackUrlPattern = Pattern.compile(TRACK_URL_REGEX);
@@ -60,6 +66,7 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
   private static final Pattern likedUrlPattern = Pattern.compile(LIKED_URL_REGEX);
   private static final Pattern likedUserUrnPattern = Pattern.compile(LIKED_USER_URN_REGEX);
   private static final Pattern searchPattern = Pattern.compile(SEARCH_REGEX);
+  private static final Pattern similarPattern = Pattern.compile(SIMILAR_REGEX);
 
   private final SoundCloudDataReader dataReader;
   private final SoundCloudDataLoader dataLoader;
@@ -128,6 +135,10 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
 
     if (track == null) {
       track = processAsLikedTracks(reference);
+    }
+
+    if (track == null) {
+      track = processAsSimiliar(reference);
     }
 
     if (track == null && allowSearch) {
@@ -289,6 +300,35 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
     }
   }
 
+  private AudioItem processAsSimiliar(AudioReference reference) {
+    if (reference.identifier.startsWith(SIMILAR_PREFIX)) {
+      if (reference.identifier.startsWith(SIMILAR_PREFIX_DEFAULT)) {
+        return loadSimilarResult(reference.identifier.substring(SIMILAR_PREFIX_DEFAULT.length()).trim(), 0, DEFAULT_SEARCH_RESULTS);
+      }
+
+      Matcher similarMatcher = similarPattern.matcher(reference.identifier);
+
+      if (similarMatcher.matches()) {
+        return loadSimilarResult(similarMatcher.group(3), Integer.parseInt(similarMatcher.group(1)), Integer.parseInt(similarMatcher.group(2)));
+      }
+    }
+
+    return null;
+  }
+
+  private AudioItem loadSimilarResult(String id, int offset, int rawLimit) {
+    int limit = Math.min(rawLimit, MAXIMUM_SEARCH_RESULTS);
+
+    try (
+      HttpInterface httpInterface = getHttpInterface();
+      CloseableHttpResponse response = httpInterface.execute(new HttpGet(buildSimilarUri(id, offset, limit)))
+    ) {
+      return loadSimilarResultsFromResponse(response, id);
+    } catch (IOException e) {
+      throw new FriendlyException("Loading similar tracks from SoundCloud failed.", SUSPICIOUS, e);
+    }
+  }
+
   private AudioItem processAsSearchQuery(AudioReference reference) {
     if (reference.identifier.startsWith(SEARCH_PREFIX)) {
       if (reference.identifier.startsWith(SEARCH_PREFIX_DEFAULT)) {
@@ -321,9 +361,29 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
   private AudioItem loadSearchResultsFromResponse(HttpResponse response, String query) throws IOException {
     try {
       JsonBrowser searchResults = JsonBrowser.parse(response.getEntity().getContent());
-      return extractTracksFromSearchResults(query, searchResults);
+      return extractTracksFromCollection("Search results for: " + query, "search", searchResults);
     } finally {
       EntityUtils.consumeQuietly(response.getEntity());
+    }
+  }
+
+  private AudioItem loadSimilarResultsFromResponse(HttpResponse response, String id) throws IOException {
+    try {
+      JsonBrowser searchResults = JsonBrowser.parse(response.getEntity().getContent());
+      return extractTracksFromCollection("Similar tracks results from track: " + id, "similar", searchResults);
+    } finally {
+      EntityUtils.consumeQuietly(response.getEntity());
+    }
+  }
+
+  private URI buildSimilarUri(String id, int offset, int limit) {
+    try {
+      return new URIBuilder("https://api-v2.soundcloud.com/tracks/" + id + "/related")
+      .addParameter("offset", String.valueOf(offset))
+      .addParameter("limit", String.valueOf(limit))
+      .build();
+    } catch (URISyntaxException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -339,7 +399,7 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
     }
   }
 
-  private AudioItem extractTracksFromSearchResults(String query, JsonBrowser searchResults) {
+  private AudioItem extractTracksFromCollection(String name, String type, JsonBrowser searchResults) {
     List<AudioTrack> tracks = new ArrayList<>();
 
     for (JsonBrowser item : searchResults.get("collection").values()) {
@@ -348,7 +408,7 @@ public class SoundCloudAudioSourceManager implements AudioSourceManager, HttpCon
       }
     }
 
-    return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
+    return new BasicAudioPlaylist(name, null, null, null, type, tracks, null, true);
   }
 
   public static class Builder {
