@@ -11,6 +11,7 @@ import org.apache.http.client.utils.URIBuilder;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.COMMON;
 
 public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
+  private static final String SIMILAR_PREFIX = "ytsimilar:";
   private static final String SEARCH_PREFIX = "ytsearch:";
   private static final String SEARCH_MUSIC_PREFIX = "ytmsearch:";
 
@@ -37,6 +38,8 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
       return routes.search(link.substring(SEARCH_PREFIX.length()).trim());
     } else if (link.startsWith(SEARCH_MUSIC_PREFIX)) {
       return routes.searchMusic(link.substring(SEARCH_MUSIC_PREFIX.length()).trim());
+    } else if (link.startsWith(SIMILAR_PREFIX)) {
+      return routes.similar(link.substring(SIMILAR_PREFIX.length()).trim());
     }
 
     for (Extractor extractor : extractors) {

@@ -48,6 +48,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
   private final YoutubeTrackDetailsLoader trackDetailsLoader;
   private final YoutubeSearchResultLoader searchResultLoader;
   private final YoutubeSearchMusicResultLoader searchMusicResultLoader;
+  private final YoutubeSimilarTrackLoader similarTrackLoader;
   private final YoutubePlaylistLoader playlistLoader;
   private final YoutubeLinkRouter linkRouter;
   private final LoadingRoutes loadingRoutes;
@@ -73,6 +74,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
         new DefaultYoutubeTrackDetailsLoader(),
         new YoutubeSearchProvider(),
         new YoutubeSearchMusicProvider(),
+        new YoutubeSimilarTrackProvider(),
         new YoutubeSignatureCipherManager(),
         new DefaultYoutubePlaylistLoader(),
         new DefaultYoutubeLinkRouter(),
@@ -87,6 +89,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
       YoutubeTrackDetailsLoader trackDetailsLoader,
       YoutubeSearchResultLoader searchResultLoader,
       YoutubeSearchMusicResultLoader searchMusicResultLoader,
+      YoutubeSimilarTrackLoader similarTrackLoader,
       YoutubeSignatureResolver signatureResolver,
       YoutubePlaylistLoader playlistLoader,
       YoutubeLinkRouter linkRouter,
@@ -103,6 +106,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
     this.signatureResolver = signatureResolver;
     this.searchResultLoader = searchResultLoader;
     this.searchMusicResultLoader = searchMusicResultLoader;
+    this.similarTrackLoader = similarTrackLoader;
     this.playlistLoader = playlistLoader;
     this.linkRouter = linkRouter;
     this.mixLoader = mixLoader;
@@ -257,6 +261,16 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
 
       try (HttpInterface httpInterface = getHttpInterface()) {
         return mixLoader.load(httpInterface, mixId, selectedVideoId,
+            YoutubeAudioSourceManager.this::buildTrackFromInfo);
+      } catch (Exception e) {
+        throw ExceptionTools.wrapUnfriendlyExceptions(e);
+      }
+    }
+
+    @Override
+    public AudioItem similar(String videoId) {
+      try (HttpInterface httpInterface = getHttpInterface()) {
+        return similarTrackLoader.load(httpInterface, videoId,
             YoutubeAudioSourceManager.this::buildTrackFromInfo);
       } catch (Exception e) {
         throw ExceptionTools.wrapUnfriendlyExceptions(e);

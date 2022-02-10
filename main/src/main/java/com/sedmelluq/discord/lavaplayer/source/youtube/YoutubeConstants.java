@@ -28,6 +28,7 @@ public class YoutubeConstants {
     static final String BROWSE_CHANNEL_PAYLOAD = BASE_PAYLOAD + SCREEN_PART_PAYLOAD + CLOSE_BASE_PAYLOAD + "\"params\":\"EgZ2aWRlb3M=\",\"browseId\":\"%s\"}";
     static final String NEXT_URL = BASE_URL + "/next?key=" + INNERTUBE_API_KEY;
     static final String NEXT_PAYLOAD = BASE_PAYLOAD + SCREEN_PART_PAYLOAD + CLOSE_BASE_PAYLOAD + "\"videoId\":\"%s\",\"playlistId\":\"%s\"}";
+    static final String NEXT_WITHOU_PLAYLIST_ID_PAYLOAD = BASE_PAYLOAD + SCREEN_PART_PAYLOAD + CLOSE_BASE_PAYLOAD + "\"videoId\":\"%s\"}";
 
     // YouTube Music constants
     static final String MUSIC_ORIGIN = "https://music.youtube.com";
