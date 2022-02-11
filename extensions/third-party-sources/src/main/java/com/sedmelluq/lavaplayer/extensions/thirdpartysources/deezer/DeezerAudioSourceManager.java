@@ -39,8 +39,10 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 
 public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager implements HttpConfigurable {
     private static final String DEEZER_URL_REGEX = "^(?:https://|http://|)(?:www\\.|)deezer\\.com/(?:[a-zA-Z]{2}/)(track|album|playlist|artist)/(\\d+)";
-	
+    private static final String DEEZER_SHARE_REGEX = "^(?:https://|http://|)deezer\\.page\\.link/([a-zA-Z0-9-_]+)";
+
     private static final Pattern deezerUrlPattern = Pattern.compile(DEEZER_URL_REGEX);
+    private static final Pattern deezerSharePattern = Pattern.compile(DEEZER_SHARE_REGEX);
 
     private static final String SEARCH_PREFIX = "dzsearch:";
 
@@ -69,8 +71,13 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
         if (reference.identifier.startsWith(SEARCH_PREFIX) && allowSearch) {
             return this.loadSearch(reference.identifier.substring(SEARCH_PREFIX.length()).trim());
         }
+
+        String url = reference.identifier;
+        if (deezerSharePattern.matcher(url).find()) {
+            url = getRealUrl(url);
+        }
         
-        Matcher matcher = deezerUrlPattern.matcher(reference.identifier);
+        Matcher matcher = deezerUrlPattern.matcher(url);
         if (matcher.find()) {
             String id = matcher.group(2);
             switch (matcher.group(1)) {
@@ -83,6 +90,14 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
         }
 
         return null;
+    }
+
+    private String getRealUrl(String url) {
+        try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(url))) {
+            return HttpClientTools.getRedirectLocation(url, response);
+        } catch (IOException e) {
+            throw new FriendlyException("Failed to get url from share deezer url", SUSPICIOUS, e);
+        }
     }
 
     @Override
