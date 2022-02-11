@@ -58,7 +58,7 @@ public class SpotifyTokenTracker {
     }
 
     public void updateToken() {
-        if(token != null && System.currentTimeMillis() >= expiresMs) {
+        if(token != null && System.currentTimeMillis() <= expiresMs) {
             log.debug("Spotify access token was recently updated, not updating again right away.");
             return;
         }
