@@ -41,7 +41,7 @@ public class AppleMusicTokenTracker {
     }
 
     public void updateToken() {
-        if(token != null && System.currentTimeMillis() >= expiresMs) {
+        if(!needUpdate()) {
             log.debug("AppleMusic access token was recently updated, not updating again right away.");
             return;
         }

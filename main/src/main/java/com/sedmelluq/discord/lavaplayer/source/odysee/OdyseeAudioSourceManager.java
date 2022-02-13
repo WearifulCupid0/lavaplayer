@@ -11,6 +11,7 @@ import com.sedmelluq.discord.lavaplayer.track.*;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
@@ -123,7 +124,7 @@ public class OdyseeAudioSourceManager implements AudioSourceManager, HttpConfigu
   private AudioItem loadSearchResult(String query) {
     try (
         HttpInterface httpInterface = getHttpInterface();
-        CloseableHttpResponse response = httpInterface.execute(new HttpPost(buildSearchUri(query)))
+        CloseableHttpResponse response = httpInterface.execute(new HttpGet(buildSearchUri(query)))
     ) {
       return loadSearchResultsFromResponse(response, query);
     } catch (IOException e) {

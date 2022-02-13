@@ -20,7 +20,7 @@ public class TidalTokenTracker {
     private static final String MAIN_PAGE_URL = "https://listen.tidal.com";
     private static final long TOKEN_REFRESH_INTERVAL = TimeUnit.HOURS.toMillis(1);
     private static final String PAGE_APP_SCRIPT_REGEX = "src=\"/app\\.([a-zA-Z0-9-_]+)\\.js\"";
-    private static final String APP_SCRIPT_TOKEN_REGEX = "tp\\(\\)\\?\"(?:[a-zA-Z0-9-_]+)\":\"([a-zA-Z0-9-_]+)\"";
+    private static final String APP_SCRIPT_TOKEN_REGEX = "(?:[a-zA-Z]{2})\\(\\)\\?\"(?:[a-zA-Z0-9-_]+)\":\"([a-zA-Z0-9-_]+)\"";
 
     private static final Pattern pageAppScriptPattern = Pattern.compile(PAGE_APP_SCRIPT_REGEX);
     private static final Pattern appScriptTokenPattern = Pattern.compile(APP_SCRIPT_TOKEN_REGEX);

@@ -41,6 +41,12 @@ public class OcremixAudioSourceManager implements AudioSourceManager, HttpConfig
 
     private static final Pattern ocremixPattern = Pattern.compile(OCREMIX_REGEX);
 
+    private static final String[] SERVERS = {
+        "https://iterations.org",
+        "https://ocrmirror.org",
+        "https://ocr.blueblue.fr",
+    };
+
     private final HttpInterfaceManager httpInterfaceManager;
 
     public OcremixAudioSourceManager() {
@@ -104,7 +110,10 @@ public class OcremixAudioSourceManager implements AudioSourceManager, HttpConfig
 
     private AudioTrack extractTrackFromIdentifier(String id) {
         String url = OCREMIX_URL + id;
-        try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(url + "?view=xml"))) {
+        try (
+            HttpInterface httpInterface = getHttpInterface();
+            CloseableHttpResponse response = httpInterface.execute(new HttpGet(url + "?view=xml"))
+        ) {
             HttpClientTools.assertSuccessWithContent(response, "track page info");
 
             String xml = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
@@ -123,15 +132,37 @@ public class OcremixAudioSourceManager implements AudioSourceManager, HttpConfig
                 .map((remixer) -> remixer.attr("name"))
                 .collect(Collectors.joining(", ")),
                 Long.parseLong(remix.attr("track_length")) * 1000,
-                remix.attr("file_name"),
+                getPlaybackUrl(httpInterface, remix.attr("file_name")),
                 false,
                 url,
                 OCREMIX_MAIN_URL + document.selectFirst("song").attr("main_image_file")
             );
 
             return new OcremixAudioTrack(trackInfo, this);
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new FriendlyException("Failed to load info for Overcloked Remix track", SUSPICIOUS, e);
         }
+    }
+
+    private String getPlaybackUrl(HttpInterface httpInterface, String path) throws Exception {
+        String url = null;
+
+        for (final String server : SERVERS) {
+            String current = server + path;
+            try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(current))) {
+                int statusCode = response.getStatusLine().getStatusCode();
+                if(HttpClientTools.isSuccessWithContent(statusCode)) {
+                    url = current;
+                    break; //Found track url, so we don't need to keep looking into other servers.
+                }
+            } catch (Exception e) {
+                continue; //Go to the next one.
+            }
+        }
+        if (url == null) {
+            throw new Exception("Failed to find track url");
+        }
+
+        return url;
     }
 }

@@ -60,7 +60,7 @@ public class InstagramAudioSourceManager implements AudioSourceManager, HttpConf
             JsonBrowser json = loadFromApi(INSTAGRAM_URL + matcher.group(1));
             JsonBrowser data = json.get("graphql").get("shortcode_media");
             if (!data.get("has_audio").asBoolean(true)) {
-                throw new FriendlyException("Instagram post doesn't contain a video", COMMON, null);
+                throw new FriendlyException("Instagram post doesn't contain an audio", COMMON, null);
             }
             return buildTrack(data);
         }

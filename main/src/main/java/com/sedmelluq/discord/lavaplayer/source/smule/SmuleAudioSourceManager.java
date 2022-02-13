@@ -1,4 +1,4 @@
-package com.sedmelluq.discord.lavaplayer.source.tiktok;
+package com.sedmelluq.discord.lavaplayer.source.smule;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
@@ -8,7 +8,6 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
-import com.sedmelluq.discord.lavaplayer.tools.Units;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
@@ -30,45 +29,36 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
 /**
- * Audio source manager which detects Tiktok tracks by URL.
+ * Audio source manager which detects Smule tracks by URL.
  */
-public class TiktokAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-    private final static String VIDEO_URL_REGEX = "^(?:http://|https://|)(?:www\\.|m\\.|)tiktok\\.com/@[^/]+/video/(\\d+)";
-    private static final String MOBILE_URL_REGEX = "^(?:https?://)?vm\\.tiktok\\.com/\\w+";
+public class SmuleAudioSourceManager implements AudioSourceManager, HttpConfigurable {
+    private final static String URL_REGEX = "^(?:http://|https://|)(?:www\\.|)smule\\.com/recording/(?:[a-zA-Z0-9-_]+)/([0-9-_]+)";
 
-    private final static Pattern videoUrlPattern = Pattern.compile(VIDEO_URL_REGEX);
-    private final static Pattern mobileUrlPattern = Pattern.compile(MOBILE_URL_REGEX);
+    private final static Pattern urlPattern = Pattern.compile(URL_REGEX);
 
-    private final static String API_URL = "http://api2.musical.ly/aweme/v1/aweme/detail/?aweme_id=";
-    private final static String VIDEO_URL = "https://www.tiktok.com/%s/video/%s";
+    private final static String API_URL = "https://www.smule.com/p/%s/json";
+    private final static String SMULE_URL = "https://www.smule.com";
 
     private final HttpInterfaceManager httpInterfaceManager;
 
     /**
      * Create an instance.
      */
-    public TiktokAudioSourceManager() {
+    public SmuleAudioSourceManager() {
         httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
     }
 
     @Override
     public String getSourceName() {
-        return "tiktok";
+        return "smule";
     }
 
     @Override
     public AudioItem loadItem(AudioPlayerManager manager, AudioReference reference) {
-        String url = reference.identifier;
-        if (mobileUrlPattern.matcher(url).find()) {
-            url = this.getVideoUrl(reference.identifier);
-        }
+        Matcher matcher = urlPattern.matcher(reference.identifier);
         
-        Matcher matcher = videoUrlPattern.matcher(url);
         if (matcher.find()) {
-            JsonBrowser json = loadFromApi(matcher.group(1));
-            if (json != null) {
-                return buildTrack(json);
-            }
+            return loadTrack(matcher.group(1));
         }
 
         return null;
@@ -86,7 +76,7 @@ public class TiktokAudioSourceManager implements AudioSourceManager, HttpConfigu
 
     @Override
     public AudioTrack decodeTrack(AudioTrackInfo trackInfo, DataInput input) throws IOException {
-        return new TiktokAudioTrack(trackInfo, this);
+        return new SmuleAudioTrack(trackInfo, this);
     }
 
     @Override
@@ -111,43 +101,28 @@ public class TiktokAudioSourceManager implements AudioSourceManager, HttpConfigu
         return httpInterfaceManager.getInterface();
     }
 
-    public JsonBrowser loadFromApi(String id) {
-        URI uri = URI.create(API_URL + id);
+    public AudioTrack loadTrack(String id) {
+        URI uri = URI.create(String.format(API_URL, id));
         try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(uri))) {
-            HttpClientTools.assertSuccessWithContent(response, "TikTok api");
+            HttpClientTools.assertSuccessWithContent(response, "smule track");
 
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
-            return json;
+            
+            String identifier = SMULE_URL + json.get("web_url").safeText();
+
+            AudioTrackInfo trackInfo = new AudioTrackInfo(
+                json.get("title").safeText(),
+                json.get("owner").get("handle").isNull() ? json.get("artist").safeText() : json.get("owner").get("handle").safeText(),
+                (long) (json.get("song_length").as(Double.class) * 1000.0),
+                identifier,
+                false,
+                identifier,
+                json.get("cover_url").text()
+            );
+
+            return new SmuleAudioTrack(trackInfo, this);
         } catch(IOException e) {
-            throw new FriendlyException("Failed to fetch TikTok video information", SUSPICIOUS, e);
-        }
-    }
-
-    private AudioTrack buildTrack(JsonBrowser json) {
-        JsonBrowser details = json.get("aweme_detail");
-        JsonBrowser video = details.get("video");
-
-        String author = "@" + details.get("author").get("unique_id").safeText();
-        String identifier = details.get("aweme_id").safeText();
-
-        AudioTrackInfo info = new AudioTrackInfo(
-            details.get("desc").text(),
-            author,
-            video.get("duration").asLong(Units.DURATION_MS_UNKNOWN),
-            identifier,
-            false,
-            String.format(VIDEO_URL, author, identifier),
-            video.get("cover").get("url_list").index(0).text()
-        );
-
-        return new TiktokAudioTrack(info, this);
-    }
-
-    private String getVideoUrl(String url) {
-        try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(url))) {
-            return HttpClientTools.getRedirectLocation(url, response);
-        } catch (IOException e) {
-            throw new FriendlyException("Failed to get video url from mobile tiktok url", SUSPICIOUS, e);
+            throw new FriendlyException("Failed to fetch Smule track information", SUSPICIOUS, e);
         }
     }
 }

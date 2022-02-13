@@ -52,10 +52,15 @@ public class TiktokAudioTrack extends DelegatedAudioTrack {
   private String loadPlaybackUrl(HttpInterface httpInterface) throws IOException {
     JsonBrowser data = sourceManager.loadFromApi(trackInfo.identifier);
     if (data == null || data.get("aweme_detail").get("video").isNull()) {
+      throw new FriendlyException("Failed to get TikTok video data", SUSPICIOUS, null);
+    }
+
+    String url = data.get("aweme_detail").get("video").get("play_addr").get("url_list").index(0).text();
+    if (url == null || url.isEmpty()) {
       throw new FriendlyException("Failed to get TikTok playback url", SUSPICIOUS, null);
     }
 
-    return data.get("aweme_detail").get("video").get("play_addr").get("url_list").index(0).safeText();
+    return url;
   }
 
   @Override
