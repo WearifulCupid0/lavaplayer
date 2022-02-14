@@ -59,7 +59,7 @@ public class SmuleAudioTrack extends DelegatedAudioTrack {
             String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             Document document = Jsoup.parse(html);
             
-            String redirUrl = document.selectFirst("meta[property=twitter:player:stream]").attr("content");
+            String redirUrl = document.selectFirst("meta[name=twitter:player:stream]").attr("content");
             if (redirUrl == null || redirUrl.isEmpty()) {
                 throw new IOException("Redirect url not found on track page.");
             }
