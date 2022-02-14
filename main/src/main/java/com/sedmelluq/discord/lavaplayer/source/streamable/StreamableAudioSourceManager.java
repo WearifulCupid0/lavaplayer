@@ -59,7 +59,7 @@ public class StreamableAudioSourceManager implements AudioSourceManager, HttpCon
         Matcher m = streamablePattern.matcher(reference.identifier);
 
         if (m.find()) {
-            return extractVideoUrlFromPage(STREAMABLE_URL + m.group(1));
+            return extractVideoFromPage(STREAMABLE_URL + m.group(1));
         }
 
         return null;
@@ -99,7 +99,7 @@ public class StreamableAudioSourceManager implements AudioSourceManager, HttpCon
         httpInterfaceManager.configureBuilder(configurator);
     }
 
-    private AudioTrack extractVideoUrlFromPage(String url) {
+    private AudioTrack extractVideoFromPage(String url) {
         try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(url))) {
             HttpClientTools.assertSuccessWithContent(response, "track page info");
 

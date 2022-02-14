@@ -1,4 +1,4 @@
-package com.sedmelluq.discord.lavaplayer.source.getyarn;
+package com.sedmelluq.discord.lavaplayer.source.audioboom;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
@@ -16,6 +16,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -32,16 +33,16 @@ import org.jsoup.nodes.Document;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
 /**
- * Audio source manager which detects getyarn.io tracks by URL.
+ * Audio source manager which detects audioboom.com tracks by URL.
  */
-public class GetyarnAudioSourceManager implements HttpConfigurable, AudioSourceManager {
-  private static final String GETYARN_CLIP_URL = "https://getyarn.io/yarn-clip/";
-  private static final String GETYARN_REGEX = "^(?:http://|https://|)?(?:www\\.)?getyarn\\.io/yarn-clip/([a-zA-Z0-9-_]+)";
-  private static final Pattern getyarnPattern = Pattern.compile(GETYARN_REGEX);
+public class AudioboomAudioSourceManager implements HttpConfigurable, AudioSourceManager {
+  private static final String AUDIOBOOM_URL = "https://audioboom.com/posts/";
+  private static final String AUDIOBOOM_REGEX = "^(?:http://|https://|)?(?:www\\.)?audioboom\\.com/posts/([a-zA-Z0-9-_]+)";
+  private static final Pattern audioboomPattern = Pattern.compile(AUDIOBOOM_REGEX);
 
   private final HttpInterfaceManager httpInterfaceManager;
 
-  public GetyarnAudioSourceManager() {
+  public AudioboomAudioSourceManager() {
     httpInterfaceManager = new ThreadLocalHttpInterfaceManager(
         HttpClientTools
             .createSharedCookiesHttpBuilder()
@@ -52,16 +53,14 @@ public class GetyarnAudioSourceManager implements HttpConfigurable, AudioSourceM
 
   @Override
   public String getSourceName() {
-    return "getyarn.io";
+    return "audioboom";
   }
 
   @Override
   public AudioItem loadItem(AudioPlayerManager manager, AudioReference reference) {
-    Matcher m = getyarnPattern.matcher(reference.identifier);
+    Matcher m = audioboomPattern.matcher(reference.identifier);
 
-    if (m.find()) {
-      return extractVideoFromPage(m.group(1));
-    }
+    if (m.find()) return extractAudioFromPage(m.group(1));
 
     return null;
   }
@@ -78,7 +77,7 @@ public class GetyarnAudioSourceManager implements HttpConfigurable, AudioSourceM
 
   @Override
   public AudioTrack decodeTrack(AudioTrackInfo trackInfo, DataInput input) {
-    return new GetyarnAudioTrack(trackInfo, this);
+    return new AudioboomAudioTrack(trackInfo, this);
   }
 
   @Override
@@ -100,25 +99,25 @@ public class GetyarnAudioSourceManager implements HttpConfigurable, AudioSourceM
     httpInterfaceManager.configureBuilder(configurator);
   }
 
-  private AudioTrack extractVideoFromPage(String identifier) {
-    String url = GETYARN_CLIP_URL + identifier;
-    try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(url))) {
-      HttpClientTools.assertSuccessWithContent(response, "clip page");
+  private AudioTrack extractAudioFromPage(String path) {
+    String url = AUDIOBOOM_URL + path;
+    try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(URI.create(url)))) {
+      HttpClientTools.assertSuccessWithContent(response, "audio page");
 
       String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
       Document document = Jsoup.parse(html);
-      
+
       AudioTrackInfo trackInfo = new AudioTrackInfo(
         document.selectFirst("meta[property=og:title]").attr("content"),
-        "Unknown author",
+        document.selectFirst("meta[property=og:audio:artist]").attr("content"),
         Units.DURATION_MS_UNKNOWN,
-        identifier,
+        url,
         false,
         url,
-        document.selectFirst(".video-js .ab100").attr("poster")
+        document.selectFirst("meta[property=og:image]").attr("content")
       );
 
-      return new GetyarnAudioTrack(trackInfo, this);
+      return new AudioboomAudioTrack(trackInfo, this);
     } catch (IOException e) {
       throw new FriendlyException("Failed to load info for yarn clip", SUSPICIOUS, null);
     }

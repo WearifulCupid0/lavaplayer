@@ -54,7 +54,7 @@ public class TuneinAudioSourceManager implements AudioSourceManager, HttpConfigu
         Matcher m = tuneinPattern.matcher(reference.identifier);
 
         if (m.find()) {
-            return extractVideoUrlFromPage(String.format(TUNEIN_URL, m.group(1)));
+            return extractRadioFromPage(String.format(TUNEIN_URL, m.group(1)));
         }
 
         return null;
@@ -94,7 +94,7 @@ public class TuneinAudioSourceManager implements AudioSourceManager, HttpConfigu
         httpInterfaceManager.configureBuilder(configurator);
     }
 
-    private AudioTrack extractVideoUrlFromPage(String url) {
+    private AudioTrack extractRadioFromPage(String url) {
         try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(url))) {
             HttpClientTools.assertSuccessWithContent(response, "radio info page");
 
