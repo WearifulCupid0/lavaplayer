@@ -12,6 +12,7 @@ import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.protocol.HttpClientContext;
 import org.jsoup.nodes.Document;
 import org.jsoup.Jsoup;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,7 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 /**
  * Audio track that handles processing Smule tracks.
@@ -59,17 +61,24 @@ public class SmuleAudioTrack extends DelegatedAudioTrack {
             String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             Document document = Jsoup.parse(html);
             
-            String redirUrl = document.selectFirst("meta[name=twitter:player:stream]").attr("content");
-            if (redirUrl == null || redirUrl.isEmpty()) {
+            String redirString = document.selectFirst("meta[name=twitter:player:stream]").attr("content");
+            if (redirString == null || redirString.isEmpty()) {
                 throw new IOException("Redirect url not found on track page.");
             }
 
-            String url = HttpClientTools.getRedirectLocation(redirUrl, response);
-            if (url == null || url.isEmpty()) {
-                throw new IOException("Stream url not found using redirect url.");
+            URI redirUrl =  URI.create(redirString.replaceAll("amp;", ""));
+            try (CloseableHttpResponse res = httpInterface.execute(new HttpGet(redirUrl))) {
+                if (res.getStatusLine().getStatusCode() != 302) { //Smule always send 302 if the playback url has been found.
+                    throw new IOException("Playback url not found.");
+                }
+                HttpClientContext context = httpInterface.getContext();
+                List<URI> redirects = context.getRedirectLocations();
+                if (redirects != null && !redirects.isEmpty()) {
+                    return redirects.get(0).toString();
+                } else {
+                    throw new IOException("Failed to follow playback redirect location.");
+                }
             }
-
-            return url;
         }
     }
 
