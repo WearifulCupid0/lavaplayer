@@ -24,6 +24,7 @@ import com.sedmelluq.discord.lavaplayer.source.streamable.StreamableAudioSourceM
 import com.sedmelluq.discord.lavaplayer.source.tiktok.TiktokAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.tunein.TuneinAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.twitter.TwitterAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
 
@@ -60,6 +61,7 @@ public class AudioSourceManagers {
     playerManager.registerSourceManager(new TuneinAudioSourceManager());
     playerManager.registerSourceManager(new RedditAudioSourceManager());
     playerManager.registerSourceManager(new InstagramAudioSourceManager());
+    playerManager.registerSourceManager(new TwitterAudioSourceManager());
     playerManager.registerSourceManager(new SmuleAudioSourceManager());
     playerManager.registerSourceManager(new TiktokAudioSourceManager());
     playerManager.registerSourceManager(new VimeoAudioSourceManager());
