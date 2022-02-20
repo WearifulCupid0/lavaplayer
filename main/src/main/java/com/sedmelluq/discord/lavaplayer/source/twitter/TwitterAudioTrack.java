@@ -1,6 +1,7 @@
 package com.sedmelluq.discord.lavaplayer.source.twitter;
 
 import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack;
+import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.PersistentHttpStream;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -47,7 +48,7 @@ public class TwitterAudioTrack extends DelegatedAudioTrack {
   }
 
   @Override
-  public TwitterAudioSourceManager getSourceManager() {
+  public AudioSourceManager getSourceManager() {
     return sourceManager;
   }
 }

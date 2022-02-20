@@ -56,7 +56,7 @@ public class InstagramAudioTrack extends DelegatedAudioTrack {
     }
     JsonBrowser shortcodeMedia = data.get("graphql").get("shortcode_media");
     if (!shortcodeMedia.get("has_audio").asBoolean(false)) {
-        throw new FriendlyException("Track doesn't contains a audio.", SUSPICIOUS, null);
+        throw new FriendlyException("Track doesn't contains an audio.", SUSPICIOUS, null);
     }
 
     return shortcodeMedia.get("video_url").safeText();

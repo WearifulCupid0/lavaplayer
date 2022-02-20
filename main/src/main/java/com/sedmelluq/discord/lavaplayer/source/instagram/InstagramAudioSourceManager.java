@@ -126,7 +126,7 @@ public class InstagramAudioSourceManager implements AudioSourceManager, HttpConf
             (long) (json.get("video_duration").as(Double.class) * 1000.0),
             identifier,
             false,
-            String.format("https://www.instagram.com/p/%s/", identifier),
+            INSTAGRAM_URL + identifier,
             json.get("thumbnail_src").text()
         );
 
