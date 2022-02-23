@@ -68,9 +68,6 @@ public class SmuleAudioTrack extends DelegatedAudioTrack {
 
             URI redirUrl =  URI.create(redirString.replaceAll("amp;", ""));
             try (CloseableHttpResponse res = httpInterface.execute(new HttpGet(redirUrl))) {
-                if (res.getStatusLine().getStatusCode() != 302) { //Smule always send 302 if the playback url has been found.
-                    throw new IOException("Playback url not found.");
-                }
                 HttpClientContext context = httpInterface.getContext();
                 List<URI> redirects = context.getRedirectLocations();
                 if (redirects != null && !redirects.isEmpty()) {
