@@ -6,7 +6,8 @@ import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
-import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
+import com.sedmelluq.discord.lavaplayer.track.AudioItem;
+import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
@@ -20,8 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+import static com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.NEXT_URL;
-import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.NEXT_WITHOU_PLAYLIST_ID_PAYLOAD;
+import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.NEXT_SIMILAR_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.WATCH_URL_PREFIX;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
@@ -35,11 +37,11 @@ public class YoutubeSimilarTrackProvider implements YoutubeSimilarTrackLoader {
      * @param videoId ID of the main video
      * @return Playlist of the similar tracks.
      */
-    public AudioPlaylist load(HttpInterface httpInterface, String videoId, Function<AudioTrackInfo, AudioTrack> trackFactory) {
+    public AudioItem load(HttpInterface httpInterface, String videoId, Function<AudioTrackInfo, AudioTrack> trackFactory) {
         List<AudioTrack> tracks = new ArrayList<>();
 
         HttpPost post = new HttpPost(NEXT_URL);
-        StringEntity payload = new StringEntity(String.format(NEXT_WITHOU_PLAYLIST_ID_PAYLOAD, videoId), "UTF-8");
+        StringEntity payload = new StringEntity(String.format(NEXT_SIMILAR_PAYLOAD, videoId), "UTF-8");
         post.setEntity(payload);
 
         try (CloseableHttpResponse response = httpInterface.execute(post)) {
@@ -57,7 +59,17 @@ public class YoutubeSimilarTrackProvider implements YoutubeSimilarTrackLoader {
                     .get("horizontalListRenderer")
                     .get("items");
             
-            extractTracks(items, tracks, trackFactory);
+            if (items == null || items.isNull()) return AudioReference.NO_TRACK;
+            List<JsonBrowser> values = items.values();
+
+            if (values.isEmpty()) return AudioReference.NO_TRACK;
+
+            values.forEach(json -> {
+                AudioTrack track = extractTrack(json, trackFactory);
+                if (track != null) tracks.add(track);
+            });
+
+            if (tracks.isEmpty()) return AudioReference.NO_TRACK;
 
         } catch (IOException e) {
             throw new FriendlyException("Could not read track page.", SUSPICIOUS, e);
@@ -66,29 +78,26 @@ public class YoutubeSimilarTrackProvider implements YoutubeSimilarTrackLoader {
         return new BasicAudioPlaylist("Similar tracks results from track: " + videoId, null, null, null, "similar", tracks, null, true);
     }
 
-    private void extractTracks(
-        JsonBrowser items,
-        List<AudioTrack> tracks,
+    private AudioTrack extractTrack(
+        JsonBrowser video,
         Function<AudioTrackInfo, AudioTrack> trackFactory
     ) {
-        for (JsonBrowser video : items.values()) {
-            JsonBrowser renderer = video.get("gridVideoRenderer");
+        JsonBrowser renderer = video.get("gridVideoRenderer");
 
-            if (renderer.isNull()) {
-                return;
-            }
-
-            String title = renderer.get("title").get("runs").index(0).get("text").text();
-            JsonBrowser authorData = renderer.get("longBylineText").isNull() ? renderer.get("shortBylineText") : renderer.get("longBylineText");
-            String author = authorData.get("runs").index(0).get("text").text();
-            String durationStr = renderer.get("lengthText").get("runs").index(0).get("text").text();
-            long duration = DataFormatTools.durationTextToMillis(durationStr);
-            String identifier = renderer.get("videoId").text();
-            String uri = WATCH_URL_PREFIX + identifier;
-
-            AudioTrackInfo trackInfo = new AudioTrackInfo(title, author, duration, identifier, false, uri,
-                PBJUtils.getYouTubeThumbnail(renderer, identifier));
-            tracks.add(trackFactory.apply(trackInfo));
+        if (renderer.isNull()) {
+            return null;
         }
+
+        String title = renderer.get("title").get("runs").index(0).get("text").text();
+        JsonBrowser authorData = renderer.get("longBylineText").isNull() ? renderer.get("shortBylineText") : renderer.get("longBylineText");
+        String author = authorData.get("runs").index(0).get("text").text();
+        String durationStr = renderer.get("lengthText").get("runs").index(0).get("text").text();
+        long duration = durationStr != null ? DataFormatTools.durationTextToMillis(durationStr) : DURATION_MS_UNKNOWN;
+        String identifier = renderer.get("videoId").text();
+        String uri = WATCH_URL_PREFIX + identifier;
+
+        AudioTrackInfo trackInfo = new AudioTrackInfo(title, author, duration, identifier, duration == DURATION_MS_UNKNOWN, uri,
+            PBJUtils.getYouTubeThumbnail(renderer, identifier));
+        return trackFactory.apply(trackInfo);
     }
 }

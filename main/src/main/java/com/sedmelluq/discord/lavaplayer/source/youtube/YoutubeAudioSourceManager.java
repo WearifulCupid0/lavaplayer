@@ -58,7 +58,15 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
    * Create an instance with default settings.
    */
   public YoutubeAudioSourceManager() {
-    this(true, null, null);
+    this(true);
+  }
+
+  /**
+   * Create an instance.
+   * @param allowSearch Whether to allow search queries as identifiers
+   */
+  public YoutubeAudioSourceManager(boolean allowSearch) {
+    this(allowSearch, null, null);
   }
 
   /**

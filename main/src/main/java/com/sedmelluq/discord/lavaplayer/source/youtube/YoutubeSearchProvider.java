@@ -109,16 +109,11 @@ public class YoutubeSearchProvider implements YoutubeSearchResultLoader {
 
     String title = json.get("title").get("runs").index(0).get("text").text();
     String author = json.get("longBylineText").get("runs").index(0).get("text").text();
-    long duration = DURATION_MS_UNKNOWN;
-    boolean isStream = false;
-    if (json.get("lengthText").isNull()) {
-      isStream = true;
-    } else {
-      duration = DataFormatTools.durationTextToMillis(json.get("lengthText").get("runs").index(0).get("text").text());
-    }
+    String durationStr = json.get("lengthText").get("runs").index(0).get("text").text();
+    long duration = durationStr != null ? DataFormatTools.durationTextToMillis(durationStr) : DURATION_MS_UNKNOWN;
     String videoId = json.get("videoId").text();
 
-    AudioTrackInfo info = new AudioTrackInfo(title, author, duration, videoId, isStream,
+    AudioTrackInfo info = new AudioTrackInfo(title, author, duration, videoId, duration == DURATION_MS_UNKNOWN,
         WATCH_URL_PREFIX + videoId, PBJUtils.getYouTubeThumbnail(json, videoId));
 
     return trackFactory.apply(info);

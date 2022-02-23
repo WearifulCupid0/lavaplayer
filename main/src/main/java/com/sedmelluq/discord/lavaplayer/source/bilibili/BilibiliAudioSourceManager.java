@@ -163,7 +163,7 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
         }
 
         return new BasicAudioPlaylist(
-            "Pages for video: " + videosData.get("title").text(),
+            videosData.get("title").text(),
             uploader, thumbnailUrl, getWatchUrl(videoId), "pages",
             tracks, null, false
         );
