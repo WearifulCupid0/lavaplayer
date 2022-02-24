@@ -44,41 +44,39 @@ public class AudioboomAudioTrack extends DelegatedAudioTrack {
     @Override
     public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
         try (HttpInterface httpInterface = sourceManager.getHttpInterface()) {
-            String url = loadPlaybackUrl(httpInterface);
-            log.debug("Playing audioboom track from url: {}", url);
+            URI url = loadPlaybackUrl(httpInterface);
+            log.debug("Playing audioboom track from url: {}", url.toString());
 
-            try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(url), null)) {
+            try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, url, null)) {
                 processDelegate(new Mp3AudioTrack(this.trackInfo, stream), localExecutor);
                 return;
             }
         }
     }
 
-    private String loadPlaybackUrl(HttpInterface httpInterface) throws IOException {
+    private URI loadPlaybackUrl(HttpInterface httpInterface) throws IOException {
         try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(trackInfo.identifier))) {
             HttpClientTools.assertSuccessWithContent(response, "audio page");
 
             String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             Document document = Jsoup.parse(html);
             
-            String redirString = document.selectFirst("meta[property=og:audio]").attr("content");
-            if (redirString == null || redirString.isEmpty()) {
+            String url = document.selectFirst("meta[property=og:audio]").attr("content");
+            if (url == null || url.isEmpty()) {
                 throw new IOException("Redirect url not found on track page.");
             }
 
-            URI redirUrl =  URI.create(redirString.replaceAll("amp;", ""));
-            try (CloseableHttpResponse res = httpInterface.execute(new HttpGet(redirUrl))) {
+            try (CloseableHttpResponse res = httpInterface.execute(new HttpGet(URI.create(url)))) {
                 HttpClientContext context = httpInterface.getContext();
                 List<URI> redirects = context.getRedirectLocations();
                 if (redirects != null && !redirects.isEmpty()) {
-                    return redirects.get(0).toString();
+                    return redirects.get(0);
                 } else {
                     throw new IOException("Failed to follow playback redirect location.");
                 }
             }
         }
     }
-
 
     @Override
     protected AudioTrack makeShallowClone() {

@@ -44,17 +44,17 @@ public class SmuleAudioTrack extends DelegatedAudioTrack {
     @Override
     public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
         try (HttpInterface httpInterface = sourceManager.getHttpInterface()) {
-            String playbackUrl = loadPlaybackUrl(httpInterface);
+            URI playbackUrl = loadPlaybackUrl(httpInterface);
 
-            log.debug("Starting Smule track from URL: {}", playbackUrl);
+            log.debug("Starting Smule track from URL: {}", playbackUrl.toString());
 
-            try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(playbackUrl), null)) {
+            try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, playbackUrl, null)) {
                 processDelegate(new MpegAudioTrack(trackInfo, stream), localExecutor);
             }
         }
     }
 
-    private String loadPlaybackUrl(HttpInterface httpInterface) throws IOException {
+    private URI loadPlaybackUrl(HttpInterface httpInterface) throws IOException {
         try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(trackInfo.identifier))) {
             HttpClientTools.assertSuccessWithContent(response, "track page");
 
@@ -71,7 +71,7 @@ public class SmuleAudioTrack extends DelegatedAudioTrack {
                 HttpClientContext context = httpInterface.getContext();
                 List<URI> redirects = context.getRedirectLocations();
                 if (redirects != null && !redirects.isEmpty()) {
-                    return redirects.get(0).toString();
+                    return redirects.get(0);
                 } else {
                     throw new IOException("Failed to follow playback redirect location.");
                 }
