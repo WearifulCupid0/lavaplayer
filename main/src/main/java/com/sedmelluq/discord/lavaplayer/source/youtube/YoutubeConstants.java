@@ -24,7 +24,7 @@ public class YoutubeConstants {
     static final String PLAYER_EMBED_PAYLOAD = BASE_PAYLOAD + SCREEN_PART_PAYLOAD + EMBED_PART_PAYLOAD + CLOSE_BASE_PAYLOAD + CLOSE_PLAYER_PAYLOAD;
     static final String VERIFY_AGE_URL = BASE_URL + "/verify_age";
     static final String VERIFY_AGE_PAYLOAD = BASE_PAYLOAD + SCREEN_PART_PAYLOAD + CLOSE_BASE_PAYLOAD + "\"nextEndpoint\":{\"urlEndpoint\":{\"url\":\"%s\"}},\"setControvercy\":true}";
-    static final String SEARCH_URL = BASE_URL + "/search";
+    static final String SEARCH_URL = BASE_URL + "/search?key=" + INNERTUBE_API_KEY;
     static final String SEARCH_PAYLOAD = DEFAULT_BASE_PAYLOAD + SCREEN_PART_PAYLOAD + CLOSE_BASE_PAYLOAD + "\"query\":\"%s\",\"params\":\"EgIQAQ==\"}";
     static final String BROWSE_URL = BASE_URL + "/browse";
     static final String BROWSE_CONTINUATION_PAYLOAD = DEFAULT_BASE_PAYLOAD + SCREEN_PART_PAYLOAD + CLOSE_BASE_PAYLOAD + "\"continuation\":\"%s\"}";
