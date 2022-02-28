@@ -129,7 +129,7 @@ public class NewgroundsAudioSourceManager implements AudioSourceManager, HttpCon
                 json.get("title").text(),
                 json.get("author").text(),
                 DURATION_MS_UNKNOWN,
-                videoId,
+                json.get("sources").values().get(0).get("src").text(),
                 false,
                 videoUrl
         ), this);
@@ -145,7 +145,7 @@ public class NewgroundsAudioSourceManager implements AudioSourceManager, HttpCon
                 json.get("title").text(),
                 json.get("author").text(),
                 json.get("duration").as(Long.class) * 1000,
-                audioId,
+                json.get("sources").index(0).get("src").text(),
                 false,
                 audioUrl
         ), this);
