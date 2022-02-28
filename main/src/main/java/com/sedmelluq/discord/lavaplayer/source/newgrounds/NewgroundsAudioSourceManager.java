@@ -23,6 +23,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -123,13 +124,13 @@ public class NewgroundsAudioSourceManager implements AudioSourceManager, HttpCon
             throw new FriendlyException("Server responded with an error.", SUSPICIOUS, new IllegalStateException("Response code is " + statusCode + ". Message is " + error.get("msg").text()));
         }
 
-        System.out.println(json.text());
+        List<JsonBrowser> sources = json.get("sources").values();
 
         return new NewgroundsAudioTrack(new AudioTrackInfo(
                 json.get("title").text(),
                 json.get("author").text(),
                 DURATION_MS_UNKNOWN,
-                json.get("sources").values().get(0).get("src").text(),
+                sources.get(sources.size() - 1).get("src").text(),
                 false,
                 videoUrl
         ), this);
