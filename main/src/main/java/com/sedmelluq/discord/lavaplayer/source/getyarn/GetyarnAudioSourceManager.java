@@ -36,7 +36,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
  */
 public class GetyarnAudioSourceManager implements HttpConfigurable, AudioSourceManager {
   private static final String GETYARN_CLIP_URL = "https://getyarn.io/yarn-clip/";
-  private static final String GETYARN_REGEX = "^(?:http://|https://|)?(?:www\\.)?getyarn\\.io/yarn-clip/([a-zA-Z0-9-_]+)";
+  private static final String GETYARN_REGEX = "^(?:http://|https://|)(?:www\\.|)getyarn\\.io/yarn-clip/([a-zA-Z0-9-_]+)";
   private static final Pattern getyarnPattern = Pattern.compile(GETYARN_REGEX);
 
   private final HttpInterfaceManager httpInterfaceManager;
