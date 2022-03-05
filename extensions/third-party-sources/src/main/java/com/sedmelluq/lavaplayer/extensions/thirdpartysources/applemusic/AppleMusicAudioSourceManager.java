@@ -187,7 +187,7 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
         return new BasicAudioPlaylist(
             attributes.get("name").safeText(),
             attributes.get("curatorName").safeText(),
-            attributes.get("artwork").get("url").text().replace("{w}x{h}", "800x800"),
+            attributes.get("artwork").get("url").safeText().replace("{w}x{h}", "800x800"),
             attributes.get("url").text(),
             "playlist",
             tracks,
@@ -210,7 +210,7 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
         return new BasicAudioPlaylist(
             attributes.get("name").safeText(),
             attributes.get("artistName").safeText(),
-            attributes.get("artwork").get("url").text().replace("{w}x{h}", "800x800"),
+            attributes.get("artwork").get("url").safeText().replace("{w}x{h}", "800x800"),
             attributes.get("url").text(),
             "playlist",
             tracks,
