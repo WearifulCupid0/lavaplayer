@@ -105,18 +105,16 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
                 List<JsonBrowser> apiResponseValues = apiResponse.get("data").get("result").values();
                 List<AudioTrack> tracks = new ArrayList<>();
                 for (JsonBrowser item : apiResponseValues) {
-                    String title = item.get("title").text();
+                    String title = item.get("title").safeText();
                     Matcher titleMatcher = titlePattern.matcher(title);
                     if (titleMatcher.find()) {
                         title = titleMatcher.group(1) + titleMatcher.group(2) + titleMatcher.group(3);
                     }
-                    String uploader = item.get("author").text();
+                    String uploader = item.get("author").safeText();
                     String thumbnailUrl = "https:" + item.get("pic").text();
                     long duration = DataFormatTools.durationTextToMillis(item.get("duration").text());
                     String videoId = item.get("bvid").text();
-                    tracks.add(
-                        new BilibiliAudioTrack(new AudioTrackInfo(title, uploader, duration, videoId, false, getWatchUrl(videoId), thumbnailUrl), this)
-                    );
+                    tracks.add(new BilibiliAudioTrack(new AudioTrackInfo(title, uploader, duration, videoId, false, getWatchUrl(videoId), thumbnailUrl), this));
                 }
                 return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
             }
