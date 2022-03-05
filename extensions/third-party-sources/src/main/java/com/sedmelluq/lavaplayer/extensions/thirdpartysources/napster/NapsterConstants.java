@@ -12,7 +12,8 @@ public class NapsterConstants {
     //API
     static final String DEFAULT_API_KEY = "YTkxZTRhNzAtODdlNy00ZjMzLTg0MWItOTc0NmZmNjU4Yzk4";
 
-    static final String API_URL = "https://api.napster.com/v2.2";
+    static final String BASE_URL = "https://api.napster.com";
+    static final String API_URL = BASE_URL + "/v2.2";
 
     static final String ALBUM_API_URL = API_URL + "/albums/%s/%s";
     static final String ALBUM_TRACK_API_URL = API_URL + "/albums/%s/tracks?limit=200";

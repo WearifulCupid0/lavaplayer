@@ -7,7 +7,8 @@ public class AppleMusicConstants {
     static final String ARTIST_URL = MAIN_URL + "/artist/";
 
     //Api endpoints
-    static final String API_URL = "https://api.music.apple.com/v1/catalog/us";
+    static final String BASE_URL = "https://api.music.apple.com";
+    static final String API_URL = BASE_URL + "/v1/catalog/us";
 
     static final String SEARCH_API_URL = API_URL + "/search";
     static final String TRACK_API_URL = API_URL + "/songs/%s";

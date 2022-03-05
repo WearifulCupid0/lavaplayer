@@ -180,8 +180,17 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
         }
 
         List<AudioTrack> tracks = new ArrayList<>();
-        for(JsonBrowser track : playlist.get("relationships").get("tracks").get("data").values()) {
+        JsonBrowser tracksJson = playlist.get("relationships").get("tracks");
+        for(JsonBrowser track : tracksJson.get("data").values()) {
             tracks.add(buildTrack(track));
+        }
+        String next = tracksJson.get("next").text();
+        while(next != null && !next.isEmpty()) {
+            tracksJson = this.requestApi(BASE_URL + next);
+            next = tracksJson.get("next").text();
+            for(JsonBrowser track : tracksJson.get("data").values()) {
+                tracks.add(buildTrack(track));
+            }
         }
         JsonBrowser attributes = playlist.get("attributes");
         return new BasicAudioPlaylist(
@@ -203,8 +212,17 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
         }
 
         List<AudioTrack> tracks = new ArrayList<>();
-        for(JsonBrowser track : album.get("relationships").get("tracks").get("data").values()) {
+        JsonBrowser tracksJson = album.get("relationships").get("tracks");
+        for(JsonBrowser track : tracksJson.get("data").values()) {
             tracks.add(buildTrack(track));
+        }
+        String next = tracksJson.get("next").text();
+        while(next != null && !next.isEmpty()) {
+            tracksJson = this.requestApi(BASE_URL + next);
+            next = tracksJson.get("next").text();
+            for(JsonBrowser track : tracksJson.get("data").values()) {
+                tracks.add(buildTrack(track));
+            }
         }
         JsonBrowser attributes = album.get("attributes");
         return new BasicAudioPlaylist(
@@ -212,7 +230,7 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
             attributes.get("artistName").safeText(),
             attributes.get("artwork").get("url").safeText().replace("{w}x{h}", "800x800"),
             attributes.get("url").text(),
-            "playlist",
+            attributes.get("isSingle").asBoolean(false) ? "single" : "album",
             tracks,
             findSelectedTrack(tracks, trackId),
             false

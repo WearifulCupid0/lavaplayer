@@ -265,6 +265,15 @@ public class NapsterAudioSourceManager extends ThirdPartyAudioSourceManager impl
             tracks.add(buildTrack(track));
         }
 
+        String next = json.get("meta").get("query").get("next").text();
+        while (next != null && !next.isEmpty()) {
+            JsonBrowser nextPage = this.requestApi(next);
+            next = nextPage.get("meta").get("query").get("next").text();
+            for (JsonBrowser track : nextPage.get("tracks").values()) {
+                tracks.add(buildTrack(track));
+            }
+        }
+
         return new BasicAudioPlaylist(
             playlist.get("name").safeText(),
             null,
