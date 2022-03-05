@@ -37,7 +37,11 @@ import static com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN;
  * Audio source manager which detects NewGrounds tracks by URL.
  */
 public class NewgroundsAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-    static final Pattern URL_PATTERN = Pattern.compile("^https://www.newgrounds.com/(portal/view|audio/listen)/([0-9]+)(?:\\?.*|)$");
+    private static final String URL_REGEX = "^https://www.newgrounds.com/(portal/view|audio/listen)/([0-9]+)(?:\\?.*|)$";
+    private static final String HTML_IMAGE_REGEX = "\"background-image: url\\('(.*)'\\)\"";
+
+    private static final Pattern urlPattern = Pattern.compile(URL_REGEX);
+    private static final Pattern imageHtmlPattern = Pattern.compile(HTML_IMAGE_REGEX);
 
     private final HttpInterfaceManager httpInterfaceManager;
 
@@ -60,7 +64,7 @@ public class NewgroundsAudioSourceManager implements AudioSourceManager, HttpCon
 
     @Override
     public AudioItem loadItem(AudioPlayerManager manager, AudioReference reference) {
-        Matcher matcher = URL_PATTERN.matcher(reference.identifier);
+        Matcher matcher = urlPattern.matcher(reference.identifier);
         if (!matcher.matches()) {
             return null;
         }
@@ -147,13 +151,21 @@ public class NewgroundsAudioSourceManager implements AudioSourceManager, HttpCon
             return AudioReference.NO_TRACK;
         }
 
+        String artwork = null;
+        String html = json.get("html").text();
+        if (html != null && !html.isEmpty()) {
+            Matcher m = imageHtmlPattern.matcher(html);
+            if (m.find()) artwork = m.group(1);
+        }
+
         return new NewgroundsAudioTrack(new AudioTrackInfo(
                 json.get("title").text(),
                 json.get("author").text(),
                 json.get("duration").as(Long.class) * 1000,
                 json.get("sources").index(0).get("src").text(),
                 false,
-                audioUrl
+                audioUrl,
+                artwork
         ), this);
     }
 
