@@ -230,7 +230,7 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
             : null,
             ALBUM_URL + album.get("id").text(),
             album.get("type").text().toLowerCase(),
-            tracks.size() > total ? tracks.subList(0, total) : tracks,
+            tracks.size() > total ? tracks.subList(0, total.intValue()) : tracks,
             null,
             false
         );
@@ -257,7 +257,7 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
             : null,
             PLAYLIST_URL + playlist.get("uuid").text(),
             "playlist",
-            tracks.size() > total ? tracks.subList(0, total) : tracks,
+            tracks.size() > total ? tracks.subList(0, total.intValue()) : tracks,
             null,
             false
         );
