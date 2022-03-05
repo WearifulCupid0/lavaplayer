@@ -9,6 +9,7 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
+import com.sedmelluq.discord.lavaplayer.tools.io.ThreadLocalHttpInterfaceManager;
 import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -36,7 +37,6 @@ import static com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN;
  * Audio source manager which detects NewGrounds tracks by URL.
  */
 public class NewgroundsAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-
     static final Pattern URL_PATTERN = Pattern.compile("^https://www.newgrounds.com/(portal/view|audio/listen)/([0-9]+)(?:\\?.*|)$");
 
     private final HttpInterfaceManager httpInterfaceManager;
@@ -45,7 +45,12 @@ public class NewgroundsAudioSourceManager implements AudioSourceManager, HttpCon
      * Create an instance.
      */
     public NewgroundsAudioSourceManager() {
-        httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
+        httpInterfaceManager = new ThreadLocalHttpInterfaceManager(
+            HttpClientTools
+                .createSharedCookiesHttpBuilder()
+                .setRedirectStrategy(new HttpClientTools.NoRedirectsStrategy()),
+            HttpClientTools.DEFAULT_REQUEST_CONFIG
+        );
     }
 
     @Override
@@ -166,6 +171,4 @@ public class NewgroundsAudioSourceManager implements AudioSourceManager, HttpCon
             return JsonBrowser.parse(response.getEntity().getContent());
         }
     }
-
-
 }
