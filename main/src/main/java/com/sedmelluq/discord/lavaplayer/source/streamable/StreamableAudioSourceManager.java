@@ -32,7 +32,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 
 public class StreamableAudioSourceManager implements AudioSourceManager, HttpConfigurable {
     private static final String STREAMABLE_URL = "https://streamable.com/";
-    private static final String STREAMABLE_REGEX = "^(?:http://|https://|)(?:www\\.|m\\.|)streamable\\.com/([a-zA-Z0-9-_]+)";
+    private static final String STREAMABLE_REGEX = "^(?:http://|https://|)(?:www\\.|m\\.|)streamable\\.com/(?:e/|)([a-zA-Z0-9-_]+)";
     private static final String VIDEO_DATA_REGEX = "var videoObject\\s*=\\s*(.*);";
 
     private static final Pattern streamablePattern = Pattern.compile(STREAMABLE_REGEX);

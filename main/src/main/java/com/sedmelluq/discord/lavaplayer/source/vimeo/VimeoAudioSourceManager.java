@@ -112,6 +112,8 @@ public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigur
   public AudioTrack buildTrack(JsonBrowser json) {
     JsonBrowser video = json.get("video");
 
+    if (video.isNull()) return null;
+
     AudioTrackInfo trackInfo = new AudioTrackInfo(
       video.get("title").text(),
       video.get("owner").get("name").text(),
@@ -119,7 +121,7 @@ public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigur
       video.get("id").text(),
       false,
       video.get("url").text(),
-      video.get("thumbs").get("1028").text()
+      video.get("thumbs").get("1280").text()
     );
 
     return new VimeoAudioTrack(trackInfo, this);
