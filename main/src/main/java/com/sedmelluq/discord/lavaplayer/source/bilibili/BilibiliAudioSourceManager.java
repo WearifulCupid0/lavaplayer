@@ -38,9 +38,13 @@ import static com.sedmelluq.discord.lavaplayer.source.bilibili.BilibiliConstants
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
 public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-    private static final String SEARCH_PREFIX = "blsearch:";
     private static final String DOMAIN_REGEX = "^(?:http://|https://|)(?:www\\.|m\\.|)bilibili\\.com/(video)[/:]([A-Za-z0-9]+).*";
+    private static final String TITLE_REGEX = "(.*)<em class=\"keyword\">(.*)</em>(.*)";
+
+    private static final String SEARCH_PREFIX = "blsearch:";
+
     private static final Pattern urlPattern = Pattern.compile(DOMAIN_REGEX);
+    private static final Pattern titlePattern = Pattern.compile(TITLE_REGEX);
 
     private final boolean allowSearch;
     private final HttpInterfaceManager httpInterfaceManager;
@@ -102,7 +106,10 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
                 List<AudioTrack> tracks = new ArrayList<>();
                 for (JsonBrowser item : apiResponseValues) {
                     String title = item.get("title").text();
-                    title.replace("<em class=\"keyword\">", "").replace("</em>", "");
+                    Matcher titleMatcher = titlePattern.matcher(title);
+                    if (titleMatcher.find()) {
+                        title = titleMatcher.group(1) + titleMatcher.group(2) + titleMatcher.group(3);
+                    }
                     String uploader = item.get("author").text();
                     String thumbnailUrl = "https:" + item.get("pic").text();
                     long duration = DataFormatTools.durationTextToMillis(item.get("duration").text());
