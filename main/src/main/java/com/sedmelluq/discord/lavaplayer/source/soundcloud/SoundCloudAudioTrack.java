@@ -1,7 +1,6 @@
 package com.sedmelluq.discord.lavaplayer.source.soundcloud;
 
 import com.sedmelluq.discord.lavaplayer.container.mp3.Mp3AudioTrack;
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.PersistentHttpStream;
@@ -89,7 +88,7 @@ public class SoundCloudAudioTrack extends DelegatedAudioTrack {
   }
 
   @Override
-  public AudioSourceManager getSourceManager() {
+  public SoundCloudAudioSourceManager getSourceManager() {
     return sourceManager;
   }
 }

@@ -1,7 +1,6 @@
 package com.sedmelluq.discord.lavaplayer.source.http;
 
 import com.sedmelluq.discord.lavaplayer.container.MediaContainerDescriptor;
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.Units;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.PersistentHttpStream;
@@ -62,7 +61,7 @@ public class HttpAudioTrack extends DelegatedAudioTrack {
   }
 
   @Override
-  public AudioSourceManager getSourceManager() {
+  public HttpAudioSourceManager getSourceManager() {
     return sourceManager;
   }
 }

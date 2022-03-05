@@ -9,5 +9,7 @@ public interface MixcloudFormatHandler {
 
   String getPlaybackUrl(String identifier);
 
+  String getManifestUrl(String identifier);
+
   String getHLSPlaybackUrl(String identifier);
 }

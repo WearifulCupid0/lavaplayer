@@ -1,7 +1,6 @@
 package com.sedmelluq.discord.lavaplayer.source.local;
 
 import com.sedmelluq.discord.lavaplayer.container.MediaContainerDescriptor;
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack;
@@ -53,7 +52,7 @@ public class LocalAudioTrack extends DelegatedAudioTrack {
   }
 
   @Override
-  public AudioSourceManager getSourceManager() {
+  public LocalAudioSourceManager getSourceManager() {
     return sourceManager;
   }
 }

@@ -1,7 +1,6 @@
 package com.sedmelluq.discord.lavaplayer.source.streamable;
 
 import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack;
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.PersistentHttpStream;
@@ -69,7 +68,7 @@ public class StreamableAudioTrack extends DelegatedAudioTrack {
     }
 
     @Override
-    public AudioSourceManager getSourceManager() {
+    public StreamableAudioSourceManager getSourceManager() {
         return sourceManager;
     }
 }

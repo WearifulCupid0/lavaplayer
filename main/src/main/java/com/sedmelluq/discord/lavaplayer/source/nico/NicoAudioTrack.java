@@ -1,7 +1,6 @@
 package com.sedmelluq.discord.lavaplayer.source.nico;
 
 import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack;
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.PersistentHttpStream;
@@ -92,7 +91,7 @@ public class NicoAudioTrack extends DelegatedAudioTrack {
   }
 
   @Override
-  public AudioSourceManager getSourceManager() {
+  public NicoAudioSourceManager getSourceManager() {
     return sourceManager;
   }
 }

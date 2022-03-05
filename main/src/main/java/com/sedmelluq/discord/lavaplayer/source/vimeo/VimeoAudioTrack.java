@@ -1,7 +1,6 @@
 package com.sedmelluq.discord.lavaplayer.source.vimeo;
 
 import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack;
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
@@ -98,7 +97,7 @@ public class VimeoAudioTrack extends DelegatedAudioTrack {
   }
 
   @Override
-  public AudioSourceManager getSourceManager() {
+  public VimeoAudioSourceManager getSourceManager() {
     return sourceManager;
   }
 }

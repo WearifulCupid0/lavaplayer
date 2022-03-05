@@ -1,7 +1,6 @@
 package com.sedmelluq.discord.lavaplayer.source.bandcamp;
 
 import com.sedmelluq.discord.lavaplayer.container.mp3.Mp3AudioTrack;
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -72,7 +71,7 @@ public class BandcampAudioTrack extends DelegatedAudioTrack {
   }
 
   @Override
-  public AudioSourceManager getSourceManager() {
+  public BandcampAudioSourceManager getSourceManager() {
     return sourceManager;
   }
 }

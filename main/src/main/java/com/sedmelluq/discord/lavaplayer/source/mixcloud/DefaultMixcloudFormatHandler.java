@@ -5,8 +5,8 @@ import java.util.List;
 public class DefaultMixcloudFormatHandler implements MixcloudFormatHandler {
     private static final FormatType[] TYPES = FormatType.values();
 
-  @Override
-  public MixcloudTrackFormat chooseBestFormat(List<MixcloudTrackFormat> formats) {
+    @Override
+    public MixcloudTrackFormat chooseBestFormat(List<MixcloudTrackFormat> formats) {
         for (FormatType type : TYPES) {
             for (MixcloudTrackFormat format : formats) {
                 if (type.matches(format)) {
@@ -32,6 +32,15 @@ public class DefaultMixcloudFormatHandler implements MixcloudFormatHandler {
     @Override
     public String getPlaybackUrl(String identifier) {
         if (identifier.startsWith("M:")) {
+            return identifier.substring(2);
+        }
+
+        return null;
+    }
+
+    @Override
+    public String getManifestUrl(String identifier) {
+        if (identifier.startsWith("S:")) {
             return identifier.substring(2);
         }
 

@@ -35,8 +35,9 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
  */
 public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigurable {
     private static final String URL_REGEX = "^(?:http://|https://|)(?:www\\.|api\\.|audio\\.|)clyp\\.it/([a-zA-Z0-9-_]+)";
-    private static final Pattern urlPattern = Pattern.compile(URL_REGEX);
     private static final String API_URL = "https://api.clyp.it/%s/playlist";
+
+    private static final Pattern urlPattern = Pattern.compile(URL_REGEX);
 
     private final HttpInterfaceManager httpInterfaceManager;
 
@@ -117,7 +118,7 @@ public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigura
         }
     }
 
-    private AudioTrack buildTrack(JsonBrowser data) {
+    private AudioItem buildTrack(JsonBrowser data) {
         if (!data.get("AudioFiles").isNull() && data.get("AudioFiles").isList() && !data.get("AudioFiles").index(0).isNull()) {
             JsonBrowser audioFile = data.get("AudioFiles").index(0);
             String title = audioFile.get("Title").text();
@@ -126,7 +127,7 @@ public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigura
             ? audioFile.get("User").get("FirstName").text()
             : audioFile.get("User").get("FirstName").text() + " " + audioFile.get("User").get("LastName").text();
             
-            ClypAudioTrack track = new ClypAudioTrack(new AudioTrackInfo(
+            return new ClypAudioTrack(new AudioTrackInfo(
                 title,
                 author,
                 (long) (audioFile.get("Duration").as(Double.class) * 1000.0),
@@ -135,10 +136,8 @@ public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigura
                 identifier,
                 PBJUtils.getClypArtwork(audioFile)
             ), this);
-
-            return track;
         }
 
-        return null;
+        return AudioReference.NO_TRACK;
     }
 }

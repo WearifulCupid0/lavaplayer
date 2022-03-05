@@ -1,7 +1,6 @@
 package com.sedmelluq.discord.lavaplayer.source.jamendo;
 
 import com.sedmelluq.discord.lavaplayer.container.mp3.Mp3AudioTrack;
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.PersistentHttpStream;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -47,7 +46,7 @@ public class JamendoAudioTrack extends DelegatedAudioTrack {
   }
 
   @Override
-  public AudioSourceManager getSourceManager() {
+  public JamendoAudioSourceManager getSourceManager() {
     return sourceManager;
   }
 }

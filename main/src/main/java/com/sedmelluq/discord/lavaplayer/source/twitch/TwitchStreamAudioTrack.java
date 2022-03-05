@@ -1,6 +1,5 @@
 package com.sedmelluq.discord.lavaplayer.source.twitch;
 
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.stream.M3uStreamSegmentUrlProvider;
 import com.sedmelluq.discord.lavaplayer.source.stream.MpegTsM3uStreamAudioTrack;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -62,7 +61,7 @@ public class TwitchStreamAudioTrack extends MpegTsM3uStreamAudioTrack {
   }
 
   @Override
-  public AudioSourceManager getSourceManager() {
+  public TwitchStreamAudioSourceManager getSourceManager() {
     return sourceManager;
   }
 }

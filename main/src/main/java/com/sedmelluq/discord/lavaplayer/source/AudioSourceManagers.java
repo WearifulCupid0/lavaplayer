@@ -2,7 +2,6 @@ package com.sedmelluq.discord.lavaplayer.source;
 
 import com.sedmelluq.discord.lavaplayer.container.MediaContainerRegistry;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
-import com.sedmelluq.discord.lavaplayer.source.audioboom.AudioboomAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.bandcamp.BandcampAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.bilibili.BilibiliAudioSourceManager;
@@ -18,7 +17,6 @@ import com.sedmelluq.discord.lavaplayer.source.newgrounds.NewgroundsAudioSourceM
 import com.sedmelluq.discord.lavaplayer.source.ocremix.OcremixAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.odysee.OdyseeAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.reddit.RedditAudioSourceManager;
-import com.sedmelluq.discord.lavaplayer.source.smule.SmuleAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.streamable.StreamableAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.tiktok.TiktokAudioSourceManager;
@@ -54,7 +52,6 @@ public class AudioSourceManagers {
     playerManager.registerSourceManager(new BilibiliAudioSourceManager(true));
     playerManager.registerSourceManager(new iHeartAudioSourceManager(true, containerRegistry));
     playerManager.registerSourceManager(SoundCloudAudioSourceManager.createDefault());
-    playerManager.registerSourceManager(new AudioboomAudioSourceManager());
     playerManager.registerSourceManager(new BandcampAudioSourceManager());
     playerManager.registerSourceManager(new StreamableAudioSourceManager());
     playerManager.registerSourceManager(new OcremixAudioSourceManager());
@@ -62,7 +59,6 @@ public class AudioSourceManagers {
     playerManager.registerSourceManager(new RedditAudioSourceManager());
     playerManager.registerSourceManager(new InstagramAudioSourceManager());
     playerManager.registerSourceManager(new TwitterAudioSourceManager());
-    playerManager.registerSourceManager(new SmuleAudioSourceManager());
     playerManager.registerSourceManager(new TiktokAudioSourceManager());
     playerManager.registerSourceManager(new VimeoAudioSourceManager());
     playerManager.registerSourceManager(new TwitchStreamAudioSourceManager());

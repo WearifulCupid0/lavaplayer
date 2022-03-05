@@ -1,7 +1,6 @@
 package com.sedmelluq.discord.lavaplayer.source.tunein;
 
 import com.sedmelluq.discord.lavaplayer.container.mp3.Mp3AudioTrack;
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -70,7 +69,7 @@ public class TuneinAudioTrack extends DelegatedAudioTrack {
     }
 
     @Override
-    public AudioSourceManager getSourceManager() {
+    public TuneinAudioSourceManager getSourceManager() {
         return sourceManager;
     }
 }

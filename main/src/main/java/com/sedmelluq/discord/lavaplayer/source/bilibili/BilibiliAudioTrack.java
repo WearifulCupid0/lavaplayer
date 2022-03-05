@@ -1,7 +1,6 @@
 package com.sedmelluq.discord.lavaplayer.source.bilibili;
 
 import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack;
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.Units;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
@@ -89,7 +88,7 @@ public class BilibiliAudioTrack extends DelegatedAudioTrack {
     }
 
     @Override
-    public AudioSourceManager getSourceManager() {
+    public BilibiliAudioSourceManager getSourceManager() {
       return sourceManager;
     }
 }
