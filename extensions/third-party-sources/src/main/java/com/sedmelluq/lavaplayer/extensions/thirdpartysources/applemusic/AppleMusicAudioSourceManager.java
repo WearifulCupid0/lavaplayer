@@ -39,9 +39,11 @@ import static com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
 public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager implements HttpConfigurable {
-    private static final String APPLEMUSIC_URL_REGEX = "(https?://)?(www\\.)?music\\.apple\\.com/(?<countrycode>[a-zA-Z]{2}/)?(?<type>album|playlist|artist)(/[a-zA-Z0-9\\-]+)?/(?<identifier>[a-zA-Z0-9.]+)(\\?i=(?<track>\\d+))?";
-	
+    private static final String APPLEMUSIC_URL_REGEX = "^(?:https://|http://|)(?:www\\.|)music\\.apple\\.com/(?:[a-zA-Z]{2}/)(?<type>artist|playlist|album)/(?:[a-zA-Z0-9\\-]+/|)(?<identifier>[a-zA-Z0-9-_\\.]+)";
+    private static final String TRACK_ID_REGEX = "i=(\\d+)";
+
     private static final Pattern appleMusicUrlPattern = Pattern.compile(APPLEMUSIC_URL_REGEX);
+    private static final Pattern trackIdPattern = Pattern.compile(TRACK_ID_REGEX);
 
     private static final String SEARCH_PREFIX = "amsearch:";
 
@@ -81,10 +83,16 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
         Matcher matcher = appleMusicUrlPattern.matcher(reference.identifier);
         if (matcher.find()) {
             String id = matcher.group("identifier");
-            String trackId = matcher.group("track");
-            if (trackId != null && trackId.isEmpty()) trackId = null;
+            
             switch (matcher.group("type")) {
-                case "album": return this.loadAlbumOrTrack(id, trackId);
+                case "album": {
+                    Matcher trackIdMatcher = trackIdPattern.matcher(reference.identifier);
+                    String trackId = null;
+                    if (trackIdMatcher.find()) {
+                        trackId = trackIdMatcher.group(1);
+                    }
+                    return this.loadAlbumOrTrack(id, trackId);
+                }
                 case "playlist": return this.loadPlaylist(id);
                 case "artist": return this.loadArtist(id);
                 default: return null;
