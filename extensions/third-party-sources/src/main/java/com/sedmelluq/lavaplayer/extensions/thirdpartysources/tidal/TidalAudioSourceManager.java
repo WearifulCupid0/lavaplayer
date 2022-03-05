@@ -54,6 +54,10 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
         this(true, true, playerManager);
     }
 
+    public TidalAudioSourceManager(boolean allowSearch, AudioPlayerManager playerManager) {
+        this(allowSearch, true, playerManager);
+    }
+
     public TidalAudioSourceManager(boolean allowSearch, boolean fetchIsrc, AudioPlayerManager playerManager) {
         super(playerManager, fetchIsrc);
         this.allowSearch = allowSearch;

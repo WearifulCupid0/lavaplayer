@@ -54,6 +54,10 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
         this(true, true, playerManager);
     }
 
+    public DeezerAudioSourceManager(boolean allowSearch, AudioPlayerManager playerManager) {
+        this(allowSearch, true, playerManager);
+    }
+
     public DeezerAudioSourceManager(boolean allowSearch, boolean fetchIsrc, AudioPlayerManager playerManager) {
         super(playerManager, fetchIsrc);
         this.allowSearch = allowSearch;

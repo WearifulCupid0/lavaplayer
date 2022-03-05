@@ -1,7 +1,6 @@
 package com.sedmelluq.discord.lavaplayer.source.getyarn;
 
 import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack;
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.Units;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.PersistentHttpStream;
@@ -46,7 +45,7 @@ public class GetyarnAudioTrack extends DelegatedAudioTrack {
   }
 
   @Override
-  public AudioSourceManager getSourceManager() {
+  public GetyarnAudioSourceManager getSourceManager() {
     return sourceManager;
   }
 }

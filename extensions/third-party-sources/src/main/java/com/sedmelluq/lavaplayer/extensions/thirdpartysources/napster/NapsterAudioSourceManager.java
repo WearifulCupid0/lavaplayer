@@ -55,6 +55,10 @@ public class NapsterAudioSourceManager extends ThirdPartyAudioSourceManager impl
         this(true, true, playerManager);
     }
 
+    public NapsterAudioSourceManager(boolean allowSearch, AudioPlayerManager playerManager) {
+        this(allowSearch, true, playerManager);
+    }
+
     public NapsterAudioSourceManager(boolean allowSearch, boolean fetchIsrc, AudioPlayerManager playerManager) {
         this(allowSearch, fetchIsrc, DEFAULT_API_KEY, playerManager);
     }

@@ -54,6 +54,10 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
         this(true, true, playerManager);
     }
 
+    public AppleMusicAudioSourceManager(boolean allowSearch, AudioPlayerManager playerManager) {
+        this(allowSearch, true, playerManager);
+    }
+
     public AppleMusicAudioSourceManager(boolean allowSearch, boolean fetchIsrc, AudioPlayerManager playerManager) {
         super(playerManager, fetchIsrc);
         this.allowSearch = allowSearch;

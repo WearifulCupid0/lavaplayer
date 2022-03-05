@@ -54,6 +54,10 @@ public class YandexMusicAudioSourceManager extends ThirdPartyAudioSourceManager 
     this(true, true, playerManager);
   }
 
+  public YandexMusicAudioSourceManager(boolean allowSearch, AudioPlayerManager playerManager) {
+    this(allowSearch, true, playerManager);
+  }
+
   public YandexMusicAudioSourceManager(boolean allowSearch, boolean fetchIsrc, AudioPlayerManager playerManager) {
     this(
         allowSearch,

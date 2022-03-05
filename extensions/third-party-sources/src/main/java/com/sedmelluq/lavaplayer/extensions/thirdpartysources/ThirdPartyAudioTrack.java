@@ -13,6 +13,7 @@ import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class ThirdPartyAudioTrack extends DelegatedAudioTrack {
@@ -42,8 +43,8 @@ public class ThirdPartyAudioTrack extends DelegatedAudioTrack {
 
 	private String getTrackTitle() {
 		String query = this.trackInfo.title;
-		if(!this.trackInfo.author.equals("Unknown artist")) {
-			query += " " + this.trackInfo.author;
+		if(!this.trackInfo.author.startsWith("Unknown")) {
+			query += " - " + this.trackInfo.author;
 		}
 		return query;
 	}
@@ -55,12 +56,12 @@ public class ThirdPartyAudioTrack extends DelegatedAudioTrack {
 		for(String provider : this.providers) {
 			if(provider.contains(ISRC_PATTERN)) {
 				if(this.isrc != null) {
-					provider = provider.replace(ISRC_PATTERN, this.isrc);
+					provider = provider.replace(ISRC_PATTERN, this.isrc.replaceAll("-", ""));
 				} else {
                     if(this.sourceManager.isFetchIsrcEnabled()) {
                         this.isrc = this.sourceManager.fetchIsrc(this);
                         if(this.isrc != null) {
-                            provider = provider.replace(ISRC_PATTERN, this.isrc);
+                            provider = provider.replace(ISRC_PATTERN, this.isrc.replaceAll("-", ""));
                         }
                     }
 
@@ -71,14 +72,32 @@ public class ThirdPartyAudioTrack extends DelegatedAudioTrack {
 
 			provider = provider.replace(QUERY_PATTERN, getTrackTitle());
 			track = loadItem(provider);
-			if(track != null) break;
+			if (track != null) {
+				if (track instanceof InternalAudioTrack) {
+					break;
+				}
+				if (track instanceof AudioPlaylist) {
+					List<AudioTrack> tracks = ((AudioPlaylist) track).getTracks();
+					if (tracks.size() <= 0) {
+						continue;
+					}
+					if (provider.startsWith("ytm")) {
+						for (AudioTrack t : tracks) {
+							AudioTrackInfo info = t.getInfo();
+							if (info.title.toLowerCase().contains(this.trackInfo.title.toLowerCase()) &&
+								info.author.toLowerCase().contains(this.trackInfo.author.toLowerCase())) {
+									track = t;
+									break;
+								}
+						}
+					}
+					track = tracks.get(0);
+					break;
+				}
+			}
 		}
 
-		if(track instanceof AudioPlaylist) {
-			track = ((AudioPlaylist) track).getTracks().get(0);
-		}
-
-		if(track instanceof InternalAudioTrack) {
+		if (track != null) {
 			processDelegate((InternalAudioTrack) track, executor);
 			return;
 		}

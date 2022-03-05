@@ -55,6 +55,10 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
         this(true, true, playerManager);
     }
 
+    public SpotifyAudioSourceManager(boolean allowSearch, AudioPlayerManager playerManager) {
+        this(allowSearch, true, playerManager);
+    }
+
     public SpotifyAudioSourceManager(boolean allowSearch, boolean fetchIsrc, AudioPlayerManager playerManager) {
         this(allowSearch, fetchIsrc, null, null, playerManager);
     }
