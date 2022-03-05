@@ -41,7 +41,7 @@ public class YandexMusicAudioTrack extends ThirdPartyAudioTrack {
           processDelegate(new Mp3AudioTrack(trackInfo, stream), localExecutor);
         }
       } else {
-        process(localExecutor);
+        super.process(localExecutor);
       }
     }
   }

@@ -1,7 +1,7 @@
 package com.sedmelluq.discord.lavaplayer.source.newgrounds;
 
+import com.sedmelluq.discord.lavaplayer.container.mp3.Mp3AudioTrack;
 import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack;
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.PersistentHttpStream;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -34,10 +34,12 @@ public class NewgroundsAudioTrack extends DelegatedAudioTrack {
     @Override
     public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
         try (HttpInterface httpInterface = sourceManager.getHttpInterface()) {
-            log.debug("Starting NewGrounds track from URL: {}", trackInfo.identifier);
+            log.debug("Starting NewGrounds track from URL: {}", this.trackInfo.identifier);
 
-            try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(trackInfo.identifier), null)) {
-                processDelegate(new MpegAudioTrack(trackInfo, stream), localExecutor);
+            try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(this.trackInfo.identifier), null)) {
+                processDelegate(this.trackInfo.identifier.contains(".mp3")
+                ? new Mp3AudioTrack(trackInfo, stream)
+                : new MpegAudioTrack(trackInfo, stream), localExecutor);
             }
         }
     }
@@ -48,7 +50,7 @@ public class NewgroundsAudioTrack extends DelegatedAudioTrack {
     }
 
     @Override
-    public AudioSourceManager getSourceManager() {
+    public NewgroundsAudioSourceManager getSourceManager() {
         return sourceManager;
     }
 }

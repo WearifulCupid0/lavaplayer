@@ -88,7 +88,13 @@ public class ThirdPartyAudioTrack extends DelegatedAudioTrack {
 								info.author.toLowerCase().contains(this.trackInfo.author.toLowerCase())) {
 									track = t;
 									break;
-								}
+							}
+						}
+						
+						if (track != null) {
+							break;
+						} else {
+							continue;
 						}
 					}
 					track = tracks.get(0);
