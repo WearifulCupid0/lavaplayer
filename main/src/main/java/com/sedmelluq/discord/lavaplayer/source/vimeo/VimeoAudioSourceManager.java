@@ -182,7 +182,7 @@ public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigur
 
     return new VimeoAudioTrack(new AudioTrackInfo(
       clip.get("name").safeText(),
-      clip.get("owner").get("name").safeText(),
+      clip.get("user").get("name").safeText(),
       (long) (clip.get("duration").as(Double.class) * 1000.0),
       identifier,
       false,
