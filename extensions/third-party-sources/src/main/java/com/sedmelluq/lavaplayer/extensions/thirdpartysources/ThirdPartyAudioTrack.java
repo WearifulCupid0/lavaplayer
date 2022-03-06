@@ -71,13 +71,14 @@ public class ThirdPartyAudioTrack extends DelegatedAudioTrack {
 			}
 
 			provider = provider.replace(QUERY_PATTERN, getTrackTitle());
-			track = loadItem(provider);
-			if (track != null) {
-				if (track instanceof InternalAudioTrack) {
+			AudioItem result = loadItem(provider);
+			if (result != null) {
+				if (result instanceof InternalAudioTrack) {
+					track = result;
 					break;
 				}
-				if (track instanceof AudioPlaylist) {
-					List<AudioTrack> tracks = ((AudioPlaylist) track).getTracks();
+				if (result instanceof AudioPlaylist) {
+					List<AudioTrack> tracks = ((AudioPlaylist) result).getTracks();
 					if (tracks.size() <= 0) {
 						continue;
 					}
