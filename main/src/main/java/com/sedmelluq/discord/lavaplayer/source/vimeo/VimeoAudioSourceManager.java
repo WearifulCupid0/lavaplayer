@@ -134,6 +134,9 @@ public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigur
       throw new FriendlyException("Track information not found on the page.", SUSPICIOUS, null);
     }
 
+    String artworkUrl = config.get("player").get("poster").get("url").text();
+    if (artworkUrl == null || artworkUrl.isEmpty()) artworkUrl = config.get("thumbnail").get("src_2x").text();
+
     return new VimeoAudioTrack(new AudioTrackInfo(
         config.get("clip").get("title").text(),
         config.get("owner").get("display_name").text(),
@@ -141,7 +144,7 @@ public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigur
         trackUrl,
         false,
         trackUrl,
-        config.get("thumbnail").get("src_2x").text()
+        artworkUrl
     ), this);
   }
 }
