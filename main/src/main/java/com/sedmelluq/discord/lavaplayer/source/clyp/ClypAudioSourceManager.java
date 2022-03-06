@@ -58,7 +58,7 @@ public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigura
     public AudioItem loadItem(AudioPlayerManager manager, AudioReference reference) {
         String identifier = reference.identifier;
 
-        if (reference.identifier == RANDOM_AUDIO) {
+        if (reference.identifier.equals(RANDOM_AUDIO)) {
             String randomUrl = getRandomAudio();
             if (randomUrl != null && !randomUrl.isEmpty()) {
                 identifier = randomUrl;
