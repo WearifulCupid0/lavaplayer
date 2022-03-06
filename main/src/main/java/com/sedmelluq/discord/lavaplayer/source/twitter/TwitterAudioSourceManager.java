@@ -117,7 +117,7 @@ public class TwitterAudioSourceManager implements AudioSourceManager, HttpConfig
         String title = json.get("full_text").text();
         if (title == null || title.isEmpty()) title = "Twitter post.";
 
-        String author = json.get("user").get("name").safeText();
+        String author = json.get("user").get("screen_name").safeText();
         long length = videoInfo.get("duration_millis").asLong(Units.DURATION_MS_UNKNOWN);
         List<JsonBrowser> variants = videoInfo.get("variants").values();
         JsonBrowser bestFormat = null;

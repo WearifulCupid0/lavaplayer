@@ -69,12 +69,12 @@ public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigur
 
   @Override
   public AudioItem loadItem(AudioPlayerManager manager, AudioReference reference) {
-    if (!trackUrlPattern.matcher(reference.identifier).matches()) {
-      return null;
-    }
-
     if (allowSearch && reference.identifier.startsWith(SEARCH_PREFIX)) {
       return loadFromSearchPage(reference.identifier.substring(SEARCH_PREFIX.length()).trim());
+    }
+
+    if (!trackUrlPattern.matcher(reference.identifier).matches()) {
+      return null;
     }
 
     try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
