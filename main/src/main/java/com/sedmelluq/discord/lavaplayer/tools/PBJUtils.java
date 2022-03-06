@@ -74,11 +74,6 @@ public class PBJUtils {
         return null;
     }
 
-    public static String getVimeoThumbnail(String id) {
-        if (id != null) return "https://i.vimeocdn.com/video/" + id + "_1920x1080";
-        return null;
-    }
-
     public static String getBandcampArtwork(JsonBrowser trackData) {
         String artId = trackData.get("art_id").text();
         if (artId != null) {
