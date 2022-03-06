@@ -135,7 +135,9 @@ public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigur
     try (HttpInterface httpInterface = getHttpInterface()) {
       URI uri = new URIBuilder("https://vimeo.com/search")
       .addParameter("q", query).build();
-      try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(uri))) {
+      HttpGet get = new HttpGet(uri);
+      get.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36");
+      try (CloseableHttpResponse response = httpInterface.execute(get)) {
         int statusCode = response.getStatusLine().getStatusCode();
 
         if (statusCode == HttpStatus.SC_NOT_FOUND) {
