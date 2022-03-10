@@ -16,15 +16,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.BASE_PAYLOAD;
-import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.CLIENT_WEB_NAME;
-import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.CLIENT_WEB_VERSION;
-import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.CLOSE_BASE_PAYLOAD;
-import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.CLOSE_PLAYER_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.PLAYER_EMBED_PAYLOAD;
+import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.PLAYER_TRAILER_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.PLAYER_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.PLAYER_URL;
-import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.SCREEN_PART_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.VERIFY_AGE_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.VERIFY_AGE_URL;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.WATCH_URL_PREFIX;
@@ -133,7 +128,7 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
     } else if ("UNPLAYABLE".equals(status)) {
       String unplayableReason = getUnplayableReason(statusBlock);
 
-      if ("Playback on other websites has been disabled by the video owner.".equals(unplayableReason)) {
+      if ("Playback on other websites has been disabled by the video owner".contains(unplayableReason)) {
         return InfoStatus.NON_EMBEDDABLE;
       }
 
@@ -211,11 +206,7 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
     StringEntity payload;
 
     if (infoStatus == InfoStatus.PREMIERE_TRAILER) {
-      payload = new StringEntity(String.format(
-          String.format(
-              BASE_PAYLOAD, CLIENT_WEB_NAME, CLIENT_WEB_VERSION
-          ) + SCREEN_PART_PAYLOAD + CLOSE_BASE_PAYLOAD + CLOSE_PLAYER_PAYLOAD, videoId, playerScriptTimestamp.scriptTimestamp
-      ), "UTF-8");
+      payload = new StringEntity(String.format(PLAYER_TRAILER_PAYLOAD, videoId, playerScriptTimestamp.scriptTimestamp), "UTF-8");
     } else if (infoStatus == InfoStatus.NON_EMBEDDABLE) {
       payload = new StringEntity(String.format(PLAYER_PAYLOAD, videoId, playerScriptTimestamp.scriptTimestamp), "UTF-8");
     } else {
