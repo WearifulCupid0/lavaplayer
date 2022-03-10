@@ -128,7 +128,7 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
     } else if ("UNPLAYABLE".equals(status)) {
       String unplayableReason = getUnplayableReason(statusBlock);
 
-      if ("Playback on other websites has been disabled by the video owner".contains(unplayableReason)) {
+      if (unplayableReason.contains("Playback on other websites has been disabled by the video owner")) {
         return InfoStatus.NON_EMBEDDABLE;
       }
 
