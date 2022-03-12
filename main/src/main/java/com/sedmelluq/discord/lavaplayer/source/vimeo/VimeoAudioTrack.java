@@ -66,7 +66,9 @@ public class VimeoAudioTrack extends DelegatedAudioTrack {
   }
 
   private JsonBrowser loadPlayerConfig(HttpInterface httpInterface) throws IOException {
-    try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(trackInfo.identifier))) {
+    HttpGet get = new HttpGet(trackInfo.identifier);
+    get.setHeader("User-Agent", VimeoAudioSourceManager.USER_AGENT);
+    try (CloseableHttpResponse response = httpInterface.execute(get)) {
       int statusCode = response.getStatusLine().getStatusCode();
 
       if (!HttpClientTools.isSuccessWithContent(statusCode)) {
