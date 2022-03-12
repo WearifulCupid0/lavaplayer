@@ -41,6 +41,8 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
  * Audio source manager which detects Vimeo tracks by URL.
  */
 public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigurable {
+  private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36";
+
   private static final String TRACK_URL_REGEX = "^https://vimeo.com/[0-9]+(?:\\?.*|)$";
   private static final Pattern trackUrlPattern = Pattern.compile(TRACK_URL_REGEX);
   private static final String SEARCH_PREFIX = "vmsearch:";
@@ -122,7 +124,7 @@ public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigur
   }
 
   private JsonBrowser loadSearchConfigFromPageContent(String content) throws IOException {
-    String configText = DataFormatTools.extractBetween(content, "(vimeo.config || {}), ", ");");
+    String configText = DataFormatTools.extractBetween(content, "(window.vimeo || {}), ", ");");
 
     if (configText != null) {
       return JsonBrowser.parse(configText);
@@ -136,7 +138,7 @@ public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigur
       URI uri = new URIBuilder("https://vimeo.com/search")
       .addParameter("q", query).build();
       HttpGet get = new HttpGet(uri);
-      get.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36");
+      get.setHeader("User-Agent", USER_AGENT);
       try (CloseableHttpResponse response = httpInterface.execute(get)) {
         int statusCode = response.getStatusLine().getStatusCode();
 
@@ -202,7 +204,9 @@ public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigur
   }
 
   private AudioItem loadFromTrackPage(HttpInterface httpInterface, String trackUrl) throws IOException {
-    try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(trackUrl))) {
+    HttpGet get = new HttpGet(trackUrl);
+    get.setHeader("User-Agent", USER_AGENT);
+    try (CloseableHttpResponse response = httpInterface.execute(get)) {
       int statusCode = response.getStatusLine().getStatusCode();
 
       if (statusCode == HttpStatus.SC_NOT_FOUND) {
