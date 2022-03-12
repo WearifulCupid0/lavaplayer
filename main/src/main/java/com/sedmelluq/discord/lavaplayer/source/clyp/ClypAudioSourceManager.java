@@ -36,7 +36,6 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigurable {
     private static final String URL_REGEX = "^(?:http://|https://|)(?:www\\.|api\\.|audio\\.|)clyp\\.it/([a-zA-Z0-9-_]+)";
     private static final String API_URL = "https://api.clyp.it/%s/playlist";
-    private static final String RANDOM_AUDIO = "clyp:random";
 
     private static final Pattern urlPattern = Pattern.compile(URL_REGEX);
 
@@ -56,16 +55,7 @@ public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigura
 
     @Override
     public AudioItem loadItem(AudioPlayerManager manager, AudioReference reference) {
-        String identifier = reference.identifier;
-
-        if (reference.identifier.equals(RANDOM_AUDIO)) {
-            String randomUrl = getRandomAudio();
-            if (randomUrl != null && !randomUrl.isEmpty()) {
-                identifier = randomUrl;
-            }
-        }
-
-        String id = getIdentifier(identifier);
+        String id = getIdentifier(reference.identifier);
         if (id != null) {
             JsonBrowser metadata = getMetadata(id);
             return buildTrack(metadata);
@@ -115,16 +105,6 @@ public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigura
     @Override
     public void configureBuilder(Consumer<HttpClientBuilder> configurator) {
         httpInterfaceManager.configureBuilder(configurator);
-    }
-
-    private String getRandomAudio() {
-        try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet("https://clyp.it/example-url"))) {
-            HttpClientTools.assertSuccessWithContent(response, "random audio api response");
-
-            return JsonBrowser.parse(response.getEntity().getContent()).get("url").text();
-        } catch(IOException e) {
-            throw new FriendlyException("Failed to get a Clyp audio url", SUSPICIOUS, e);
-        }
     }
 
     private JsonBrowser getMetadata(String identifier) {
