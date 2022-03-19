@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
+import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.COMMON;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
 /**
@@ -53,31 +54,20 @@ public class VimeoAudioTrack extends DelegatedAudioTrack {
     }
   }
 
-  private String loadPlaybackUrl(HttpInterface httpInterface) throws IOException {
-    JsonBrowser config = loadPlayerConfig(httpInterface);
-    if (config == null) {
+  private String loadPlaybackUrl(HttpInterface httpInterface) {
+    JsonBrowser config = this.sourceManager.requestPage(URI.create(this.trackInfo.identifier), "window.vimeo.clip_page_config = ", "\n");
+    if (config.isNull() || config.get("player").isNull()) {
       throw new FriendlyException("Track information not present on the page.", SUSPICIOUS, null);
     }
 
     String trackConfigUrl = config.get("player").get("config_url").text();
+    if (trackConfigUrl == null || trackConfigUrl.isEmpty()) {
+      throw new FriendlyException("Player config url not present on the page", COMMON, null);
+    }
+
     JsonBrowser trackConfig = loadTrackConfig(httpInterface, trackConfigUrl);
 
     return trackConfig.get("request").get("files").get("progressive").index(0).get("url").text();
-  }
-
-  private JsonBrowser loadPlayerConfig(HttpInterface httpInterface) throws IOException {
-    HttpGet get = new HttpGet(trackInfo.identifier);
-    get.setHeader("User-Agent", VimeoAudioSourceManager.USER_AGENT);
-    try (CloseableHttpResponse response = httpInterface.execute(get)) {
-      int statusCode = response.getStatusLine().getStatusCode();
-
-      if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-        throw new FriendlyException("Server responded with an error.", SUSPICIOUS,
-            new IllegalStateException("Response code for player config is " + statusCode));
-      }
-
-      return sourceManager.loadConfigJsonFromPageContent(IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8));
-    }
   }
 
   private JsonBrowser loadTrackConfig(HttpInterface httpInterface, String trackAccessInfoUrl) throws IOException {

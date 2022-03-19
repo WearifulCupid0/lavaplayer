@@ -43,7 +43,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigurable {
   public static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36";
 
-  private static final String TRACK_URL_REGEX = "^https://vimeo.com/[0-9]+(?:\\?.*|)$";
+  private static final String TRACK_URL_REGEX = "^(?:http://|https://|)(?:www\\.|)vimeo.com/(\\d+)";
   private static final Pattern trackUrlPattern = Pattern.compile(TRACK_URL_REGEX);
   private static final String SEARCH_PREFIX = "vmsearch:";
 
@@ -72,18 +72,13 @@ public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigur
   @Override
   public AudioItem loadItem(AudioPlayerManager manager, AudioReference reference) {
     if (allowSearch && reference.identifier.startsWith(SEARCH_PREFIX)) {
-      return loadFromSearchPage(reference.identifier.substring(SEARCH_PREFIX.length()).trim());
+      return loadSearch(reference.identifier.substring(SEARCH_PREFIX.length()).trim());
     }
 
-    if (!trackUrlPattern.matcher(reference.identifier).matches()) {
-      return null;
-    }
-
-    try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
-      return loadFromTrackPage(httpInterface, reference.identifier);
-    } catch (IOException e) {
-      throw new FriendlyException("Loading Vimeo track information failed.", SUSPICIOUS, e);
-    }
+    Matcher m = trackUrlPattern.matcher(reference.identifier);
+    if (m.find()) return loadTrack(m.group(1));
+    
+    return null;
   }
 
   @Override
@@ -123,53 +118,43 @@ public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigur
     httpInterfaceManager.configureBuilder(configurator);
   }
 
-  private JsonBrowser loadSearchConfigFromPageContent(String content) throws IOException {
-    String configText = DataFormatTools.extractBetween(content, "(window.vimeo || {}), ", ");");
-
-    if (configText != null) {
-      return JsonBrowser.parse(configText);
-    }
-
-    return null;
-  }
-
-  private AudioItem loadFromSearchPage(String query) {
+  public JsonBrowser requestPage(URI uri, String input1, String input2) {
     try (HttpInterface httpInterface = getHttpInterface()) {
-      URI uri = new URIBuilder("https://vimeo.com/search")
-      .addParameter("q", query).build();
       HttpGet get = new HttpGet(uri);
       get.setHeader("User-Agent", USER_AGENT);
+      get.setHeader("Host", "vimeo.com");
+      get.setHeader("Accept", "*/*");
       try (CloseableHttpResponse response = httpInterface.execute(get)) {
-        int statusCode = response.getStatusLine().getStatusCode();
-
-        if (statusCode == HttpStatus.SC_NOT_FOUND) {
-          return AudioReference.NO_TRACK;
-        } else if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-          throw new FriendlyException("Server responded with an error.", SUSPICIOUS,
-              new IllegalStateException("Response code is " + statusCode));
+        HttpClientTools.assertSuccessWithContent(response, "response page");
+        String text = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+        String extracted = DataFormatTools.extractBetween(text, input1, input2);
+        if (extracted == null) {
+          throw new IOException("Extract points not found on vimeo page.");
         }
 
-        JsonBrowser result = loadSearchConfigFromPageContent(IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8));
-        if (result == null) {
-          return AudioReference.NO_TRACK;
-        }
-
-        List<JsonBrowser> clips = result.get("api").get("initial_json").get("data").values();
-        List<AudioTrack> tracks = new ArrayList<>();
-        clips.forEach(data -> {
-          AudioTrack track = loadSearchTrack(data);
-          if (track != null) tracks.add(track);
-        });
-
-        if (tracks.size() < 1) {
-          return AudioReference.NO_TRACK;
-        }
-
-        return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
+        return JsonBrowser.parse(extracted);
       }
-    } catch (Exception e) {
-      throw new FriendlyException("Failed to load vimeo search results.", SUSPICIOUS, e);
+    } catch (IOException e) {
+      throw new FriendlyException("Failed to load vimeo page.", SUSPICIOUS, e);
     }
+  }
+
+  private AudioItem loadSearch(String query) {
+    URI uri = new URIBuilder("https://vimeo.com/search").addParameter("q", query).build();
+    JsonBrowser result = requestPage(uri, "(vimeo.config || {}), ", ");");
+
+    List<JsonBrowser> clips = result.get("api").get("initial_json").get("data").values();
+    List<AudioTrack> tracks = new ArrayList<>();
+    clips.forEach(data -> {
+      AudioTrack track = loadSearchTrack(data);
+      if (track != null) tracks.add(track);
+    });
+
+    if (tracks.size() < 1) {
+      return AudioReference.NO_TRACK;
+    }
+
+    return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
   }
 
   private AudioTrack loadSearchTrack(JsonBrowser content) {
@@ -193,38 +178,12 @@ public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigur
     ), this);
   }
 
-  public JsonBrowser loadConfigJsonFromPageContent(String content) throws IOException {
-    String configText = DataFormatTools.extractBetween(content, "window.vimeo.clip_page_config = ", "\n");
+  private AudioTrack loadTrack(String identifier) {
+    String trackUrl = "https://vimeo.com/" + identifier;
+    JsonBrowser config = requestPage(URI.create(trackUrl), "window.vimeo.clip_page_config = ", "\n");
 
-    if (configText != null) {
-      return JsonBrowser.parse(configText);
-    }
-
-    return null;
-  }
-
-  private AudioItem loadFromTrackPage(HttpInterface httpInterface, String trackUrl) throws IOException {
-    HttpGet get = new HttpGet(trackUrl);
-    get.setHeader("User-Agent", USER_AGENT);
-    try (CloseableHttpResponse response = httpInterface.execute(get)) {
-      int statusCode = response.getStatusLine().getStatusCode();
-
-      if (statusCode == HttpStatus.SC_NOT_FOUND) {
-        return AudioReference.NO_TRACK;
-      } else if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-        throw new FriendlyException("Server responded with an error.", SUSPICIOUS,
-            new IllegalStateException("Response code is " + statusCode));
-      }
-
-      return loadTrackFromPageContent(trackUrl, IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8));
-    }
-  }
-
-  private AudioTrack loadTrackFromPageContent(String trackUrl, String content) throws IOException {
-    JsonBrowser config = loadConfigJsonFromPageContent(content);
-
-    if (config == null) {
-      throw new FriendlyException("Track information not found on the page.", SUSPICIOUS, null);
+    if (config.get("clip").isNull() || config.get("player").isNull()) {
+      return AudioReference.NO_TRACK;
     }
 
     String artworkUrl = config.get("player").get("poster").get("url").text();
