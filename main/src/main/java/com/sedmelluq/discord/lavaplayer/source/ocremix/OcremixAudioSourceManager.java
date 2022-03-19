@@ -45,7 +45,7 @@ public class OcremixAudioSourceManager implements AudioSourceManager, HttpConfig
         "https://iterations.org",
         "https://ocrmirror.org",
         "https://ocr.blueblue.fr",
-    };
+    }
 
     private final HttpInterfaceManager httpInterfaceManager;
 
@@ -124,6 +124,8 @@ public class OcremixAudioSourceManager implements AudioSourceManager, HttpConfig
                 throw new IOException("Track details wasn't present on track page.");
             }
 
+            String artworkPath = document.selectFirst("song").attr("main_image_file");
+
             AudioTrackInfo trackInfo = new AudioTrackInfo(
                 remix.attr("name"),
                 document.selectFirst("remixers")
@@ -135,7 +137,7 @@ public class OcremixAudioSourceManager implements AudioSourceManager, HttpConfig
                 getPlaybackUrl(httpInterface, remix.attr("file_name")),
                 false,
                 url,
-                OCREMIX_MAIN_URL + document.selectFirst("song").attr("main_image_file")
+                artworkPath != null && !artworkPath.isEmpty() ? OCREMIX_MAIN_URL + artworkPath : null
             );
 
             return new OcremixAudioTrack(trackInfo, this);
