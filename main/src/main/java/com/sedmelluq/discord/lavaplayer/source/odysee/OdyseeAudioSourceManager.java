@@ -84,14 +84,14 @@ public class OdyseeAudioSourceManager implements AudioSourceManager, HttpConfigu
     try (HttpInterface httpInterface = getHttpInterface()) {
       HttpPost post = new HttpPost(OdyseeConstants.API_URL);
 
-      post.setEntity(new StringEntity(String.format(OdyseeConstants.RESOLVE_PAYLOAD, "lbry://" + uploader + "/" + videoName), ContentType.APPLICATION_JSON));
+      post.setEntity(new StringEntity(String.format(OdyseeConstants.RESOLVE_PAYLOAD, "lbry://@" + uploader + "/" + videoName), ContentType.APPLICATION_JSON));
 
       try (CloseableHttpResponse response = httpInterface.execute(post)) {
         HttpClientTools.assertSuccessWithContent(response, "video api response");
 
         JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
 
-        return extractTrackFromJson(json.get("result").get("lbry://" + uploader + "/" + videoName));
+        return extractTrackFromJson(json.get("result").get("lbry://@" + uploader + "/" + videoName));
       }
     } catch (IOException e) {
       throw new FriendlyException("Error occurred when extracting video info.", SUSPICIOUS, e);

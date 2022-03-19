@@ -44,8 +44,8 @@ public class OcremixAudioSourceManager implements AudioSourceManager, HttpConfig
     private static final String[] SERVERS = {
         "https://iterations.org",
         "https://ocrmirror.org",
-        "https://ocr.blueblue.fr",
-    }
+        "https://ocr.blueblue.fr"
+    };
 
     private final HttpInterfaceManager httpInterfaceManager;
 

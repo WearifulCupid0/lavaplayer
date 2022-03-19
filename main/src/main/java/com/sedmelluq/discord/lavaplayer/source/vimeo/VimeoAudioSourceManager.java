@@ -17,7 +17,6 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -122,9 +121,9 @@ public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigur
   public JsonBrowser requestPage(URI uri, String input1, String input2) {
     try (HttpInterface httpInterface = getHttpInterface()) {
       HttpGet get = new HttpGet(uri);
-      get.setHeader("User-Agent", USER_AGENT);
-      get.setHeader("Host", "vimeo.com");
-      get.setHeader("Accept", "*/*");
+      get.addHeader("User-Agent", USER_AGENT);
+      get.addHeader("Host", "vimeo.com");
+      get.addHeader("Accept", "*/*");
       try (CloseableHttpResponse response = httpInterface.execute(get)) {
         HttpClientTools.assertSuccessWithContent(response, "response page");
         String text = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
