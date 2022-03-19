@@ -37,7 +37,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN;
  * Audio source manager which detects NewGrounds tracks by URL.
  */
 public class NewgroundsAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-    private static final String URL_REGEX = "^https://www.newgrounds.com/(portal/view|audio/listen)/([0-9]+)(?:\\?.*|)$";
+    private static final String URL_REGEX = "^^(?:http://|https://|)(?:www\\.|)newgrounds\\.com/(portal/view|audio/listen)/([0-9]+)";
     private static final String HTML_IMAGE_REGEX = "\"background-image: url\\('(.*)'\\)\"";
 
     private static final Pattern urlPattern = Pattern.compile(URL_REGEX);

@@ -38,7 +38,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 public class OdyseeAudioSourceManager implements AudioSourceManager, HttpConfigurable {
   private static final Logger log = LoggerFactory.getLogger(OdyseeAudioSourceManager.class);
 
-  private static final String TRACK_URL_REGEX = "^(?:https?://|)odysee\\.com/(.+):.+/(.+):.+";
+  private static final String TRACK_URL_REGEX = "^(?:http://|https://|)(?:www\\.|)odysee\\.com/@([a-zA-Z0-9-_:]+)/([a-zA-Z0-9-_:]+)";
   private static final String SEARCH_PREFIX = "odsearch:";
 
   private static final Pattern TRACK_URL_PATTERN = Pattern.compile(TRACK_URL_REGEX);
@@ -106,12 +106,13 @@ public class OdyseeAudioSourceManager implements AudioSourceManager, HttpConfigu
     long duration = durationStr == null ? Units.DURATION_MS_UNKNOWN : DataFormatTools.durationTextToMillis(durationStr);
 
     String name = json.get("name").safeText();
+    String title = json.get("value").get("title").isNull() ? name : json.get("name").safeText();
     String claimId = json.get("claim_id").safeText();
     String uploader = json.get("signing_channel").get("name").safeText();
     String thumbnail = json.get("value").get("thumbnail").get("url").safeText();
 
     return new OdyseeAudioTrack(new AudioTrackInfo(
-        name,
+        title,
         uploader,
         duration,
         name + "#" + claimId,

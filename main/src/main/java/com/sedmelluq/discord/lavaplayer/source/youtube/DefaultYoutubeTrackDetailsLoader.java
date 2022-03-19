@@ -120,7 +120,7 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
     } else if ("ERROR".equals(status)) {
       String reason = statusBlock.get("reason").text();
 
-      if ("This video is unavailable".equals(reason)) {
+      if (reason.contains("This video is unavailable")) {
         return InfoStatus.DOES_NOT_EXIST;
       } else {
         throw new FriendlyException(reason, COMMON, null);
@@ -136,11 +136,11 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
     } else if ("LOGIN_REQUIRED".equals(status)) {
       String errorReason = statusBlock.get("reason").text();
 
-      if ("This video is private".equals(errorReason)) {
+      if (errorReason.contains("This video is private")) {
         throw new FriendlyException("This is a private video.", COMMON, null);
       }
 
-      if ("This video may be inappropriate for some users.".equals(errorReason)) {
+      if (errorReason.contains("This video may be inappropriate for some users")) {
         throw new FriendlyException("This video requires age verification.", SUSPICIOUS,
                 new IllegalStateException("You did not set email and password in YoutubeAudioSourceManager."));
       }
