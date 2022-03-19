@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
@@ -178,7 +179,7 @@ public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigur
     ), this);
   }
 
-  private AudioTrack loadTrack(String identifier) {
+  private AudioItem loadTrack(String identifier) {
     String trackUrl = "https://vimeo.com/" + identifier;
     JsonBrowser config = requestPage(URI.create(trackUrl), "window.vimeo.clip_page_config = ", "\n");
 
