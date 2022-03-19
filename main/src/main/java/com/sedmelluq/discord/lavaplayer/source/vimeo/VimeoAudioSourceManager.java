@@ -141,21 +141,25 @@ public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigur
   }
 
   private AudioItem loadSearch(String query) {
-    URI uri = new URIBuilder("https://vimeo.com/search").addParameter("q", query).build();
-    JsonBrowser result = requestPage(uri, "(vimeo.config || {}), ", ");");
+    try {
+      URI uri = new URIBuilder("https://vimeo.com/search").addParameter("q", query).build();
+      JsonBrowser result = requestPage(uri, "(vimeo.config || {}), ", ");");
 
-    List<JsonBrowser> clips = result.get("api").get("initial_json").get("data").values();
-    List<AudioTrack> tracks = new ArrayList<>();
-    clips.forEach(data -> {
-      AudioTrack track = loadSearchTrack(data);
-      if (track != null) tracks.add(track);
-    });
+      List<JsonBrowser> clips = result.get("api").get("initial_json").get("data").values();
+      List<AudioTrack> tracks = new ArrayList<>();
+      clips.forEach(data -> {
+        AudioTrack track = loadSearchTrack(data);
+        if (track != null) tracks.add(track);
+      });
 
-    if (tracks.size() < 1) {
-      return AudioReference.NO_TRACK;
+      if (tracks.size() < 1) {
+        return AudioReference.NO_TRACK;
+      }
+
+      return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
+    } catch (Exception e) {
+      throw new FriendlyException("Failed to load vimeo search results", SUSPICIOUS, e);
     }
-
-    return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
   }
 
   private AudioTrack loadSearchTrack(JsonBrowser content) {
