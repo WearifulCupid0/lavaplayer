@@ -54,7 +54,7 @@ public class VimeoAudioTrack extends DelegatedAudioTrack {
     }
   }
 
-  private String loadPlaybackUrl(HttpInterface httpInterface) {
+  private String loadPlaybackUrl(HttpInterface httpInterface) throws Exception {
     JsonBrowser config = this.sourceManager.requestPage(URI.create(this.trackInfo.identifier), "window.vimeo.clip_page_config = ", "\n");
     if (config.isNull() || config.get("player").isNull()) {
       throw new FriendlyException("Track information not present on the page.", SUSPICIOUS, null);
