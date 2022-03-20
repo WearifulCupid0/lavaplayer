@@ -120,7 +120,7 @@ public class GetyarnAudioSourceManager implements HttpConfigurable, AudioSourceM
 
       return new GetyarnAudioTrack(trackInfo, this);
     } catch (IOException e) {
-      throw new FriendlyException("Failed to load info for yarn clip", SUSPICIOUS, null);
+      throw new FriendlyException("Failed to load info for yarn clip", SUSPICIOUS, e);
     }
   }
 }

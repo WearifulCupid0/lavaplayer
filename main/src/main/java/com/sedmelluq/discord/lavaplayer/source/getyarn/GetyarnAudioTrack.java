@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 public class GetyarnAudioTrack extends DelegatedAudioTrack {
   private static final Logger log = LoggerFactory.getLogger(DelegatedAudioTrack.class);
-  private static final String URL = "https://y.yarn.co/%s.mp4";
+  private static final String URL = "https://y.yarn.co/%s.mp4?v=0";
   private final GetyarnAudioSourceManager sourceManager;
 
   public GetyarnAudioTrack(AudioTrackInfo trackInfo, GetyarnAudioSourceManager sourceManager) {

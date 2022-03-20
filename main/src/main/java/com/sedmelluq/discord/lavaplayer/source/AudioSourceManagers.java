@@ -16,6 +16,7 @@ import com.sedmelluq.discord.lavaplayer.source.ocremix.OcremixAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.odysee.OdyseeAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.reddit.RedditAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.soundgasm.SoundgasmAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.streamable.StreamableAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.tiktok.TiktokAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.tunein.TuneinAudioSourceManager;
@@ -50,6 +51,7 @@ public class AudioSourceManagers {
     playerManager.registerSourceManager(new BilibiliAudioSourceManager(true));
     playerManager.registerSourceManager(new iHeartAudioSourceManager(true, containerRegistry));
     playerManager.registerSourceManager(SoundCloudAudioSourceManager.createDefault());
+    playerManager.registerSourceManager(new SoundgasmAudioSourceManager());
     playerManager.registerSourceManager(new BandcampAudioSourceManager());
     playerManager.registerSourceManager(new StreamableAudioSourceManager());
     playerManager.registerSourceManager(new OcremixAudioSourceManager());
