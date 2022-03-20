@@ -35,7 +35,7 @@ public class SoundgasmAudioSourceManager implements HttpConfigurable, AudioSourc
     private static final String SOUNDGASM_CLIP_URL = "https://soundgasm.net/u/%s/%s";
     private static final String SOUNDGASM_URL_REGEX = "^(?:http://|https://|)(?:www\\.|)soundgasm\\.net/u/([a-zA-Z0-9-_]+)/([a-zA-Z0-9-_]+)";
     private static final String SOUNDGASM_TITLE_REGEX = "<div class=\"jp-title\" aria-label=\"title\">(.*)<\\/div>";
-    private static final String SOUNDGASM_IDENTIFIER_REGEX = "^(?:http://|https://|)(?:www\\.|media\\.)soundgasm\\.net/sounds/([a-zA-Z0-9-_]+)\\.m4a";
+    private static final String SOUNDGASM_IDENTIFIER_REGEX = "\"(?:http://|https://|)(?:www\\.|media\\.)soundgasm\\.net/sounds/([a-zA-Z0-9-_]+)\\.m4a\"";
 
     private static final Pattern soundgasmUrlPattern = Pattern.compile(SOUNDGASM_URL_REGEX);
     private static final Pattern soundgasmTitlePattern = Pattern.compile(SOUNDGASM_TITLE_REGEX);
