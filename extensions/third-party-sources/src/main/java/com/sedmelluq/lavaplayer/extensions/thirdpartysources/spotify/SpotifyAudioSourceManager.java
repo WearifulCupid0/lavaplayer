@@ -45,6 +45,7 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
     private static final Pattern spotifyUrnPattern = Pattern.compile(SPOTIFY_URN_REGEX);
 
     private static final String SEARCH_PREFIX = "spsearch:";
+    private static final String TRACKS_PREFIX = "sptracks:";
 
     private final Map<String, String> isrcCache = new HashMap<>();
     private final boolean allowSearch;
@@ -81,6 +82,10 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
     public AudioItem loadItem(AudioPlayerManager playerManager, AudioReference reference) {
         if (reference.identifier.startsWith(SEARCH_PREFIX) && allowSearch) {
             return this.loadSearch(reference.identifier.substring(SEARCH_PREFIX.length()).trim());
+        }
+
+        if (reference.identifier.startsWith(TRACKS_PREFIX)) {
+
         }
 
         Matcher matcher;
@@ -151,6 +156,20 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
 
     public SpotifyTokenTracker getTokenTracker() {
         return this.tokenTracker;
+    }
+
+    private AudioItem loadTracks(String ids) {
+        JsonBrowser result = this.requestApi(TRACKS_API_URL + ids);
+        if(result.isNull()) {
+            return AudioReference.NO_TRACK;
+        }
+        List<AudioTrack> tracks = new ArrayList<>();
+        result.get("tracks").values().forEach(info -> {
+            AudioTrack track = buildTrack(info, info.get("album"));
+            if (track != null) tracks.add(track);
+        });
+
+        return new BasicAudioPlaylist("Loaded tracks: " + ids, null, null, null, "tracks", tracks, null, true);
     }
 
     private AudioItem loadTrack(String id) {

@@ -13,6 +13,7 @@ public class SpotifyConstants {
     static final String API_URL = "https://api.spotify.com/v1";
 
     static final String TRACK_API_URL = API_URL + "/tracks/";
+    static final String TRACKS_API_URL = API_URL + "/tracks?ids=";
     static final String ALBUM_API_URL = API_URL + "/albums/";
     static final String PLAYLIST_API_URL = API_URL + "/playlists/";
     static final String ARTIST_API_URL = API_URL + "/artists/";

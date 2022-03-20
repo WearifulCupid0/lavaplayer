@@ -116,7 +116,7 @@ public class SoundgasmAudioSourceManager implements HttpConfigurable, AudioSourc
                 identifier = identifierMatcher.group(1);
             }
 
-            if (identifier == null) {
+            if (identifier == null || identifier.isEmpty()) {
                 throw new IOException("Audio id not found on soundgasm page.");
             }
 
