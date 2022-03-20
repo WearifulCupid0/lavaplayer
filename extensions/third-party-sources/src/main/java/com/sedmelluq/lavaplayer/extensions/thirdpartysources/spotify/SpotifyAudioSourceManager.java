@@ -85,7 +85,7 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
         }
 
         if (reference.identifier.startsWith(TRACKS_PREFIX)) {
-
+            return this.loadTracks(reference.identifier.substring(TRACKS_PREFIX.length()).trim());
         }
 
         Matcher matcher;
