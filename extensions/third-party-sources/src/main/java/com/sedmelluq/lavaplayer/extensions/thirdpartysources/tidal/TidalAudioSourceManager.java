@@ -197,7 +197,7 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
                 false
             );
         } catch (Exception e) {
-            throw new FriendlyException("Failed to load TIDAL search result", SUSPICIOUS, e);
+            throw new FriendlyException("Failed to load TIDAL mix result", SUSPICIOUS, e);
         }
     }
 

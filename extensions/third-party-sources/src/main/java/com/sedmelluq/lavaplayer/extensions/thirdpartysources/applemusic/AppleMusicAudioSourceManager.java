@@ -39,7 +39,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
 public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager implements HttpConfigurable {
-    private static final String APPLEMUSIC_URL_REGEX = "^(?:https://|http://|)(?:www\\.|)music\\.apple\\.com/(?:[a-zA-Z]{2}/)(?<type>artist|playlist|album)/(?:[a-zA-Z0-9\\-]+/|)(?<identifier>[a-zA-Z0-9-_\\.]+)";
+    private static final String APPLEMUSIC_URL_REGEX = "^(?:https://|http://|)(?:www\\.|)music\\.apple\\.com/(?:[a-zA-Z]{2}/)(?<type>artist|playlist|album|music\\-video)/(?:.*/|)(?<identifier>[a-zA-Z0-9-_\\.]+)";
     private static final String TRACK_ID_REGEX = "i=(\\d+)";
 
     private static final Pattern appleMusicUrlPattern = Pattern.compile(APPLEMUSIC_URL_REGEX);
@@ -173,6 +173,15 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
         }
     }
 
+    private AudioItem loadMusicVideo(String videoId) {
+        JsonBrowser video = this.requestApi(String.format(VIDEO_API_URL, videoId)).get("data").index(0);
+        if (video.isNull()) {
+            return AudioReference.NO_TRACK;
+        }
+
+        return buildTrack(video);
+    }
+
     private AudioItem loadPlaylist(String playlistId) {
         JsonBrowser playlist = this.requestApi(String.format(PLAYLIST_API_URL, playlistId)).get("data").index(0);
         if(playlist.isNull()) {
@@ -279,6 +288,15 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
     private AudioTrack buildTrack(JsonBrowser trackInfo) {
         JsonBrowser attributes = trackInfo.get("attributes");
         String identifier = trackInfo.get("id").text();
+        JsonBrowser artworkJson = attributes.get("artwork");
+        String width = "800";
+        if (!artworkJson.get("width").isNull()) {
+            width = artworkJson.get("width").text();
+        }
+        String height = "800";
+        if (!artworkJson.get("height").isNull()) {
+            height = artworkJson.get("height").text();
+        }
         AudioTrackInfo info = new AudioTrackInfo(
             attributes.get("name").safeText(),
             attributes.get("artistName").safeText(),
@@ -286,7 +304,7 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
             identifier,
             false,
             attributes.get("url").text(),
-            attributes.get("artwork").get("url").text().replace("{w}x{h}", "800x800")
+            attributes.get("artwork").get("url").text().replace("{w}x{h}", width + "x" + height)
         );
 
         String isrc = attributes.get("isrc").text();

@@ -11,6 +11,7 @@ public class AppleMusicConstants {
     static final String API_URL = BASE_URL + "/v1/catalog/us";
 
     static final String SEARCH_API_URL = API_URL + "/search";
+    static final String VIDEO_API_URL = API_URL + "/music-videos/%s";
     static final String TRACK_API_URL = API_URL + "/songs/%s";
     static final String ARTIST_API_URL = API_URL + "/artists/%s";
     static final String ARTIST_TRACK_API_URL = ARTIST_API_URL + "/view/top-songs";
