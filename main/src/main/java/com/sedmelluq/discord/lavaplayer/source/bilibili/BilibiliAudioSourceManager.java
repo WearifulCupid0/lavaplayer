@@ -131,7 +131,7 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
                 JsonBrowser trackMeta = JsonBrowser.parse(response.getEntity().getContent());
                 if (trackMeta.get("code").as(Integer.class) != 0) return null;
                 JsonBrowser trackData = trackMeta.get("data");
-                if (trackData.get("videos").as(Integer.class) > 1) return extractTracksFromPage(trackData);
+                if (trackData.get("videos").as(Integer.class) > 1) return extractTracksFromPlaylist(trackData);
                 return extractTrackInfo(trackData);
             }
         } catch (IOException e) {
@@ -149,7 +149,7 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
         return new BilibiliAudioTrack(new AudioTrackInfo(title, uploader, duration, identifier, false, getWatchUrl(videoId), thumbnailUrl), this);
     }
 
-    private AudioPlaylist extractTracksFromPage(JsonBrowser videosData) {
+    private AudioPlaylist extractTracksFromPlaylist(JsonBrowser videosData) {
         String uploader = videosData.get("owner").get("name").text();
         String thumbnailUrl = videosData.get("pic").text();
         String videoId = videosData.get("bvid").text();
@@ -169,7 +169,7 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
 
         return new BasicAudioPlaylist(
             videosData.get("title").text(),
-            uploader, thumbnailUrl, getWatchUrl(videoId), "pages",
+            uploader, thumbnailUrl, getWatchUrl(videoId), "playlist",
             tracks, null, false
         );
     }

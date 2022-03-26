@@ -140,7 +140,7 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
         throw new FriendlyException("This is a private video.", COMMON, null);
       }
 
-      if (errorReason.contains("This video may be inappropriate for some users")) {
+      if (errorReason.contains("This video may be inappropriate for some users") || errorReason.contains("this content is age-restricted")) {
         throw new FriendlyException("This video requires age verification.", SUSPICIOUS,
                 new IllegalStateException("You did not set email and password in YoutubeAudioSourceManager."));
       }
