@@ -224,7 +224,7 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
   protected JsonBrowser loadTrackInfoFromMainPage(HttpInterface httpInterface, String videoId) throws IOException {
     String url = WATCH_URL_PREFIX + videoId + "&pbj=1&hl=en";
 
-    try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(url))) {
+    try (CloseableHttpResponse response = httpInterface.execute(new HttpPost(url))) {
       return processResponse(response);
     }
   }
