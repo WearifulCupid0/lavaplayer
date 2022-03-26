@@ -130,6 +130,8 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
 
       if (unplayableReason.contains("Playback on other websites has been disabled by the video owner")) {
         return InfoStatus.NON_EMBEDDABLE;
+      } else if (unplayableReason.contains("Sorry, this content is age-restricted")) {
+        return InfoStatus.CONTENT_CHECK_REQUIRED;
       }
 
       throw new FriendlyException(unplayableReason, COMMON, null);
