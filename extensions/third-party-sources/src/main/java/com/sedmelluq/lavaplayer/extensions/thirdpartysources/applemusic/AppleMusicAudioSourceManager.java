@@ -95,6 +95,7 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
                 }
                 case "playlist": return this.loadPlaylist(id);
                 case "artist": return this.loadArtist(id);
+                case "music-video": return this.loadMusicVideo(id);
                 default: return null;
             }
         }
