@@ -115,9 +115,9 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
 
     if (status == null) {
       throw new RuntimeException("No playability status field.");
-    } else if ("OK".equals(status)) {
+    } else if (status.contains("OK")) {
       return InfoStatus.INFO_PRESENT;
-    } else if ("ERROR".equals(status)) {
+    } else if (status.contains("ERROR")) {
       String reason = statusBlock.get("reason").text();
 
       if (reason.contains("This video is unavailable")) {
@@ -125,7 +125,7 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
       } else {
         throw new FriendlyException(reason, COMMON, null);
       }
-    } else if ("UNPLAYABLE".equals(status)) {
+    } else if (status.contains("UNPLAYABLE")) {
       String unplayableReason = getUnplayableReason(statusBlock);
 
       if (unplayableReason.contains("Playback on other websites has been disabled by the video owner")) {
@@ -133,7 +133,7 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
       }
 
       throw new FriendlyException(unplayableReason, COMMON, null);
-    } else if ("LOGIN_REQUIRED".equals(status)) {
+    } else if (status.contains("LOGIN_REQUIRED")) {
       String errorReason = statusBlock.get("reason").text();
 
       if (errorReason.contains("This video is private")) {
@@ -145,14 +145,10 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
                 new IllegalStateException("You did not set email and password in YoutubeAudioSourceManager."));
       }
 
-      if (errorReason.contains("this content is age-restricted")) {
-        return InfoStatus.CONTENT_CHECK_REQUIRED;
-      }
-
       return InfoStatus.REQUIRES_LOGIN;
-    } else if ("CONTENT_CHECK_REQUIRED".equals(status)) {
+    } else if (status.contains("CONTENT_CHECK_REQUIRED")) {
       return InfoStatus.CONTENT_CHECK_REQUIRED;
-    } else if ("LIVE_STREAM_OFFLINE".equals(status)) {
+    } else if (status.contains("LIVE_STREAM_OFFLINE")) {
       if (!statusBlock.get("errorScreen").get("ypcTrailerRenderer").isNull()) {
         return InfoStatus.PREMIERE_TRAILER;
       }
@@ -248,7 +244,7 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
               .get("url")
               .text();
       if (fetchedContentVerifiedLink != null) {
-        return loadTrackInfoFromMainPage(httpInterface, fetchedContentVerifiedLink.substring(9));
+        return loadTrackInfoFromMainPage(httpInterface, fetchedContentVerifiedLink.replace("/watch?v=", ""));
       }
 
       log.error("Did not receive requested content verified link on track {} response: {}", videoId, json);
