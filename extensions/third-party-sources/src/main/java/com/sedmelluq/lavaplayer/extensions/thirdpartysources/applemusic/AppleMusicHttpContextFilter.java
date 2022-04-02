@@ -27,7 +27,8 @@ public class AppleMusicHttpContextFilter implements HttpContextFilter {
     public void onRequest(HttpClientContext context, HttpUriRequest request, boolean isRepetition) {
         if (request.getURI().getHost().contains("api.music.apple.com")) {
             request.setHeader("Authorization", tokenTracker.getFormmatedToken());
-            request.setHeader("Content-Type", "application/json");
+            request.setHeader("Origin", "https://music.apple.com");
+            request.setHeader("Referer", "https://music.apple.com/");
         }
     }
 
