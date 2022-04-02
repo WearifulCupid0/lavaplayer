@@ -11,11 +11,13 @@ public class YoutubeConstants {
     static final String CLIENT_ANDROID_VERSION = "16.24";
     static final String CLIENT_WEB_NAME = "WEB";
     static final String CLIENT_WEB_VERSION = "2.20211221.00.00";
-    static final String CLIENT_SCREEN = "EMBED";
+    static final String CLIENT_TVHTML5_NAME = "TVHTML5_SIMPLY_EMBEDDED_PLAYER";
+    static final String CLIENT_TVHTML5_VERSION = "2.0";
+    static final String CLIENT_SCREEN_EMBED = "EMBED";
     static final String BASE_PAYLOAD = "{\"context\":{\"client\":{\"clientName\":\"%s\",\"clientVersion\":\"%s\"";
     static final String DEFAULT_BASE_PAYLOAD = String.format(BASE_PAYLOAD, CLIENT_ANDROID_NAME, CLIENT_ANDROID_VERSION);
     static final String SCREEN_PART_PAYLOAD = ",\"screenDensityFloat\":1,\"screenHeightPoints\":1080,\"screenPixelDensity\":1,\"screenWidthPoints\":1920";
-    static final String EMBED_PART_PAYLOAD = ",\"clientScreen\":\"" + CLIENT_SCREEN + "\"},\"thirdParty\":{\"embedUrl\":\"https://google.com\"";
+    static final String EMBED_PART_PAYLOAD = ",\"clientScreen\":\"" + CLIENT_SCREEN_EMBED + "\"},\"thirdParty\":{\"embedUrl\":\"https://google.com\"";
     static final String CLOSE_BASE_PAYLOAD = "}},";
     static final String CLOSE_PLAYER_PAYLOAD = "\"racyCheckOk\":true,\"contentCheckOk\":true,\"videoId\":\"%s\",\"playbackContext\":{\"contentPlaybackContext\":{\"signatureTimestamp\":%s}}}";
 
@@ -23,8 +25,7 @@ public class YoutubeConstants {
     static final String PLAYER_PAYLOAD = DEFAULT_BASE_PAYLOAD + SCREEN_PART_PAYLOAD + CLOSE_BASE_PAYLOAD + CLOSE_PLAYER_PAYLOAD;
     static final String PLAYER_EMBED_PAYLOAD = DEFAULT_BASE_PAYLOAD + SCREEN_PART_PAYLOAD + EMBED_PART_PAYLOAD + CLOSE_BASE_PAYLOAD + CLOSE_PLAYER_PAYLOAD;
     static final String PLAYER_TRAILER_PAYLOAD = String.format(BASE_PAYLOAD, CLIENT_WEB_NAME, CLIENT_WEB_VERSION) + SCREEN_PART_PAYLOAD + CLOSE_BASE_PAYLOAD + CLOSE_PLAYER_PAYLOAD;
-    static final String VERIFY_AGE_URL = BASE_URL + "/verify_age";
-    static final String VERIFY_AGE_PAYLOAD = DEFAULT_BASE_PAYLOAD + SCREEN_PART_PAYLOAD + CLOSE_BASE_PAYLOAD + "\"nextEndpoint\":{\"urlEndpoint\":{\"url\":\"%s\"}},\"setControvercy\":true}";
+    static final String PLAYER_TVHTML5_PAYLOAD = String.format(BASE_PAYLOAD, CLIENT_TVHTML5_NAME, CLIENT_TVHTML5_VERSION) + SCREEN_PART_PAYLOAD + CLOSE_BASE_PAYLOAD + CLOSE_PLAYER_PAYLOAD;
     static final String SEARCH_URL = BASE_URL + "/search?key=" + INNERTUBE_API_KEY;
     static final String SEARCH_PAYLOAD = DEFAULT_BASE_PAYLOAD + SCREEN_PART_PAYLOAD + CLOSE_BASE_PAYLOAD + "\"query\":\"%s\",\"params\":\"EgIQAQ==\"}";
     static final String BROWSE_URL = BASE_URL + "/browse";

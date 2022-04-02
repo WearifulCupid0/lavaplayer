@@ -71,7 +71,7 @@ public class AppleMusicTokenTracker {
 
             this.token = decoded.get("MEDIA_API").get("token").text();
             this.tokenType = "Bearer";
-            this.expiresMs = jackson.readTree(Base64.getDecoder().decode(this.token.split("\\.")[1])).get("exp").asLong();
+            this.expiresMs = jackson.readTree(Base64.getDecoder().decode(this.token.split("\\.")[1])).get("exp").asLong() * 1000;
         }
     }
 
