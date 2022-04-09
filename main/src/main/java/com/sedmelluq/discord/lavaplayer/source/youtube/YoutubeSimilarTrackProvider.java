@@ -48,16 +48,20 @@ public class YoutubeSimilarTrackProvider implements YoutubeSimilarTrackLoader {
             HttpClientTools.assertSuccessWithContent(response, "track similar response");
 
             JsonBrowser body = JsonBrowser.parse(response.getEntity().getContent());
-            JsonBrowser items = body.get("contents")
+            List<JsonBrowser> contents = body.get("contents")
                     .get("singleColumnWatchNextResults")
                     .get("results")
                     .get("results")
-                    .get("contents")
-                    .index(1)
-                    .get("shelfRenderer")
-                    .get("content")
-                    .get("horizontalListRenderer")
-                    .get("items");
+                    .get("contents").values();
+            
+            JsonBrowser items = null;
+
+            for (JsonBrowser content : contents) {
+                if (!content.get("shelfRenderer").isNull()) {
+                    items = content.get("shelfRenderer");
+                    break;
+                }
+            }
             
             if (items == null || items.isNull()) return AudioReference.NO_TRACK;
             List<JsonBrowser> values = items.values();
