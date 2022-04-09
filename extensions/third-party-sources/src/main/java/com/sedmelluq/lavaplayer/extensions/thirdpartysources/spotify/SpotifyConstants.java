@@ -19,4 +19,5 @@ public class SpotifyConstants {
     static final String ARTIST_API_URL = API_URL + "/artists/";
     static final String ARTIST_TRACKS_API_URL = ARTIST_API_URL + "%s/top-tracks?market=US";
     static final String SEARCH_API_URL = API_URL + "/search";
+    static final String SIMILAR_API_URL = API_URL + "/recommendations";
 }
