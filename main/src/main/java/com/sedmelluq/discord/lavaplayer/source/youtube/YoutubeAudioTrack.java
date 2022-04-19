@@ -2,6 +2,7 @@ package com.sedmelluq.discord.lavaplayer.source.youtube;
 
 import com.sedmelluq.discord.lavaplayer.container.matroska.MatroskaAudioTrack;
 import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack;
+import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -43,10 +44,8 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
 
       log.debug("Starting track from URL: {}", format.signedUrl);
 
-      if (trackInfo.isStream) {
-        processStream(localExecutor, format, false);
-      } else if (format.details.getContentLength() == CONTENT_LENGTH_UNKNOWN) {
-        processStream(localExecutor, format, true);
+      if (trackInfo.isStream || format.details.getContentLength() == CONTENT_LENGTH_UNKNOWN) {
+        processStream(localExecutor, format);
       } else {
         processStatic(localExecutor, httpInterface, format);
       }
@@ -63,12 +62,12 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
     }
   }
 
-  private void processStream(LocalAudioTrackExecutor localExecutor, FormatWithUrl format, boolean staticStream) throws Exception {
+  private void processStream(LocalAudioTrackExecutor localExecutor, FormatWithUrl format) throws Exception {
     if (MIME_AUDIO_WEBM.equals(format.details.getType().getMimeType())) {
       throw new FriendlyException("YouTube WebM streams are currently not supported.", COMMON, null);
     } else {
       try (HttpInterface streamingInterface = sourceManager.getHttpInterface()) {
-        processDelegate(new YoutubeMpegStreamAudioTrack(trackInfo, streamingInterface, format.signedUrl, staticStream), localExecutor);
+        processDelegate(new YoutubeMpegStreamAudioTrack(trackInfo, streamingInterface, format.signedUrl, format.details.getContentLength()), localExecutor);
       }
     }
   }
@@ -98,7 +97,7 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
   }
 
   @Override
-  public YoutubeAudioSourceManager getSourceManager() {
+  public AudioSourceManager getSourceManager() {
     return sourceManager;
   }
 

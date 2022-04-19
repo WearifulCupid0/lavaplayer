@@ -36,6 +36,8 @@ public class AudiomackAudioTrack extends DelegatedAudioTrack {
     public void process(LocalAudioTrackExecutor executor) throws Exception {
         try (HttpInterface httpInterface = sourceManager.getHttpInterface()) {
             String url = getPlaybackURL(httpInterface);
+            if (url == null) throw new IOException("Audiomack playback url not found.");
+
             log.debug("Starting to play Audiomack track from url {}", url);
             
             try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(url), null)) {
@@ -46,6 +48,7 @@ public class AudiomackAudioTrack extends DelegatedAudioTrack {
 
     private String getPlaybackURL(HttpInterface httpInterface) {
         String[] parameters = this.sourceManager.parseURL(this.trackInfo.identifier);
+        if (parameters == null) return null;
         String apiUrl = String.format(API_URL, parameters[0], parameters[1]);
         try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(URI.create(apiUrl)))) {
             HttpClientTools.assertSuccessWithContent(response, "api response");
