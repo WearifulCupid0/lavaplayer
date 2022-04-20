@@ -54,17 +54,20 @@ public class YoutubeSimilarTrackProvider implements YoutubeSimilarTrackLoader {
                     .get("results")
                     .get("contents").values();
             
-            JsonBrowser items = null;
+            JsonBrowser shelfRenderer = null;
 
             for (JsonBrowser content : contents) {
                 if (!content.get("shelfRenderer").isNull()) {
-                    items = content.get("shelfRenderer");
+                    shelfRenderer = content.get("shelfRenderer");
                     break;
                 }
             }
             
-            if (items == null || items.isNull()) return AudioReference.NO_TRACK;
-            List<JsonBrowser> values = items.values();
+            if (shelfRenderer == null || shelfRenderer.isNull()) return AudioReference.NO_TRACK;
+            List<JsonBrowser> values = shelfRenderer
+            .get("content")
+            .get("horizontalListRenderer")
+            .get("items").values();
 
             if (values.isEmpty()) return AudioReference.NO_TRACK;
 
@@ -74,7 +77,6 @@ public class YoutubeSimilarTrackProvider implements YoutubeSimilarTrackLoader {
             });
 
             if (tracks.isEmpty()) return AudioReference.NO_TRACK;
-
         } catch (IOException e) {
             throw new FriendlyException("Could not read track page.", SUSPICIOUS, e);
         }
@@ -88,9 +90,7 @@ public class YoutubeSimilarTrackProvider implements YoutubeSimilarTrackLoader {
     ) {
         JsonBrowser renderer = video.get("gridVideoRenderer");
 
-        if (renderer.isNull()) {
-            return null;
-        }
+        if (renderer.isNull()) return null;
 
         String title = renderer.get("title").get("runs").index(0).get("text").text();
         JsonBrowser authorData = renderer.get("longBylineText").isNull() ? renderer.get("shortBylineText") : renderer.get("longBylineText");
@@ -100,8 +100,7 @@ public class YoutubeSimilarTrackProvider implements YoutubeSimilarTrackLoader {
         String identifier = renderer.get("videoId").text();
         String uri = WATCH_URL_PREFIX + identifier;
 
-        AudioTrackInfo trackInfo = new AudioTrackInfo(title, author, duration, identifier, duration == DURATION_MS_UNKNOWN, uri,
-            PBJUtils.getYouTubeThumbnail(renderer, identifier));
+        AudioTrackInfo trackInfo = new AudioTrackInfo(title, author, duration, identifier, duration == DURATION_MS_UNKNOWN, uri, PBJUtils.getYouTubeThumbnail(renderer, identifier));
         return trackFactory.apply(trackInfo);
     }
 }
