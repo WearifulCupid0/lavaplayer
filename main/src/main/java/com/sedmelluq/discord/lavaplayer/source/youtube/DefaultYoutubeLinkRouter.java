@@ -16,7 +16,7 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
   private static final String SEARCH_MUSIC_PREFIX = "ytmsearch:";
 
   private static final String PROTOCOL_REGEX = "(?:http://|https://|)";
-  private static final String DOMAIN_REGEX = "(?:www\\.|m\\.|music\\.|)youtube\\.com";
+  private static final String DOMAIN_REGEX = "(?:www\\.|m\\.|music\\.|)youtube(?:kids|)\\.com";
   private static final String SHORT_DOMAIN_REGEX = "(?:www\\.|)youtu\\.be";
   private static final String VIDEO_ID_REGEX = "(?<v>[a-zA-Z0-9_-]{11})";
   private static final String PLAYLIST_ID_REGEX = "(?<list>(PL|LL|FL|UU)[a-zA-Z0-9_-]+)";
