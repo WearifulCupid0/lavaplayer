@@ -277,8 +277,8 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
         String next = playlist.get("tracks").get("next").text();
         while(next != null) {
             JsonBrowser tPage = this.requestApi(next);
-            for(JsonBrowser track : tPage.get("items").values()) {
-                tracks.add(buildTrack(track.get("track"), track.get("track").get("album")));
+            for(JsonBrowser item : tPage.get("items").values()) {
+                if (!item.get("track").isNull()) tracks.add(buildTrack(item.get("track"), item.get("track").get("album")));
             }
             next = tPage.get("next").text();
         }
