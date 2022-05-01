@@ -59,6 +59,11 @@ public class YoutubeHttpContextFilter implements HttpContextFilter {
       // Used for fetching access token, let's not recurse.
       return;
     }
+    
+    if (context.getAttribute(YoutubeConstants.ATTRIBUTE_VERIFY_AGE) == Boolean.TRUE) {
+      //If is a verify age request, skip verification.
+      return;
+    }
 
     String accessToken = tokenTracker.getAccessToken();
     if (!DataFormatTools.isNullOrEmpty(accessToken)) {

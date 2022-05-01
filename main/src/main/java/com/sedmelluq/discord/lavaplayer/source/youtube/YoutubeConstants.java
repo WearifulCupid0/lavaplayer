@@ -36,6 +36,11 @@ public class YoutubeConstants {
     static final String NEXT_PAYLOAD = DEFAULT_BASE_PAYLOAD + SCREEN_PART_PAYLOAD + CLOSE_BASE_PAYLOAD + "\"videoId\":\"%s\",\"playlistId\":\"%s\"}";
     static final String NEXT_SIMILAR_PAYLOAD = DEFAULT_BASE_PAYLOAD + SCREEN_PART_PAYLOAD + CLOSE_BASE_PAYLOAD + "\"videoId\":\"%s\"}";
 
+    // Verfiy age constants
+    static final String ATTRIBUTE_VERIFY_AGE = "contentCheck";
+    static final String VERIFY_AGE_URL = BASE_URL + "/verify_age";
+    static final String VERIFY_AGE_PAYLOAD = String.format(BASE_PAYLOAD, CLIENT_WEB_NAME, CLIENT_WEB_VERSION) + CLOSE_BASE_PAYLOAD + "\"nextEndpoint\":{\"urlEndpoint\":{\"url\":\"/watch?v=%s\"}}, \"setControvercy\": true}";
+
     // YouTube Music constants
     static final String MUSIC_ORIGIN = "https://music.youtube.com";
     static final String MUSIC_BASE_URL = "https://music.youtube.com/youtubei/v1";

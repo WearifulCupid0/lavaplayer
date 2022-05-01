@@ -15,12 +15,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 
+import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.YOUTUBE_ORIGIN;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.PLAYER_EMBED_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.PLAYER_TRAILER_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.PLAYER_TVHTML5_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.PLAYER_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.PLAYER_URL;
+import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.ATTRIBUTE_VERIFY_AGE;
+import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.VERIFY_AGE_URL;
+import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.VERIFY_AGE_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.tools.ExceptionTools.throwWithDebugInfo;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.COMMON;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
@@ -71,7 +76,7 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
       YoutubeAudioSourceManager sourceManager
   ) throws IOException {
     YoutubeTrackJsonData data = YoutubeTrackJsonData.fromMainResult(mainInfo);
-    InfoStatus status = checkPlayabilityStatus(data.playerResponse, false);
+    InfoStatus status = checkPlayabilityStatus(data.playerResponse, false, false);
 
     if (status == InfoStatus.DOES_NOT_EXIST) {
       return null;
@@ -85,26 +90,43 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
           .get("ypcTrailerRenderer")
           .get("unserializedPlayerResponse")
       );
-      status = checkPlayabilityStatus(data.playerResponse, true);
+      status = checkPlayabilityStatus(data.playerResponse, true, false);
       
     }
 
     if (status == InfoStatus.REQUIRES_LOGIN) {
       JsonBrowser trackInfo = loadTrackInfoFromInnertube(httpInterface, videoId, sourceManager, status);
       data = YoutubeTrackJsonData.fromMainResult(trackInfo);
-      status = checkPlayabilityStatus(data.playerResponse, true);
+      status = checkPlayabilityStatus(data.playerResponse, true, false);
     }
 
     if (status == InfoStatus.NON_EMBEDDABLE) {
       JsonBrowser trackInfo = loadTrackInfoFromInnertube(httpInterface, videoId, sourceManager, status);
-      checkPlayabilityStatus(trackInfo, true);
+      checkPlayabilityStatus(trackInfo, true, false);
+      data = YoutubeTrackJsonData.fromMainResult(trackInfo);
+    }
+
+    if (status == InfoStatus.CONTENT_CHECK_REQUIRED) {
+      JsonBrowser response = fetchContentCheck(videoId, httpInterface);
+      if (response == null || response.isNull() || response.get("actions").index(0).isNull()) {
+        throw new FriendlyException("YouTube send an empty content check response.", SUSPICIOUS, null);
+      }
+      JsonBrowser playerResponse = fetchResponseFromContentCheck(response.get("actions").index(0), sourceManager);
+      if (playerResponse == null || playerResponse.isNull() || playerResponse.index(0).isNull()) {
+        throw new FriendlyException("YouTube send an empty content check player response.", SUSPICIOUS, null);
+      }
+      JsonBrowser trackInfo = findPlayerResponseFromContentCheck(playerResponse);
+      if (trackInfo == null || trackInfo.isNull()) {
+        throw new FriendlyException("Failed to find track info from YouTube content check player response.", SUSPICIOUS, null);
+      }
+      checkPlayabilityStatus(trackInfo, true, true);
       data = YoutubeTrackJsonData.fromMainResult(trackInfo);
     }
 
     return data;
   }
 
-  protected InfoStatus checkPlayabilityStatus(JsonBrowser playerResponse, boolean secondCheck) {
+  protected InfoStatus checkPlayabilityStatus(JsonBrowser playerResponse, boolean secondCheck, boolean fromContentCheck) {
     JsonBrowser statusBlock = playerResponse.get("playabilityStatus");
 
     if (statusBlock.isNull()) {
@@ -147,7 +169,11 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
 
       return InfoStatus.REQUIRES_LOGIN;
     } else if (status.contains("CONTENT_CHECK_REQUIRED")) {
-      throw new FriendlyException(getUnplayableReason(statusBlock), COMMON, null);
+      if (fromContentCheck) {
+        throw new FriendlyException("This video requires age verification.", SUSPICIOUS,
+                new IllegalStateException("You did not set email and password in YoutubeAudioSourceManager."));
+      }
+      return InfoStatus.CONTENT_CHECK_REQUIRED;
     } else if (status.contains("LIVE_STREAM_OFFLINE")) {
       if (!statusBlock.get("errorScreen").get("ypcTrailerRenderer").isNull()) {
         return InfoStatus.PREMIERE_TRAILER;
@@ -165,7 +191,8 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
     DOES_NOT_EXIST,
     LIVE_STREAM_OFFLINE,
     PREMIERE_TRAILER,
-    NON_EMBEDDABLE
+    NON_EMBEDDABLE,
+    CONTENT_CHECK_REQUIRED
   }
 
   protected String getUnplayableReason(JsonBrowser statusBlock) {
@@ -277,6 +304,63 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
 
       return fetchedPlayerScript;
     }
+  }
+
+  private JsonBrowser fetchContentCheck(String videoId, HttpInterface httpInterface) throws IOException {
+    HttpPost post = new HttpPost(VERIFY_AGE_URL);
+    post.setEntity(new StringEntity(String.format(VERIFY_AGE_PAYLOAD, videoId)));
+    try (CloseableHttpResponse response = httpInterface.execute(post)) {
+      HttpClientTools.assertSuccessWithContent(response, "youtube verify age response");
+
+      String responseText = EntityUtils.toString(response.getEntity(), UTF_8);
+      try {
+        return JsonBrowser.parse(responseText);
+      } catch (FriendlyException e) {
+        throw e;
+      } catch (Exception e) {
+        throw new FriendlyException("Received unexpected response from YouTube.", SUSPICIOUS,
+            new RuntimeException("Failed to parse: " + responseText, e));
+      }
+    }
+  }
+
+  private JsonBrowser fetchResponseFromContentCheck(JsonBrowser action, YoutubeAudioSourceManager sourceManager) throws IOException {
+    try (HttpInterface httpInterface = sourceManager.getHttpInterface()) {
+      httpInterface.getContext().setAttribute(ATTRIBUTE_VERIFY_AGE, Boolean.TRUE);
+      JsonBrowser endpointJson = action.get("navigateAction").get("endpoint");
+      String endpoint = endpointJson.get("urlEndpoint").get("url").text();
+      if (endpoint == null || endpoint.isEmpty()) {
+        throw new IOException("Watch endpoint not found on verify age response.");
+      }
+      HttpPost post = new HttpPost(YOUTUBE_ORIGIN + endpoint);
+      post.setHeader("Content-Type", "application/x-www-form-urlencoded");
+      post.setHeader("Authorization", "Bearer " + sourceManager.getAccessTokenTracker().getAccessToken());
+      post.setEntity(new StringEntity("command=" + URLEncoder.encode(endpointJson.toString(), UTF_8)));
+      try (CloseableHttpResponse response = httpInterface.execute(post)) {
+        HttpClientTools.assertSuccessWithContent(response, "youtube verify age player response");
+
+        String responseText = EntityUtils.toString(response.getEntity(), UTF_8);
+        try {
+          return JsonBrowser.parse(responseText);
+        } catch (FriendlyException e) {
+          throw e;
+        } catch (Exception e) {
+          throw new FriendlyException("Received unexpected response from YouTube.", SUSPICIOUS,
+              new RuntimeException("Failed to parse: " + responseText, e));
+        }
+      }
+    }
+  }
+
+  private JsonBrowser findPlayerResponseFromContentCheck(JsonBrowser response) {
+    JsonBrowser playerResponse = null;
+    for (JsonBrowser value : response.values()) {
+      if (!value.get("playerResponse").isNull()) {
+        playerResponse = value.get("playerResponse");
+        break;
+      }
+    }
+    return playerResponse;
   }
 
   public CachedPlayerScript getCachedPlayerScript() {
