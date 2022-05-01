@@ -335,7 +335,7 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
       HttpPost post = new HttpPost(YOUTUBE_ORIGIN + endpoint);
       post.setHeader("Content-Type", "application/x-www-form-urlencoded");
       post.setHeader("Authorization", "Bearer " + sourceManager.getAccessTokenTracker().getAccessToken());
-      post.setEntity(new StringEntity("command=" + URLEncoder.encode(endpointJson.toString(), UTF_8)));
+      post.setEntity(new StringEntity("command=" + URLEncoder.encode(endpointJson.toString(), UTF_8.toString())));
       try (CloseableHttpResponse response = httpInterface.execute(post)) {
         HttpClientTools.assertSuccessWithContent(response, "youtube verify age player response");
 
