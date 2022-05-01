@@ -95,6 +95,10 @@ public class YoutubeSignatureCipherManager implements YoutubeSignatureResolver {
     this.cipherLoadLock = new Object();
   }
 
+  public void clearCache(String cipherScriptUrl) {
+    cipherCache.remove(cipherScriptUrl);
+  }
+
   /**
    * Produces a valid playback URL for the specified track
    * @param httpInterface HTTP interface to use
