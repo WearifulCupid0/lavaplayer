@@ -8,7 +8,7 @@ val moduleName = "lavaplayer"
 version = "1.3.99"
 
 dependencies {
-  api("com.sedmelluq:lava-common:1.1.2")
+  api("com.github.davidffa.lavaplayer-fork:lava-common:ebd213f")
   implementation("com.github.davidffa:lavaplayer-natives-fork:1.0.0")
   implementation("com.github.walkyst.JAADec-fork:jaadec-ext-aac:0.1.3")
   implementation("org.mozilla:rhino-engine:1.7.14")
