@@ -289,7 +289,7 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
   private String fetchScript(String videoId, HttpInterface httpInterface) throws IOException {
     long now = System.currentTimeMillis();
 
-    try (CloseableHttpResponse response = httpInterface.execute(new HttpGet("https://www.youtube.com/embed/" + videoId))) {
+    try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(YOUTUBE_ORIGIN + "/embed/" + videoId))) {
       HttpClientTools.assertSuccessWithContent(response, "youtube embed video id");
 
       String responseText = EntityUtils.toString(response.getEntity());
