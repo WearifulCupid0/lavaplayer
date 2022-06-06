@@ -301,6 +301,8 @@ public class DefaultAudioPlayerManager implements AudioPlayerManager {
   }
 
   private void encodeTrackDetails(AudioTrack track, DataOutput output) throws IOException {
+    Object userData = track.getUserData();
+    output.writeUTF(userData.toString());
     AudioSourceManager sourceManager = track.getSourceManager();
     output.writeUTF(sourceManager.getSourceName());
     sourceManager.encodeTrack(track, output);
@@ -322,11 +324,14 @@ public class DefaultAudioPlayerManager implements AudioPlayerManager {
   }
 
   private AudioTrack decodeTrackDetails(AudioTrackInfo trackInfo, DataInput input) throws IOException {
+    String userData = input.readUTF();
     String sourceName = input.readUTF();
 
     for (AudioSourceManager sourceManager : sourceManagers) {
       if (sourceName.equals(sourceManager.getSourceName())) {
-        return sourceManager.decodeTrack(trackInfo, input);
+        AudioTrack track = sourceManager.decodeTrack(trackInfo, input);
+        track.setUserData(userData);
+        return track;
       }
     }
 
