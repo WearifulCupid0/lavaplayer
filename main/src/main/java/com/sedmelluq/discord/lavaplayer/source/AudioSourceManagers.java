@@ -17,6 +17,7 @@ import com.sedmelluq.discord.lavaplayer.source.ocremix.OcremixAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.odysee.OdyseeAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.reddit.RedditAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.reverbnation.ReverbnationAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.rumble.RumbleAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.soundgasm.SoundgasmAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.streamable.StreamableAudioSourceManager;
@@ -51,6 +52,7 @@ public class AudioSourceManagers {
     playerManager.registerSourceManager(new MixcloudAudioSourceManager(true));
     playerManager.registerSourceManager(new OdyseeAudioSourceManager(true));
     playerManager.registerSourceManager(new BilibiliAudioSourceManager(true));
+    playerManager.registerSourceManager(new VimeoAudioSourceManager(true));
     playerManager.registerSourceManager(new iHeartAudioSourceManager(true, containerRegistry));
     playerManager.registerSourceManager(SoundCloudAudioSourceManager.createDefault());
     playerManager.registerSourceManager(new SoundgasmAudioSourceManager());
@@ -62,12 +64,12 @@ public class AudioSourceManagers {
     playerManager.registerSourceManager(new RedditAudioSourceManager());
     playerManager.registerSourceManager(new TwitterAudioSourceManager());
     playerManager.registerSourceManager(new TiktokAudioSourceManager());
-    playerManager.registerSourceManager(new VimeoAudioSourceManager());
     playerManager.registerSourceManager(new TwitchStreamAudioSourceManager());
     playerManager.registerSourceManager(new ClypAudioSourceManager());
     playerManager.registerSourceManager(new ReverbnationAudioSourceManager());
     playerManager.registerSourceManager(new BandlabAudioSourceManager());
     playerManager.registerSourceManager(new GetyarnAudioSourceManager());
+    playerManager.registerSourceManager(new RumbleAudioSourceManager());
     playerManager.registerSourceManager(new HttpAudioSourceManager(containerRegistry));
   }
 
