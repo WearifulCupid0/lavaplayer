@@ -9,7 +9,7 @@ version = "1.3.99"
 
 dependencies {
   api("com.github.davidffa.lavaplayer-fork:lava-common:ebd213f")
-  implementation("com.github.walkyst:lavaplayer-natives-fork:1.0.0")
+  implementation("com.github.walkyst:lavaplayer-natives-fork:1.0.1")
   implementation("com.github.walkyst.JAADec-fork:jaadec-ext-aac:0.1.3")
   implementation("org.mozilla:rhino-engine:1.7.14")
   implementation("org.slf4j:slf4j-api:1.7.25")

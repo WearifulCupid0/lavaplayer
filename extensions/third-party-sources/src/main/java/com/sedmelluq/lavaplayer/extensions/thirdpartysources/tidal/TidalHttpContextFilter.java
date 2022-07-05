@@ -3,6 +3,8 @@ package com.sedmelluq.lavaplayer.extensions.thirdpartysources.tidal;
 import com.sedmelluq.discord.lavaplayer.tools.http.HttpContextFilter;
 import java.net.URI;
 import java.net.URISyntaxException;
+
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioSourceManager;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -29,6 +31,7 @@ public class TidalHttpContextFilter implements HttpContextFilter {
 
     @Override
     public void onRequest(HttpClientContext context, HttpUriRequest request, boolean isRepetition) {
+        request.setHeader("User-Agent", ThirdPartyAudioSourceManager.USER_AGENT);
         if (request.getURI().getHost().contains("api.tidal.com")) {
             request.setHeader("x-tidal-token", tokenTracker.getToken());
             request.setHeader("Content-Type", "application/json");

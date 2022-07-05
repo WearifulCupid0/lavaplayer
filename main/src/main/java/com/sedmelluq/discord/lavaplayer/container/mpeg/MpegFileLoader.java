@@ -59,16 +59,16 @@ public class MpegFileLoader {
         movieBoxSeen.set(true);
 
         reader.in(moov).handle("trak",
-            this::parseTrackInfo
+                this::parseTrackInfo
         ).handle("mvex",
-            fragmentedFileReader::parseMovieExtended
+                fragmentedFileReader::parseMovieExtended
         ).handle("udta",
-            this::parseMetadata
+                this::parseMetadata
         ).run();
       }).handleVersioned("emsg",
-          this::parseEventMessage
+              this::parseEventMessage
       ).handleVersioned("sidx", true,
-          fragmentedFileReader::parseSegmentIndex
+              fragmentedFileReader::parseSegmentIndex
       ).stopChecker(getRootStopChecker(movieBoxSeen)).run();
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -177,7 +177,7 @@ public class MpegFileLoader {
 
         trackInfo.setHandler(reader.readFourCC());
       }).handleVersioned("mdhd", mdhd ->
-          standardFileReader.readMediaHeaders(mdhd, trackInfo.getTrackId())
+              standardFileReader.readMediaHeaders(mdhd, trackInfo.getTrackId())
       ).handle("minf", minf -> {
         reader.in(minf).handle("stbl", stbl -> {
           MpegReader.Chain chain = reader.in(stbl);

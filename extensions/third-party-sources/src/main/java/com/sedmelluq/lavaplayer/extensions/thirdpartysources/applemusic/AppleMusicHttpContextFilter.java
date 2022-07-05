@@ -1,6 +1,7 @@
 package com.sedmelluq.lavaplayer.extensions.thirdpartysources.applemusic;
 
 import com.sedmelluq.discord.lavaplayer.tools.http.HttpContextFilter;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioSourceManager;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -25,6 +26,7 @@ public class AppleMusicHttpContextFilter implements HttpContextFilter {
 
     @Override
     public void onRequest(HttpClientContext context, HttpUriRequest request, boolean isRepetition) {
+        request.setHeader("User-Agent", ThirdPartyAudioSourceManager.USER_AGENT);
         if (request.getURI().getHost().contains("api.music.apple.com")) {
             request.setHeader("Authorization", tokenTracker.getFormmatedToken());
             request.setHeader("Origin", "https://music.apple.com");

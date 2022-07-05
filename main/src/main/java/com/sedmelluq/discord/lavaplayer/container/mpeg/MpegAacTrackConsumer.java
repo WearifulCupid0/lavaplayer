@@ -38,7 +38,7 @@ public class MpegAacTrackConsumer implements MpegTrackConsumer {
   @Override
   public void initialise() {
     log.debug("Initialising AAC track with expected frequency {} and channel count {}.",
-        track.sampleRate, track.channelCount);
+            track.sampleRate, track.channelCount);
   }
 
   @Override
@@ -60,11 +60,14 @@ public class MpegAacTrackConsumer implements MpegTrackConsumer {
   public void consume(ReadableByteChannel channel, int length) throws InterruptedException {
     if (packetRouter.nativeDecoder == null) {
       packetRouter.nativeDecoder = new AacDecoder();
-      inputBuffer = ByteBuffer.allocateDirect(4096);
       configured = configureDecoder(packetRouter.nativeDecoder);
     }
 
     if (configured) {
+      if (inputBuffer == null) {
+        inputBuffer = ByteBuffer.allocateDirect(4096);
+      }
+
       processInput(channel, length);
     } else {
       if (packetRouter.embeddedDecoder == null) {

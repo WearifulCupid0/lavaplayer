@@ -21,6 +21,7 @@ public class MatroskaAacTrackConsumer implements MatroskaTrackConsumer {
   private final AacPacketRouter packetRouter;
 
   private ByteBuffer inputBuffer;
+  private boolean configured;
 
   /**
    * @param context Configuration and output information for processing
@@ -34,7 +35,7 @@ public class MatroskaAacTrackConsumer implements MatroskaTrackConsumer {
   @Override
   public void initialise() {
     log.debug("Initialising AAC track with expected frequency {} and channel count {}.",
-        track.audio.samplingFrequency, track.audio.channels);
+            track.audio.samplingFrequency, track.audio.channels);
   }
 
   @Override
@@ -56,10 +57,14 @@ public class MatroskaAacTrackConsumer implements MatroskaTrackConsumer {
   public void consume(ByteBuffer data) throws InterruptedException {
     if (packetRouter.nativeDecoder == null) {
       packetRouter.nativeDecoder = new AacDecoder();
-      inputBuffer = ByteBuffer.allocateDirect(4096);
+      configured = configureDecoder(packetRouter.nativeDecoder);
     }
 
-    if (configureDecoder(packetRouter.nativeDecoder)) {
+    if (configured) {
+      if (inputBuffer == null) {
+        inputBuffer = ByteBuffer.allocateDirect(4096);
+      }
+
       processInput(data);
     } else {
       if (packetRouter.embeddedDecoder == null) {

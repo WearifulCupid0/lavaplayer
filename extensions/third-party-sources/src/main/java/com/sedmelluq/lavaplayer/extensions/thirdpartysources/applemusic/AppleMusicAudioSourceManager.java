@@ -1,13 +1,10 @@
 package com.sedmelluq.lavaplayer.extensions.thirdpartysources.applemusic;
 
+import com.sedmelluq.discord.lavaplayer.tools.io.*;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.*;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
 import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
@@ -64,7 +61,12 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
         super(playerManager, fetchIsrc);
         this.allowSearch = allowSearch;
         
-        this.httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
+        this.httpInterfaceManager = new ThreadLocalHttpInterfaceManager(
+                HttpClientTools.createSharedCookiesHttpBuilder(),
+                RequestConfig.custom()
+                .setConnectTimeout(10000)
+                .build()
+        );
         this.tokenTracker = new AppleMusicTokenTracker(httpInterfaceManager);
         this.httpInterfaceManager.setHttpContextFilter(new AppleMusicHttpContextFilter(this.tokenTracker));
     }

@@ -199,9 +199,9 @@ public class AacDecoder extends NativeResourceHolder {
     }
 
     return new StreamInfo(
-        (int) (combinedValue >>> 32L),
-        (int) (combinedValue & 0xFFFF),
-        (int) ((combinedValue >>> 16L) & 0xFFFF)
+            (int) (combinedValue >>> 32L),
+            (int) (combinedValue & 0xFFFF),
+            (int) ((combinedValue >>> 16L) & 0xFFFF)
     );
   }
 
