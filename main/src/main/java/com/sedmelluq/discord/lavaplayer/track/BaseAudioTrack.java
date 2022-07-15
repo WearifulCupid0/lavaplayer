@@ -21,7 +21,7 @@ public abstract class BaseAudioTrack implements InternalAudioTrack {
   private volatile AudioTrackExecutor activeExecutor;
   protected final AudioTrackInfo trackInfo;
   protected final AtomicLong accurateDuration;
-  private volatile Object userData;
+  private volatile Object userData = "{}";
 
   /**
    * @param trackInfo Track info

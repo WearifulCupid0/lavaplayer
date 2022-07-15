@@ -1,5 +1,7 @@
 package com.sedmelluq.discord.lavaplayer.track;
 
+import com.sun.istack.internal.Nullable;
+
 /**
  * Meta info for an audio track
  */
@@ -32,6 +34,11 @@ public class AudioTrackInfo {
    * URL to thumbnail of the track
    */
   public final String artworkUrl;
+  /**
+   * True if this track is considered explicit.
+   */
+  @Nullable
+  public final boolean explicit;
 
   /**
    * @param title Track title
@@ -42,7 +49,7 @@ public class AudioTrackInfo {
    * @param uri URL of the track or path to its file.
    * @param artworkUrl Thumbnail of the track
    */
-  public AudioTrackInfo(String title, String author, long length, String identifier, boolean isStream, String uri, String artworkUrl) {
+  public AudioTrackInfo(String title, String author, long length, String identifier, boolean isStream, String uri, String artworkUrl, Boolean explicit) {
     this.title = title;
     this.author = author;
     this.length = length;
@@ -50,6 +57,20 @@ public class AudioTrackInfo {
     this.isStream = isStream;
     this.uri = uri;
     this.artworkUrl = artworkUrl;
+    this.explicit = explicit;
+  }
+
+  /**
+   * @param title Track title
+   * @param author Track author, if known
+   * @param length Length of the track in milliseconds
+   * @param identifier Audio source specific track identifier
+   * @param isStream True if this track is a stream
+   * @param uri URL of the track or path to its file.
+   * @param artworkUrl URL to thumbnail of the track.
+   */
+  public AudioTrackInfo(String title, String author, long length, String identifier, boolean isStream, String uri, String artworkUrl) {
+    this(title, author, length, identifier, isStream, uri, artworkUrl, null);
   }
 
   /**
@@ -61,6 +82,6 @@ public class AudioTrackInfo {
    * @param uri URL of the track or path to its file.
    */
   public AudioTrackInfo(String title, String author, long length, String identifier, boolean isStream, String uri) {
-    this(title, author, length, identifier, isStream, uri, System.getProperty("defaultArtworkUrl", null));
+    this(title, author, length, identifier, isStream, uri, System.getProperty("defaultArtworkUrl", null), null);
   }
 }

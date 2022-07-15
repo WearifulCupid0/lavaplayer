@@ -4,6 +4,7 @@ import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.SeekableInputStream;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
+import com.sun.istack.internal.Nullable;
 
 import static com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN;
 
@@ -21,6 +22,8 @@ public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
   private String uri;
   private String artworkUrl;
   private Boolean isStream;
+  @Nullable
+  private Boolean explicit = null;
 
   private AudioTrackInfoBuilder() {
 
@@ -91,6 +94,12 @@ public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
     return this;
   }
 
+  public AudioTrackInfoBuilder setExplicit(Boolean value) {
+    explicit = value;
+    return this;
+  }
+
+
   /**
    * @param provider The track info provider to apply to the builder.
    * @return this
@@ -121,7 +130,8 @@ public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
         identifier,
         DataFormatTools.defaultOnNull(isStream, finalLength == DURATION_MS_UNKNOWN),
         uri,
-        artworkUrl
+        artworkUrl,
+        explicit
     );
   }
 
@@ -147,6 +157,24 @@ public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
     }
 
     return builder;
+  }
+
+  /**
+   * Create an instance of audio track build based on an audio track info.
+   *
+   * @param trackInfo Audio track info to use as the starting point for the builder
+   * @return An instance of the builder with the track info data.
+   */
+  public static AudioTrackInfoBuilder create(AudioTrackInfo trackInfo) {
+    return new AudioTrackInfoBuilder()
+            .setTitle(trackInfo.title)
+            .setAuthor(trackInfo.author)
+            .setLength(trackInfo.length)
+            .setIdentifier(trackInfo.identifier)
+            .setIsStream(trackInfo.isStream)
+            .setUri(trackInfo.uri)
+            .setArtworkUrl(trackInfo.artworkUrl)
+            .setExplicit(trackInfo.explicit);
   }
 
   /**

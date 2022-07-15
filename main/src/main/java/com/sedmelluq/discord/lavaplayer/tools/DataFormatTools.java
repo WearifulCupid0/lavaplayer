@@ -173,6 +173,22 @@ public class DataFormatTools {
   }
 
   /**
+   * Writes a boolean to output with the additional information whether it is <code>null</code> or not. Compatible with
+   * {@link #readNullableBoolean(DataInput)}.
+   *
+   * @param output Output to write to.
+   * @param bool Boolean to write.
+   * @throws IOException On write error.
+   */
+  public static void writeNullableBoolean(DataOutput output, Boolean bool) throws IOException {
+    output.writeBoolean(bool != null);
+
+    if (bool != null) {
+      output.writeBoolean(bool);
+    }
+  }
+
+  /**
    * Reads a string from input which may be <code>null</code>. Compatible with
    * {@link #writeNullableText(DataOutput, String)}.
    *
@@ -184,6 +200,20 @@ public class DataFormatTools {
     boolean exists = input.readBoolean();
     return exists ? input.readUTF() : null;
   }
+
+  /**
+   * Reads a boolean from input which may be <code>null</code>. Compatible with
+   * {@link #writeNullableBoolean(DataOutput, Boolean)}.
+   *
+   * @param input Input to read from.
+   * @return The boolean that was read, or <code>null</code>.
+   * @throws IOException On read error.
+   */
+  public static Boolean readNullableBoolean(DataInput input) throws IOException {
+    boolean exists = input.readBoolean();
+    return exists ? input.readBoolean() : null;
+  }
+
 
   public static boolean arrayRangeEquals(byte[] array, int offset, byte[] segment) {
     if (array.length < offset + segment.length) {
