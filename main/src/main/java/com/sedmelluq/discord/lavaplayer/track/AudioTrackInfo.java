@@ -1,7 +1,5 @@
 package com.sedmelluq.discord.lavaplayer.track;
 
-import com.sun.istack.internal.Nullable;
-
 /**
  * Meta info for an audio track
  */
@@ -37,7 +35,6 @@ public class AudioTrackInfo {
   /**
    * True if this track is considered explicit.
    */
-  @Nullable
   public final boolean explicit;
 
   /**
@@ -48,6 +45,7 @@ public class AudioTrackInfo {
    * @param isStream True if this track is a stream
    * @param uri URL of the track or path to its file.
    * @param artworkUrl Thumbnail of the track
+   * @param explicit True if this track is considered explicit.
    */
   public AudioTrackInfo(String title, String author, long length, String identifier, boolean isStream, String uri, String artworkUrl, Boolean explicit) {
     this.title = title;

@@ -4,7 +4,6 @@ import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.SeekableInputStream;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
-import com.sun.istack.internal.Nullable;
 
 import static com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN;
 
@@ -22,7 +21,6 @@ public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
   private String uri;
   private String artworkUrl;
   private Boolean isStream;
-  @Nullable
   private Boolean explicit = null;
 
   private AudioTrackInfoBuilder() {
