@@ -60,7 +60,7 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
         return null;
       }
 
-      YoutubeTrackJsonData finalData = augmentWithPlayerScript(initialData, httpInterface, videoId, requireFormats);
+      YoutubeTrackJsonData finalData = augmentWithPlayerScript(initialData, httpInterface, videoId, requireFormats, initialData.explicit);
       return new DefaultYoutubeTrackDetails(videoId, finalData);
     } catch (FriendlyException e) {
       throw e;
@@ -75,7 +75,7 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
       String videoId,
       YoutubeAudioSourceManager sourceManager
   ) throws IOException {
-    YoutubeTrackJsonData data = YoutubeTrackJsonData.fromMainResult(mainInfo);
+    YoutubeTrackJsonData data = YoutubeTrackJsonData.fromMainResult(mainInfo, false);
     InfoStatus status = checkPlayabilityStatus(data.playerResponse, false, false);
 
     if (status == InfoStatus.DOES_NOT_EXIST) {
@@ -88,7 +88,8 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
           .get("playabilityStatus")
           .get("errorScreen")
           .get("ypcTrailerRenderer")
-          .get("unserializedPlayerResponse")
+          .get("unserializedPlayerResponse"),
+              false
       );
       status = checkPlayabilityStatus(data.playerResponse, true, false);
       
@@ -96,14 +97,14 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
 
     if (status == InfoStatus.REQUIRES_LOGIN) {
       JsonBrowser trackInfo = loadTrackInfoFromInnertube(httpInterface, videoId, sourceManager, status);
-      data = YoutubeTrackJsonData.fromMainResult(trackInfo);
+      data = YoutubeTrackJsonData.fromMainResult(trackInfo, true);
       status = checkPlayabilityStatus(data.playerResponse, true, false);
     }
 
     if (status == InfoStatus.NON_EMBEDDABLE) {
       JsonBrowser trackInfo = loadTrackInfoFromInnertube(httpInterface, videoId, sourceManager, status);
       checkPlayabilityStatus(trackInfo, true, false);
-      data = YoutubeTrackJsonData.fromMainResult(trackInfo);
+      data = YoutubeTrackJsonData.fromMainResult(trackInfo, false);
     }
 
     if (status == InfoStatus.CONTENT_CHECK_REQUIRED) {
@@ -120,7 +121,7 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
         throw new FriendlyException("Failed to find track info from YouTube content check player response.", SUSPICIOUS, null);
       }
       checkPlayabilityStatus(trackInfo, true, true);
-      data = YoutubeTrackJsonData.fromMainResult(trackInfo);
+      data = YoutubeTrackJsonData.fromMainResult(trackInfo, true);
     }
 
     return data;
@@ -266,7 +267,8 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
           YoutubeTrackJsonData data,
           HttpInterface httpInterface,
           String videoId,
-          boolean requireFormats
+          boolean requireFormats,
+          boolean explicit
   ) throws IOException {
     long now = System.currentTimeMillis();
 
@@ -280,10 +282,10 @@ public class DefaultYoutubeTrackDetailsLoader implements YoutubeTrackDetailsLoad
     CachedPlayerScript cached = cachedPlayerScript;
 
     if (cached != null && cached.timestamp + 600000L >= now) {
-      return data.withPlayerScriptUrl(cached.playerScriptUrl);
+      return data.withPlayerScriptUrl(cached.playerScriptUrl, explicit);
     }
 
-    return data.withPlayerScriptUrl(fetchScript(videoId, httpInterface));
+    return data.withPlayerScriptUrl(fetchScript(videoId, httpInterface), explicit);
   }
 
   private String fetchScript(String videoId, HttpInterface httpInterface) throws IOException {

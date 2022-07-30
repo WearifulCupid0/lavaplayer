@@ -16,17 +16,20 @@ public class YoutubeTrackJsonData {
   public final JsonBrowser polymerArguments;
   public final String playerScriptUrl;
 
-  public YoutubeTrackJsonData(JsonBrowser playerResponse, JsonBrowser polymerArguments, String playerScriptUrl) {
+  public final Boolean explicit;
+
+  public YoutubeTrackJsonData(JsonBrowser playerResponse, JsonBrowser polymerArguments, String playerScriptUrl, Boolean explicit) {
     this.playerResponse = playerResponse;
     this.polymerArguments = polymerArguments;
     this.playerScriptUrl = playerScriptUrl;
+    this.explicit = explicit;
   }
 
-  public YoutubeTrackJsonData withPlayerScriptUrl(String playerScriptUrl) {
-    return new YoutubeTrackJsonData(playerResponse, polymerArguments, playerScriptUrl);
+  public YoutubeTrackJsonData withPlayerScriptUrl(String playerScriptUrl, Boolean explicit) {
+    return new YoutubeTrackJsonData(playerResponse, polymerArguments, playerScriptUrl, explicit);
   }
 
-  public static YoutubeTrackJsonData fromMainResult(JsonBrowser result) {
+  public static YoutubeTrackJsonData fromMainResult(JsonBrowser result, Boolean explicit) {
     try {
       JsonBrowser playerInfo = NULL_BROWSER;
       JsonBrowser playerResponse = NULL_BROWSER;
@@ -52,9 +55,9 @@ public class YoutubeTrackJsonData {
       }
 
       if (!playerInfo.isNull()) {
-        return fromPolymerPlayerInfo(playerInfo, playerResponse);
+        return fromPolymerPlayerInfo(playerInfo, playerResponse, explicit);
       } else if (!playerResponse.isNull()) {
-        return new YoutubeTrackJsonData(playerResponse, NULL_BROWSER, null);
+        return new YoutubeTrackJsonData(playerResponse, NULL_BROWSER, null, explicit);
       }
     } catch (Exception e) {
       throw throwWithDebugInfo(log, e, "Error parsing result", "json", result.format());
@@ -63,7 +66,7 @@ public class YoutubeTrackJsonData {
     throw throwWithDebugInfo(log, null, "Neither player nor playerResponse in result", "json", result.format());
   }
 
-  private static YoutubeTrackJsonData fromPolymerPlayerInfo(JsonBrowser playerInfo, JsonBrowser playerResponse) {
+  private static YoutubeTrackJsonData fromPolymerPlayerInfo(JsonBrowser playerInfo, JsonBrowser playerResponse, Boolean explicit) {
     JsonBrowser args = playerInfo.get("args");
     String playerScriptUrl = playerInfo.get("assets").get("js").text();
 
@@ -72,10 +75,10 @@ public class YoutubeTrackJsonData {
     if (playerResponseText == null) {
       // In case of Polymer, the playerResponse with formats is the one embedded in args, NOT the one in outer JSON.
       // However, if no player_response is available, use the outer playerResponse.
-      return new YoutubeTrackJsonData(playerResponse, args, playerScriptUrl);
+      return new YoutubeTrackJsonData(playerResponse, args, playerScriptUrl, explicit);
     }
 
-    return new YoutubeTrackJsonData(parsePlayerResponse(playerResponseText), args, playerScriptUrl);
+    return new YoutubeTrackJsonData(parsePlayerResponse(playerResponseText), args, playerScriptUrl, explicit);
   }
 
   private static JsonBrowser parsePlayerResponse(String playerResponseText) {

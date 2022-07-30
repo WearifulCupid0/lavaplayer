@@ -59,6 +59,9 @@ public class DefaultYoutubeTrackDetails implements YoutubeTrackDetails {
     return data.playerScriptUrl;
   }
 
+  @Override
+  public Boolean isExplicit() { return data.explicit; }
+
   private List<YoutubeTrackFormat> loadTrackFormats(
       HttpInterface httpInterface,
       YoutubeSignatureResolver signatureResolver
@@ -122,7 +125,7 @@ public class DefaultYoutubeTrackDetails implements YoutubeTrackDetails {
 
   private AudioTrackInfo buildTrackInfo(String videoId, String title, String uploader, TemporalInfo temporalInfo, String thumbnail) {
     return new AudioTrackInfo(title, uploader, temporalInfo.durationMillis, videoId, temporalInfo.isActiveStream,
-        WATCH_URL_PREFIX + videoId, thumbnail);
+        WATCH_URL_PREFIX + videoId, thumbnail, data.explicit);
   }
 
   private static class TemporalInfo {
