@@ -27,7 +27,12 @@ public enum AudioTrackEndReason {
    * of time passed since the last call to AudioPlayer#provide() has reached the threshold specified in player manager
    * configuration. This may also indicate either a leaked audio player which was discarded, but not stopped.
    */
-  CLEANUP(false);
+  CLEANUP(false),
+
+  /**
+   * The track was stopped because has explicit content.
+   */
+  EXPLICIT(true);
 
   /**
    * Indicates whether a new track should be started on receiving this event. If this is false, either this event is

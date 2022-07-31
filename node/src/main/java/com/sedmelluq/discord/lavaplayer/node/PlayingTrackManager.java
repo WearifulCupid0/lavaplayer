@@ -61,7 +61,7 @@ public class PlayingTrackManager {
         audioTrack.setPosition(message.position);
       }
 
-      PlayingTrack playingTrack = new PlayingTrack(message.executorId, message.volume, audioTrack);
+      PlayingTrack playingTrack = new PlayingTrack(message.executorId, message.volume, audioTrack, message.allowExplicit);
       PlayingTrack existingTrack = tracks.putIfAbsent(message.executorId, playingTrack);
 
       if (existingTrack == null) {
@@ -182,15 +182,18 @@ public class PlayingTrackManager {
     private final InternalAudioTrack audioTrack;
     private volatile long lastFrameRequestTime;
     private volatile long lastNonZeroFrameRequestTime;
-    private AtomicReference<TrackExceptionMessage> exceptionMessage;
+    private final AtomicReference<TrackExceptionMessage> exceptionMessage;
 
-    private PlayingTrack(long executorId, int volume, InternalAudioTrack audioTrack) {
+    private final boolean allowExplicit;
+
+    private PlayingTrack(long executorId, int volume, InternalAudioTrack audioTrack, boolean allowExplicit) {
       this.executorId = executorId;
       this.playerOptions = new AudioPlayerOptions();
       this.audioTrack = audioTrack;
       this.lastFrameRequestTime = System.currentTimeMillis();
       this.lastNonZeroFrameRequestTime = lastFrameRequestTime;
       this.exceptionMessage = new AtomicReference<>();
+      this.allowExplicit = allowExplicit;
       playerOptions.volumeLevel.set(volume);
     }
 
@@ -203,6 +206,18 @@ public class PlayingTrackManager {
     public void onTrackStuck(AudioTrack track, long thresholdMs) {
       // Should never be called.
     }
+
+    @Override
+    public  void onTrackExplicit(AudioTrack track) {
+
+    }
+
+    @Override
+    public boolean isAllowedExplicit() {
+      return this.allowExplicit;
+    }
+
+    public boolean isAllowExplicit() { return this.allowExplicit; }
 
     private TrackExceptionMessage popExceptionMessage() {
       return exceptionMessage.getAndSet(null);

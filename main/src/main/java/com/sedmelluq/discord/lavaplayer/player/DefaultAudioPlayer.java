@@ -1,14 +1,7 @@
 package com.sedmelluq.discord.lavaplayer.player;
 
 import com.sedmelluq.discord.lavaplayer.filter.PcmFilterFactory;
-import com.sedmelluq.discord.lavaplayer.player.event.AudioEvent;
-import com.sedmelluq.discord.lavaplayer.player.event.AudioEventListener;
-import com.sedmelluq.discord.lavaplayer.player.event.PlayerPauseEvent;
-import com.sedmelluq.discord.lavaplayer.player.event.PlayerResumeEvent;
-import com.sedmelluq.discord.lavaplayer.player.event.TrackEndEvent;
-import com.sedmelluq.discord.lavaplayer.player.event.TrackExceptionEvent;
-import com.sedmelluq.discord.lavaplayer.player.event.TrackStartEvent;
-import com.sedmelluq.discord.lavaplayer.player.event.TrackStuckEvent;
+import com.sedmelluq.discord.lavaplayer.player.event.*;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -48,6 +41,7 @@ public class DefaultAudioPlayer implements AudioPlayer, TrackStateListener {
   private volatile boolean stuckEventSent;
   private volatile InternalAudioTrack shadowTrack;
   private final AtomicBoolean paused;
+  private final AtomicBoolean allowExplicit;
   private final DefaultAudioPlayerManager manager;
   private final List<AudioEventListener> listeners;
   private final Object trackSwitchLock;
@@ -60,6 +54,8 @@ public class DefaultAudioPlayer implements AudioPlayer, TrackStateListener {
     this.manager = manager;
     activeTrack = null;
     paused = new AtomicBoolean();
+    allowExplicit = new AtomicBoolean();
+    allowExplicit.set(true);
     listeners = new ArrayList<>();
     trackSwitchLock = new Object();
     options = new AudioPlayerOptions();
@@ -314,6 +310,11 @@ public class DefaultAudioPlayer implements AudioPlayer, TrackStateListener {
   }
 
   /**
+   * @return Whether the player is allowed to play explicit tracks.
+   */
+  public boolean isAllowedExplicit() { return allowExplicit.get(); }
+
+  /**
    * @param value True to pause, false to resume
    */
   public void setPaused(boolean value) {
@@ -358,7 +359,7 @@ public class DefaultAudioPlayer implements AudioPlayer, TrackStateListener {
     }
   }
 
-  private void dispatchEvent(AudioEvent event) {
+  public void dispatchEvent(AudioEvent event) {
     log.debug("Firing an event with class {}", event.getClass().getSimpleName());
 
     synchronized (trackSwitchLock) {
@@ -380,6 +381,11 @@ public class DefaultAudioPlayer implements AudioPlayer, TrackStateListener {
   @Override
   public void onTrackStuck(AudioTrack track, long thresholdMs) {
     dispatchEvent(new TrackStuckEvent(this, track, thresholdMs, null));
+  }
+
+  @Override
+  public void onTrackExplicit(AudioTrack track) {
+    dispatchEvent(new TrackExplicitEvent(this, track));
   }
 
   /**

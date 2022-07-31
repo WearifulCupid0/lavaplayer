@@ -27,6 +27,7 @@ public class WavAudioTrack extends BaseAudioTrack {
 
   @Override
   public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
+    this.checkExplicitContent(localExecutor);
     WavTrackProvider trackProvider = new WavFileLoader(inputStream).loadTrack(localExecutor.getProcessingContext());
 
     try {

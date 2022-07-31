@@ -27,6 +27,7 @@ public class FlacAudioTrack extends BaseAudioTrack {
 
   @Override
   public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
+    this.checkExplicitContent(localExecutor);
     FlacFileLoader file = new FlacFileLoader(inputStream);
     FlacTrackProvider trackProvider = file.loadTrack(localExecutor.getProcessingContext());
 

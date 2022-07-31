@@ -31,7 +31,8 @@ public class MatroskaAudioTrack extends BaseAudioTrack {
   }
 
   @Override
-  public void process(LocalAudioTrackExecutor localExecutor) {
+  public void process(LocalAudioTrackExecutor localExecutor) throws  Exception {
+    this.checkExplicitContent(localExecutor);
     MatroskaStreamingFile file = loadMatroskaFile();
     MatroskaTrackConsumer trackConsumer = loadAudioTrack(file, localExecutor.getProcessingContext());
 

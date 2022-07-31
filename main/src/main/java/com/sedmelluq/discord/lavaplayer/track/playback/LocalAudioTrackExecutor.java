@@ -7,6 +7,7 @@ import com.sedmelluq.discord.lavaplayer.source.youtube.DefaultYoutubeTrackDetail
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeSignatureCipherManager;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
+import com.sedmelluq.discord.lavaplayer.tools.ExplicitContentException;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackState;
 import com.sedmelluq.discord.lavaplayer.track.InternalAudioTrack;
@@ -51,6 +52,7 @@ public class LocalAudioTrackExecutor implements AudioTrackExecutor {
   private boolean interruptibleForSeek = false;
   private volatile Throwable trackException;
   private volatile long lastRetry = -1;
+  private volatile boolean allowExplicit = true;
 
   /**
    * @param audioTrack The audio track that this executor executes
@@ -115,6 +117,7 @@ public class LocalAudioTrackExecutor implements AudioTrackExecutor {
     InterruptedException interrupt = null;
 
     try {
+      allowExplicit = listener.isAllowedExplicit();
       audioTrack.process(this);
 
       log.debug("Playing track {} finished or was stopped.", audioTrack.getIdentifier());
@@ -142,6 +145,11 @@ public class LocalAudioTrackExecutor implements AudioTrackExecutor {
           attemptProcess(listener);
           return;
         }
+      }
+
+      if (e instanceof ExplicitContentException) {
+        listener.onTrackExplicit(audioTrack);
+        return;
       }
 
       // Temporarily clear the interrupted status so it would not disrupt listener methods.
@@ -280,6 +288,9 @@ public class LocalAudioTrackExecutor implements AudioTrackExecutor {
   public boolean failedBeforeLoad() {
     return trackException != null && !frameBuffer.hasReceivedFrames();
   }
+
+  @Override
+  public boolean isAllowedExplicit() { return this.allowExplicit; }
 
   public void executeProcessingLoop(ReadExecutor readExecutor, SeekExecutor seekExecutor) {
     executeProcessingLoop(readExecutor, seekExecutor, true);

@@ -23,4 +23,16 @@ public interface TrackStateListener {
    * @param thresholdMs The wait threshold that was exceeded for this event to trigger
    */
   void onTrackStuck(AudioTrack track, long thresholdMs);
+
+  /**
+   * Called when a track has explicit content and the audio player is configured for only non-explicit tracks.
+   *
+   * @param track The audio track with explicit content.
+   */
+  void onTrackExplicit(AudioTrack track);
+
+  /**
+   * @return Whether the player is allowed to play explicit tracks.
+   */
+  boolean isAllowedExplicit();
 }

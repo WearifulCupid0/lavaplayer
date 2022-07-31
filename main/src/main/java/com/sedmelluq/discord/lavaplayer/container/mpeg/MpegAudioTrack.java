@@ -35,7 +35,8 @@ public class MpegAudioTrack extends BaseAudioTrack {
   }
 
   @Override
-  public void process(LocalAudioTrackExecutor localExecutor) {
+  public void process(LocalAudioTrackExecutor localExecutor) throws  Exception {
+    this.checkExplicitContent(localExecutor);
     MpegFileLoader file = new MpegFileLoader(inputStream);
     file.parseHeaders();
 

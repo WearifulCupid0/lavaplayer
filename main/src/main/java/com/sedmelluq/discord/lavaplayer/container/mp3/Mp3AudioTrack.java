@@ -27,6 +27,7 @@ public class Mp3AudioTrack extends BaseAudioTrack {
 
   @Override
   public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
+    this.checkExplicitContent(localExecutor);
     Mp3TrackProvider provider = new Mp3TrackProvider(localExecutor.getProcessingContext(), inputStream);
 
     try {

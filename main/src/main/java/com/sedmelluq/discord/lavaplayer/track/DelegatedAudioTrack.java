@@ -1,5 +1,6 @@
 package com.sedmelluq.discord.lavaplayer.track;
 
+import com.sedmelluq.discord.lavaplayer.tools.ExplicitContentException;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
 
 /**
@@ -20,6 +21,8 @@ public abstract class DelegatedAudioTrack extends BaseAudioTrack {
       throws Exception {
 
     this.delegate = delegate;
+    if (!localExecutor.isAllowedExplicit() && delegate.getInfo().explicit) throw new ExplicitContentException(this);
+
 
     delegate.assignExecutor(localExecutor, false);
     delegate.process(localExecutor);

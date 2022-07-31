@@ -33,15 +33,21 @@ public class TrackStartRequestMessage implements RemoteMessage {
   public final long position;
 
   /**
+   * If true allow playing tracks with explicit content
+   */
+  public final boolean allowExplicit;
+
+  /**
    * @param executorId The ID for the track executor
    * @param trackInfo Generic track information
    * @param encodedTrack Track specific extra information that is required to initialise the track object
    * @param volume Initial volume of the track
    * @param configuration Configuration to use for audio processing
    * @param position Position to start playing at in milliseconds
+   * @param allowExplicit If true allow to play tracks with explicit content
    */
   public TrackStartRequestMessage(long executorId, AudioTrackInfo trackInfo, byte[] encodedTrack, int volume,
-                                  AudioConfiguration configuration, long position) {
+                                  AudioConfiguration configuration, long position, boolean allowExplicit) {
 
     this.executorId = executorId;
     this.encodedTrack = encodedTrack;
@@ -49,5 +55,6 @@ public class TrackStartRequestMessage implements RemoteMessage {
     this.volume = volume;
     this.configuration = configuration;
     this.position = position;
+    this.allowExplicit = allowExplicit;
   }
 }

@@ -2,6 +2,7 @@ package com.sedmelluq.discord.lavaplayer.remote;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioConfiguration;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
+import com.sedmelluq.discord.lavaplayer.tools.ExplicitContentException;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
@@ -46,6 +47,7 @@ public class RemoteAudioTrackExecutor implements AudioTrackExecutor {
   private volatile boolean hasReceivedData;
   private volatile boolean hasStarted;
   private volatile Throwable trackException;
+  private volatile boolean allowExplicit = true;
 
   /**
    * @param track Audio track to play
@@ -129,6 +131,9 @@ public class RemoteAudioTrackExecutor implements AudioTrackExecutor {
     }
   }
 
+  @Override
+  public boolean isAllowedExplicit() { return this.allowExplicit; }
+
   /**
    * Mark that this track has received data from the node.
    */
@@ -152,13 +157,14 @@ public class RemoteAudioTrackExecutor implements AudioTrackExecutor {
 
   @Override
   public void execute(TrackStateListener listener) {
+    allowExplicit = listener.isAllowedExplicit();
     try {
       hasStarted = true;
       activeListener = listener;
       remoteNodeManager.startPlaying(this);
     } catch (Throwable throwable) {
       listener.onTrackException(track, ExceptionTools.wrapUnfriendlyExceptions(
-          "An error occurred when trying to start track remotely.", FriendlyException.Severity.FAULT, throwable));
+                "An error occurred when trying to start track remotely.", FriendlyException.Severity.FAULT, throwable));
 
       ExceptionTools.rethrowErrors(throwable);
     }

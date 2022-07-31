@@ -28,6 +28,7 @@ public class AdtsAudioTrack extends BaseAudioTrack {
 
   @Override
   public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
+    this.checkExplicitContent(localExecutor);
     AdtsStreamProvider provider = new AdtsStreamProvider(inputStream, localExecutor.getProcessingContext());
 
     try {

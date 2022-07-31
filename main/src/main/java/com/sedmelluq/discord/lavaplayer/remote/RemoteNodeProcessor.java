@@ -122,7 +122,7 @@ public class RemoteNodeProcessor implements RemoteNode, Runnable {
       log.info("Sending request to play {} {} from position {}", track.getIdentifier(), executor.getExecutorId(), position);
 
       queuedMessages.add(new TrackStartRequestMessage(executor.getExecutorId(), track.getInfo(), playerManager.encodeTrackDetails(track),
-          executor.getVolume(), executor.getConfiguration(), position));
+          executor.getVolume(), executor.getConfiguration(), position, executor.isAllowedExplicit()));
     }
   }
 

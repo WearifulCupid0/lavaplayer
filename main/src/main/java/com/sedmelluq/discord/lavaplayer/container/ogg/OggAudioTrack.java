@@ -31,7 +31,8 @@ public class OggAudioTrack extends BaseAudioTrack {
   }
 
   @Override
-  public void process(final LocalAudioTrackExecutor localExecutor) {
+  public void process(final LocalAudioTrackExecutor localExecutor) throws Exception {
+    this.checkExplicitContent(localExecutor);
     OggPacketInputStream packetInputStream = new OggPacketInputStream(inputStream, false);
 
     log.debug("Starting to play an OGG stream track {}", getIdentifier());

@@ -2,10 +2,8 @@ package com.sedmelluq.discord.lavaplayer.track;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
-import com.sedmelluq.discord.lavaplayer.track.playback.AudioFrame;
-import com.sedmelluq.discord.lavaplayer.track.playback.AudioTrackExecutor;
-import com.sedmelluq.discord.lavaplayer.track.playback.MutableAudioFrame;
-import com.sedmelluq.discord.lavaplayer.track.playback.PrimordialAudioTrackExecutor;
+import com.sedmelluq.discord.lavaplayer.tools.ExplicitContentException;
+import com.sedmelluq.discord.lavaplayer.track.playback.*;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -162,6 +160,10 @@ public abstract class BaseAudioTrack implements InternalAudioTrack {
     } else {
       return null;
     }
+  }
+
+  public void checkExplicitContent(LocalAudioTrackExecutor executor) throws  ExplicitContentException {
+    if (!executor.isAllowedExplicit() && trackInfo.explicit) throw  new ExplicitContentException(this);
   }
 
   protected AudioTrack makeShallowClone() {
