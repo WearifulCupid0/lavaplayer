@@ -18,6 +18,7 @@ public class TrackStartRequestCodec implements RemoteMessageCodec<TrackStartRequ
   private static final int VERSION_INITIAL = 1;
   private static final int VERSION_WITH_FORMAT = 2;
   private static final int VERSION_WITH_POSITION = 3;
+  private static final int VERSION_WITH_EXPLICIT = 4;
 
   @Override
   public Class<TrackStartRequestMessage> getMessageClass() {
@@ -92,12 +93,17 @@ public class TrackStartRequestCodec implements RemoteMessageCodec<TrackStartRequ
     }
 
     long position = 0;
+    boolean explicit = false;
 
     if (version >= VERSION_WITH_POSITION) {
       position = in.readLong();
     }
 
-    return new TrackStartRequestMessage(executorId, trackInfo, encodedTrack, volume, configuration, position);
+    if (version >= VERSION_WITH_EXPLICIT) {
+      explicit = in.readBoolean();
+    }
+
+    return new TrackStartRequestMessage(executorId, trackInfo, encodedTrack, volume, configuration, position, explicit);
   }
 
   private AudioDataFormat createFormat(int channelCount, int sampleRate, int chunkSampleCount, String codecName)

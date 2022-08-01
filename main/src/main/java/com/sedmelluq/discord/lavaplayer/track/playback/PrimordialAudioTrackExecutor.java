@@ -22,6 +22,7 @@ public class PrimordialAudioTrackExecutor implements AudioTrackExecutor {
   private final TrackMarkerTracker markerTracker;
 
   private volatile long position;
+  private volatile boolean isAllowedExplicit = false;
 
   /**
    * @param trackInfo Information of the track this executor is used with
@@ -38,6 +39,7 @@ public class PrimordialAudioTrackExecutor implements AudioTrackExecutor {
 
   @Override
   public void execute(TrackStateListener listener) {
+    this.isAllowedExplicit = listener.isAllowedExplicit();
     throw new UnsupportedOperationException();
   }
 
@@ -70,6 +72,11 @@ public class PrimordialAudioTrackExecutor implements AudioTrackExecutor {
   @Override
   public boolean failedBeforeLoad() {
     return false;
+  }
+
+  @Override
+  public boolean isAllowedExplicit() {
+    return this.isAllowedExplicit;
   }
 
   @Override
