@@ -22,7 +22,7 @@ public class YoutubeTrackJsonData {
     this.playerResponse = playerResponse;
     this.polymerArguments = polymerArguments;
     this.playerScriptUrl = playerScriptUrl;
-    this.explicit = explicit;
+    this.explicit = !playerResponse.get("microformat").get("playerMicroformatRenderer").get("isFamilySafe").asBoolean(!explicit);
   }
 
   public YoutubeTrackJsonData withPlayerScriptUrl(String playerScriptUrl, Boolean explicit) {
@@ -70,22 +70,14 @@ public class YoutubeTrackJsonData {
     JsonBrowser args = playerInfo.get("args");
     String playerScriptUrl = playerInfo.get("assets").get("js").text();
 
-    String playerResponseText = args.get("player_response").text();
+    JsonBrowser playerResp = args.get("player_response");
 
-    if (playerResponseText == null) {
+    if (playerResp.isNull()) {
       // In case of Polymer, the playerResponse with formats is the one embedded in args, NOT the one in outer JSON.
       // However, if no player_response is available, use the outer playerResponse.
       return new YoutubeTrackJsonData(playerResponse, args, playerScriptUrl, explicit);
     }
 
-    return new YoutubeTrackJsonData(parsePlayerResponse(playerResponseText), args, playerScriptUrl, explicit);
-  }
-
-  private static JsonBrowser parsePlayerResponse(String playerResponseText) {
-    try {
-      return JsonBrowser.parse(playerResponseText);
-    } catch (Exception e) {
-      throw throwWithDebugInfo(log, e, "Failed to parse player_response", "value", playerResponseText);
-    }
+    return new YoutubeTrackJsonData(playerResp, args, playerScriptUrl, explicit);
   }
 }

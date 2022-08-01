@@ -108,7 +108,8 @@ public class RedditAudioSourceManager implements AudioSourceManager, HttpConfigu
         id,
         false,
         url,
-        thumbnailUrl
+        thumbnailUrl,
+        data.get("over_18").asBoolean(false)
     ), this);
   }
 
