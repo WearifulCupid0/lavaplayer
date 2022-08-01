@@ -332,7 +332,8 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
             !trackInfo.get("is_local").asBoolean(false)
             ? TRACK_URL + identifier
             : null,
-            albumInfo.get("images").index(0).get("url").text()
+            albumInfo.get("images").index(0).get("url").text(),
+            trackInfo.get("explicit").asBoolean(false)
         );
 
         String isrc = trackInfo.get("external_ids").get("isrc").text();

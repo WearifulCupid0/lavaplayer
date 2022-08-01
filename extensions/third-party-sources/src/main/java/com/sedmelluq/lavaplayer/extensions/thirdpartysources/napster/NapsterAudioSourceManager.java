@@ -296,7 +296,8 @@ public class NapsterAudioSourceManager extends ThirdPartyAudioSourceManager impl
             identifier,
             false,
             TRACK_URL + identifier,
-            albumId != null ? String.format(CDN_URL, albumId) : null
+            albumId != null ? String.format(CDN_URL, albumId) : null,
+            trackInfo.get("isExplicit").asBoolean(false)
         );
 
         String isrc = trackInfo.get("isrc").text();

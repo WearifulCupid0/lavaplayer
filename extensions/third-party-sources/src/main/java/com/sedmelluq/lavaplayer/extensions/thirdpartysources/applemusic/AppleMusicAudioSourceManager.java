@@ -22,10 +22,7 @@ import org.apache.http.client.utils.URIBuilder;
 import java.net.URI;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -307,7 +304,8 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
             identifier,
             false,
             attributes.get("url").text(),
-            attributes.get("artwork").get("url").text().replace("{w}x{h}", width + "x" + height)
+            attributes.get("artwork").get("url").text().replace("{w}x{h}", width + "x" + height),
+            attributes.get("contentRating").safeText().equals("explicit")
         );
 
         String isrc = attributes.get("isrc").text();

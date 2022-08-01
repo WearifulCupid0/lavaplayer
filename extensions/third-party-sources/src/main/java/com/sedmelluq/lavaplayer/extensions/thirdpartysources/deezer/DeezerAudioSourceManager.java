@@ -271,7 +271,8 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
             identifier,
             false,
             trackInfo.get("link").text(),
-            albumInfo.get("cover_xl").text()
+            albumInfo.get("cover_xl").text(),
+            trackInfo.get("explicit_lyrics").asBoolean(false)
         );
 
         String isrc = trackInfo.get("isrc").text();

@@ -17,9 +17,7 @@ import static com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabConstants.A
 
 public class DefaultBandlabDataLoader extends AbstractBandlabApiLoader implements BandlabDataLoader {
     public AudioTrack loadTrack(String username, String slug, Function<AudioTrackInfo, AudioTrack> trackFactory) {
-        return extractFromApi(String.format(SONG_POST_BANDLAB_API, username, slug), (httpClient, response) -> {
-            return trackFactory.apply(BandlabUtils.buildTrackInfo(response));
-        });
+        return extractFromApi(String.format(SONG_POST_BANDLAB_API, username, slug), (httpClient, response) -> trackFactory.apply(BandlabUtils.buildTrackInfo(response)));
     }
 
     public AudioPlaylist loadCollection(String collectionId, Function<AudioTrackInfo, AudioTrack> trackFactory) {
@@ -29,9 +27,7 @@ public class DefaultBandlabDataLoader extends AbstractBandlabApiLoader implement
             response.get("posts").values()
             .forEach(t -> {
                 AudioTrackInfo info = BandlabUtils.buildTrackInfo(t);
-                if(info != null) {
-                    tracks.add(trackFactory.apply(info));
-                }
+                tracks.add(trackFactory.apply(info));
             });
 
             if(tracks.isEmpty()) {
@@ -58,9 +54,7 @@ public class DefaultBandlabDataLoader extends AbstractBandlabApiLoader implement
             response.get("posts").values()
             .forEach(t -> {
                 AudioTrackInfo info = BandlabUtils.buildTrackInfo(t);
-                if(info != null) {
-                    tracks.add(trackFactory.apply(info));
-                }
+                tracks.add(trackFactory.apply(info));
             });
 
             if(tracks.isEmpty()) {

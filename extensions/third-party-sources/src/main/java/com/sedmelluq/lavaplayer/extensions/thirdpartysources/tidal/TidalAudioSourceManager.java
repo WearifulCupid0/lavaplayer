@@ -290,7 +290,8 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
             identifier,
             false,
             TRACK_URL + identifier,
-            artworkId != null ? String.format(CDN_URL, artworkId.replaceAll("-", "/")) : imageUrl != null ? imageUrl : null
+            artworkId != null ? String.format(CDN_URL, artworkId.replaceAll("-", "/")) : imageUrl,
+            trackInfo.get("explicit").asBoolean(false)
         );
 
         String isrc = trackInfo.get("isrc").text();
