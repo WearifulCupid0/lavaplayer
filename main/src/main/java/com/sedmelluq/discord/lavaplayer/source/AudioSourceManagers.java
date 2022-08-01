@@ -2,7 +2,6 @@ package com.sedmelluq.discord.lavaplayer.source;
 
 import com.sedmelluq.discord.lavaplayer.container.MediaContainerRegistry;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
-import com.sedmelluq.discord.lavaplayer.source.audiomack.AudiomackAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.bandcamp.BandcampAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.bilibili.BilibiliAudioSourceManager;
@@ -56,7 +55,6 @@ public class AudioSourceManagers {
     playerManager.registerSourceManager(new iHeartAudioSourceManager(true, containerRegistry));
     playerManager.registerSourceManager(SoundCloudAudioSourceManager.createDefault());
     playerManager.registerSourceManager(new SoundgasmAudioSourceManager());
-    playerManager.registerSourceManager(new AudiomackAudioSourceManager());
     playerManager.registerSourceManager(new BandcampAudioSourceManager());
     playerManager.registerSourceManager(new StreamableAudioSourceManager());
     playerManager.registerSourceManager(new OcremixAudioSourceManager());
