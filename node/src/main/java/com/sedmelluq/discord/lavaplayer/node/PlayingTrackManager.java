@@ -4,12 +4,7 @@ import com.sedmelluq.discord.lavaplayer.node.message.MessageHandler;
 import com.sedmelluq.discord.lavaplayer.node.message.MessageOutput;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerOptions;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
-import com.sedmelluq.discord.lavaplayer.remote.message.TrackExceptionMessage;
-import com.sedmelluq.discord.lavaplayer.remote.message.TrackStartRequestMessage;
-import com.sedmelluq.discord.lavaplayer.remote.message.TrackStartResponseMessage;
-import com.sedmelluq.discord.lavaplayer.remote.message.TrackFrameDataMessage;
-import com.sedmelluq.discord.lavaplayer.remote.message.TrackFrameRequestMessage;
-import com.sedmelluq.discord.lavaplayer.remote.message.TrackStoppedMessage;
+import com.sedmelluq.discord.lavaplayer.remote.message.*;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -115,7 +110,7 @@ public class PlayingTrackManager {
   }
 
   private void submitPendingMessages(PlayingTrack track, MessageOutput output) {
-    TrackExceptionMessage exceptionMessage = track.popExceptionMessage();
+    RemoteMessage exceptionMessage = track.popMessage();
 
     if (exceptionMessage != null) {
       output.send(exceptionMessage);
@@ -182,7 +177,7 @@ public class PlayingTrackManager {
     private final InternalAudioTrack audioTrack;
     private volatile long lastFrameRequestTime;
     private volatile long lastNonZeroFrameRequestTime;
-    private final AtomicReference<TrackExceptionMessage> exceptionMessage;
+    private final AtomicReference<RemoteMessage> messages;
 
     private final boolean allowExplicit;
 
@@ -192,24 +187,24 @@ public class PlayingTrackManager {
       this.audioTrack = audioTrack;
       this.lastFrameRequestTime = System.currentTimeMillis();
       this.lastNonZeroFrameRequestTime = lastFrameRequestTime;
-      this.exceptionMessage = new AtomicReference<>();
+      this.messages = new AtomicReference<>();
       this.allowExplicit = allowExplicit;
       playerOptions.volumeLevel.set(volume);
     }
 
     @Override
     public void onTrackException(AudioTrack track, FriendlyException exception) {
-      this.exceptionMessage.set(new TrackExceptionMessage(executorId, exception));
+      this.messages.set(new TrackExceptionMessage(executorId, exception));
     }
 
     @Override
     public void onTrackStuck(AudioTrack track, long thresholdMs) {
-      // Should never be called.
+      this.messages.set(new TrackStuckMessage(executorId, thresholdMs));
     }
 
     @Override
     public  void onTrackExplicit(AudioTrack track) {
-
+      this.messages.set(new TrackExplicitMessage(executorId));
     }
 
     @Override
@@ -219,8 +214,8 @@ public class PlayingTrackManager {
 
     public boolean isAllowExplicit() { return this.allowExplicit; }
 
-    private TrackExceptionMessage popExceptionMessage() {
-      return exceptionMessage.getAndSet(null);
+    private RemoteMessage popMessage() {
+      return messages.getAndSet(null);
     }
 
     @Override

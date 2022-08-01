@@ -2,15 +2,7 @@ package com.sedmelluq.discord.lavaplayer.remote;
 
 import com.sedmelluq.discord.lavaplayer.format.AudioDataFormat;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
-import com.sedmelluq.discord.lavaplayer.remote.message.NodeStatisticsMessage;
-import com.sedmelluq.discord.lavaplayer.remote.message.RemoteMessage;
-import com.sedmelluq.discord.lavaplayer.remote.message.RemoteMessageMapper;
-import com.sedmelluq.discord.lavaplayer.remote.message.TrackExceptionMessage;
-import com.sedmelluq.discord.lavaplayer.remote.message.TrackFrameDataMessage;
-import com.sedmelluq.discord.lavaplayer.remote.message.TrackFrameRequestMessage;
-import com.sedmelluq.discord.lavaplayer.remote.message.TrackStartRequestMessage;
-import com.sedmelluq.discord.lavaplayer.remote.message.TrackStartResponseMessage;
-import com.sedmelluq.discord.lavaplayer.remote.message.TrackStoppedMessage;
+import com.sedmelluq.discord.lavaplayer.remote.message.*;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.RingBufferMath;
@@ -321,6 +313,10 @@ public class RemoteNodeProcessor implements RemoteNode, Runnable {
           handleTrackException((TrackExceptionMessage) message);
         } else if (message instanceof NodeStatisticsMessage) {
           handleNodeStatistics((NodeStatisticsMessage) message);
+        } else if (message instanceof TrackStuckMessage) {
+          handleTrackStuck((TrackStuckMessage) message);
+        } else if (message instanceof TrackExplicitMessage) {
+          handleTrackExplicit((TrackExplicitMessage) message);
         }
       }
     } catch (InterruptedException interruption) {
@@ -381,6 +377,22 @@ public class RemoteNodeProcessor implements RemoteNode, Runnable {
 
     if (executor != null) {
       executor.dispatchException(message.exception);
+    }
+  }
+
+  private void handleTrackExplicit(TrackExplicitMessage message) {
+    RemoteAudioTrackExecutor executor = playingTracks.get(message.executorId);
+
+    if (executor != null) {
+      executor.dispatchExplicit();
+    }
+  }
+
+  private void handleTrackStuck(TrackStuckMessage message) {
+    RemoteAudioTrackExecutor executor = playingTracks.get(message.executorId);
+
+    if (executor != null) {
+      executor.dispatchStuck(message.thresholdMs);
     }
   }
 

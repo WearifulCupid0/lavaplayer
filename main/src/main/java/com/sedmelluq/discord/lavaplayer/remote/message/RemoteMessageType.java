@@ -10,7 +10,9 @@ public enum RemoteMessageType {
   TRACK_FRAME_DATA(new TrackFrameDataCodec()),
   TRACK_STOPPED(new TrackStoppedCodec()),
   TRACK_EXCEPTION(new TrackExceptionCodec()),
-  NODE_STATISTICS(new NodeStatisticsCodec());
+  NODE_STATISTICS(new NodeStatisticsCodec()),
+  TRACK_STUCK(new TrackStuckCodec()),
+  TRACK_EXPLICIT(new TrackExplicitCodec());
 
   /**
    * The codec used for encoding and decoding this type of message.

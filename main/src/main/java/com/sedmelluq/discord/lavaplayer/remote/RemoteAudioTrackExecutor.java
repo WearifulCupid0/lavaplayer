@@ -131,6 +131,22 @@ public class RemoteAudioTrackExecutor implements AudioTrackExecutor {
     }
   }
 
+  public void dispatchExplicit() {
+    TrackStateListener currentListener = activeListener;
+
+    if (currentListener != null) {
+      currentListener.onTrackExplicit(track);
+    }
+  }
+
+  public void dispatchStuck(long thresholdMs) {
+    TrackStateListener currentListener = activeListener;
+
+    if (currentListener != null) {
+      currentListener.onTrackStuck(track, thresholdMs);
+    }
+  }
+
   @Override
   public boolean isAllowedExplicit() { return this.allowExplicit; }
 
