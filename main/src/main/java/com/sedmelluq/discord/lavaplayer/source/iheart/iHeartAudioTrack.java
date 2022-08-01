@@ -109,6 +109,7 @@ public class iHeartAudioTrack extends DelegatedAudioTrack {
         if (!result.get("episode").isNull()) {
             JsonBrowser mediaUrl = result.get("episode").get("mediaUrl");
             if (!mediaUrl.isNull()) {
+                this.trackInfo.explicit = result.get("episode").get("isExplicit").asBoolean(false);
                 String url = mediaUrl.safeText();
                 if (url.length() > 0) return url;
             }

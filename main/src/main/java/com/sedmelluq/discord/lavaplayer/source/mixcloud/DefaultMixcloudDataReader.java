@@ -33,7 +33,8 @@ public class DefaultMixcloudDataReader implements MixcloudDataReader {
             identifier,
             false,
             trackData.get("url").text(),
-            trackData.get("picture").get("url").text()
+            trackData.get("picture").get("url").text(),
+            !trackData.get("restrictedReason").isNull()
         );
     }
     

@@ -192,6 +192,7 @@ public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigur
 
     String artworkUrl = config.get("player").get("poster").get("url").text();
     if (artworkUrl == null || artworkUrl.isEmpty()) artworkUrl = config.get("thumbnail").get("src_2x").text();
+    String contentRating = config.get("content_rating").get("type").text();
 
     return new VimeoAudioTrack(new AudioTrackInfo(
         config.get("clip").get("title").text(),
@@ -200,7 +201,8 @@ public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigur
         trackUrl,
         false,
         trackUrl,
-        artworkUrl
+        artworkUrl,
+        contentRating != null && !contentRating.equals("unrated")
     ), this);
   }
 }

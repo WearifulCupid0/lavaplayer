@@ -35,7 +35,7 @@ public class AudioTrackInfo {
   /**
    * True if this track is considered explicit.
    */
-  public final boolean explicit;
+  public boolean explicit;
 
   /**
    * @param title Track title
