@@ -164,9 +164,9 @@ public class LocalAudioTrackExecutor implements AudioTrackExecutor {
 
           listener.onTrackException(audioTrack, exception);
           trackException = exception;
-
-          ExceptionTools.rethrowErrors(e);
         }
+
+        ExceptionTools.rethrowErrors(e);
       }
     } finally {
       synchronized (actionSynchronizer) {
