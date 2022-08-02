@@ -48,6 +48,15 @@ public interface AudioPlayer extends AudioFrameProvider {
    * @param value True to pause, false to resume
    */
   void setPaused(boolean value);
+  /**
+   * @return Whether the player is allowed to play explicit tracks.
+   */
+  boolean isAllowedExplicit();
+
+  /**
+   * @param value True to filter explicit tracks
+   */
+  void setAllowedExplicit(boolean value);
 
   /**
    * Destroy the player and stop playing track.

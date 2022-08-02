@@ -133,6 +133,12 @@ public class StreamAudioPlayer implements AudioPlayer {
   }
 
   @Override
+  public boolean isAllowedExplicit() { return fallback.isAllowedExplicit(); }
+
+  @Override
+  public  void setAllowedExplicit(boolean value) { fallback.setAllowedExplicit(value); }
+
+  @Override
   public void destroy() {
     synchronized (lock) {
       if (streamCursor != null) {

@@ -329,6 +329,13 @@ public class DefaultAudioPlayer implements AudioPlayer, TrackStateListener {
   }
 
   /**
+   * @param value True to filter explicit tracks
+   */
+  public void setAllowedExplicit(boolean value) {
+    allowExplicit.compareAndSet(!value, value);
+  }
+
+  /**
    * Destroy the player and stop playing track.
    */
   public void destroy() {
