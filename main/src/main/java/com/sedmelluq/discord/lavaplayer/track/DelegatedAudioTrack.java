@@ -21,7 +21,7 @@ public abstract class DelegatedAudioTrack extends BaseAudioTrack {
       throws Exception {
 
     this.delegate = delegate;
-    if (!localExecutor.isAllowedExplicit() && delegate.getInfo().explicit) throw new ExplicitContentException(this);
+    if (!localExecutor.isAllowedExplicit() && this.trackInfo.explicit) throw new ExplicitContentException(this);
 
 
     delegate.assignExecutor(localExecutor, false);

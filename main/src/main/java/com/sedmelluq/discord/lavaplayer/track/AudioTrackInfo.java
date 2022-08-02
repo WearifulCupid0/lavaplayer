@@ -68,7 +68,7 @@ public class AudioTrackInfo {
    * @param artworkUrl URL to thumbnail of the track.
    */
   public AudioTrackInfo(String title, String author, long length, String identifier, boolean isStream, String uri, String artworkUrl) {
-    this(title, author, length, identifier, isStream, uri, artworkUrl, null);
+    this(title, author, length, identifier, isStream, uri, artworkUrl, false);
   }
 
   /**
@@ -80,6 +80,6 @@ public class AudioTrackInfo {
    * @param uri URL of the track or path to its file.
    */
   public AudioTrackInfo(String title, String author, long length, String identifier, boolean isStream, String uri) {
-    this(title, author, length, identifier, isStream, uri, System.getProperty("defaultArtworkUrl", null), null);
+    this(title, author, length, identifier, isStream, uri, System.getProperty("defaultArtworkUrl", null), false);
   }
 }

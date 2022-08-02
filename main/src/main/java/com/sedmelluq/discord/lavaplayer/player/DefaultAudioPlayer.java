@@ -41,7 +41,7 @@ public class DefaultAudioPlayer implements AudioPlayer, TrackStateListener {
   private volatile boolean stuckEventSent;
   private volatile InternalAudioTrack shadowTrack;
   private final AtomicBoolean paused;
-  private final AtomicBoolean allowExplicit;
+  private boolean allowExplicit = true;
   private final DefaultAudioPlayerManager manager;
   private final List<AudioEventListener> listeners;
   private final Object trackSwitchLock;
@@ -54,8 +54,6 @@ public class DefaultAudioPlayer implements AudioPlayer, TrackStateListener {
     this.manager = manager;
     activeTrack = null;
     paused = new AtomicBoolean();
-    allowExplicit = new AtomicBoolean();
-    allowExplicit.set(true);
     listeners = new ArrayList<>();
     trackSwitchLock = new Object();
     options = new AudioPlayerOptions();
@@ -312,7 +310,7 @@ public class DefaultAudioPlayer implements AudioPlayer, TrackStateListener {
   /**
    * @return Whether the player is allowed to play explicit tracks.
    */
-  public boolean isAllowedExplicit() { return allowExplicit.get(); }
+  public boolean isAllowedExplicit() { return allowExplicit; }
 
   /**
    * @param value True to pause, false to resume
@@ -332,7 +330,7 @@ public class DefaultAudioPlayer implements AudioPlayer, TrackStateListener {
    * @param value True to filter explicit tracks
    */
   public void setAllowedExplicit(boolean value) {
-    allowExplicit.compareAndSet(!value, value);
+    allowExplicit = value;
   }
 
   /**
