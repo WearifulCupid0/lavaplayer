@@ -7,18 +7,17 @@ public class PBJUtils {
     public static String getYouTubeMusicThumbnail(JsonBrowser videoData, String videoId) {
         JsonBrowser thumbnails = videoData.get("thumbnail").get("thumbnails").index(0);
         if (!thumbnails.isNull()) return thumbnails.get("url").text().replaceFirst("=.*", "=w1000-h1000");
-        return String.format("https://i.ytimg.com/vi_webp/%s/mqdefault.jpg", videoId);
+        return String.format("https://i.ytimg.com/vi/%s/mqdefault.jpg", videoId);
     }
 
     public static String getYouTubeThumbnail(JsonBrowser videoData, String videoId) {
         List<JsonBrowser> thumbnails = videoData.get("thumbnail").get("thumbnails").values();
         if (!thumbnails.isEmpty()) {
-            String lastThumbnail = thumbnails.get(thumbnails.size() - 1).get("url").text();
+            JsonBrowser thumbnailJson = thumbnails.get(thumbnails.size() - 1);
 
-            if (lastThumbnail.contains("maxresdefault")) {
-                return lastThumbnail;
-            } else {
-                return String.format("https://i.ytimg.com/vi/%s/mqdefault.jpg", videoId);
+            if (!thumbnailJson.isNull() && thumbnailJson.get("width").as(int.class) > 320 && thumbnailJson.get("height").as(int.class) > 180) {
+                String thumbnailUrl = thumbnailJson.get("url").text();
+                if (thumbnailUrl != null && !thumbnailUrl.isEmpty()) return thumbnailUrl;
             }
         }
         return String.format("https://i.ytimg.com/vi/%s/mqdefault.jpg", videoId);

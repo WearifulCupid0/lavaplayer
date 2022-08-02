@@ -2,15 +2,7 @@ package com.sedmelluq.lava.player.extras.stream;
 
 import com.sedmelluq.discord.lavaplayer.filter.PcmFilterFactory;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
-import com.sedmelluq.discord.lavaplayer.player.event.AudioEvent;
-import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
-import com.sedmelluq.discord.lavaplayer.player.event.AudioEventListener;
-import com.sedmelluq.discord.lavaplayer.player.event.PlayerPauseEvent;
-import com.sedmelluq.discord.lavaplayer.player.event.PlayerResumeEvent;
-import com.sedmelluq.discord.lavaplayer.player.event.TrackEndEvent;
-import com.sedmelluq.discord.lavaplayer.player.event.TrackExceptionEvent;
-import com.sedmelluq.discord.lavaplayer.player.event.TrackStartEvent;
-import com.sedmelluq.discord.lavaplayer.player.event.TrackStuckEvent;
+import com.sedmelluq.discord.lavaplayer.player.event.*;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
@@ -289,6 +281,11 @@ public class StreamAudioPlayer implements AudioPlayer {
     @Override
     public void onTrackStuck(AudioPlayer player, AudioTrack track, long thresholdMs) {
       dispatchEvent(new TrackStuckEvent(StreamAudioPlayer.this, track, thresholdMs, null));
+    }
+
+    @Override
+    public void onTrackExplicit(AudioPlayer player, AudioTrack track) {
+      dispatchEvent(new TrackExplicitEvent(player, track));
     }
   }
 }
