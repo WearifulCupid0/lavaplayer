@@ -147,11 +147,6 @@ public class LocalAudioTrackExecutor implements AudioTrackExecutor {
         }
       }
 
-      if (e instanceof ExplicitContentException) {
-        listener.onTrackExplicit(audioTrack);
-        return;
-      }
-
       // Temporarily clear the interrupted status so it would not disrupt listener methods.
       interrupt = findInterrupt(e);
 
@@ -160,13 +155,18 @@ public class LocalAudioTrackExecutor implements AudioTrackExecutor {
       } else {
         frameBuffer.setTerminateOnEmpty();
 
-        FriendlyException exception = ExceptionTools.wrapUnfriendlyExceptions("Something broke when playing the track.", FAULT, e);
-        ExceptionTools.log(log, exception, "playback of " + audioTrack.getIdentifier());
+        if (e instanceof ExplicitContentException) {
+          listener.onTrackExplicit(audioTrack);
+          trackException = e;
+        } else {
+          FriendlyException exception = ExceptionTools.wrapUnfriendlyExceptions("Something broke when playing the track.", FAULT, e);
+          ExceptionTools.log(log, exception, "playback of " + audioTrack.getIdentifier());
 
-        trackException = exception;
-        listener.onTrackException(audioTrack, exception);
+          listener.onTrackException(audioTrack, exception);
+          trackException = exception;
 
-        ExceptionTools.rethrowErrors(e);
+          ExceptionTools.rethrowErrors(e);
+        }
       }
     } finally {
       synchronized (actionSynchronizer) {
@@ -287,6 +287,11 @@ public class LocalAudioTrackExecutor implements AudioTrackExecutor {
   @Override
   public boolean failedBeforeLoad() {
     return trackException != null && !frameBuffer.hasReceivedFrames();
+  }
+
+  @Override
+  public boolean failedForExplicitContent() {
+    return trackException != null && trackException instanceof ExplicitContentException;
   }
 
   @Override

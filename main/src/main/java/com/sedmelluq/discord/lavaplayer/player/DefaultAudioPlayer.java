@@ -23,11 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason.CLEANUP;
-import static com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason.FINISHED;
-import static com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason.LOAD_FAILED;
-import static com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason.REPLACED;
-import static com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason.STOPPED;
+import static com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason.*;
 
 /**
  * An audio player that is capable of playing audio tracks and provides audio frames from the currently playing track.
@@ -251,8 +247,9 @@ public class DefaultAudioPlayer implements AudioPlayer, TrackStateListener {
     synchronized (trackSwitchLock) {
       if (activeTrack == track) {
         activeTrack = null;
+        AudioTrackExecutor executor = track.getActiveExecutor();
 
-        dispatchEvent(new TrackEndEvent(this, track, track.getActiveExecutor().failedBeforeLoad() ? LOAD_FAILED : FINISHED));
+        dispatchEvent(new TrackEndEvent(this, track, executor.failedForExplicitContent() ? EXPLICIT : executor.failedBeforeLoad() ? LOAD_FAILED : FINISHED));
       }
     }
   }
@@ -356,11 +353,7 @@ public class DefaultAudioPlayer implements AudioPlayer, TrackStateListener {
    */
   public void removeListener(AudioEventListener listener) {
     synchronized (trackSwitchLock) {
-      for (Iterator<AudioEventListener> iterator = listeners.iterator(); iterator.hasNext(); ) {
-        if (iterator.next() == listener) {
-          iterator.remove();
-        }
-      }
+      listeners.removeIf(audioEventListener -> audioEventListener == listener);
     }
   }
 

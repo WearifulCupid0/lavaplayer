@@ -52,6 +52,11 @@ public interface AudioTrackExecutor extends AudioFrameProvider {
   boolean failedBeforeLoad();
 
   /**
+   * @return True if the track start playing being explicit
+   */
+  boolean failedForExplicitContent();
+
+  /**
    * @return True if track with explicit content is able to play.
    */
   boolean isAllowedExplicit();

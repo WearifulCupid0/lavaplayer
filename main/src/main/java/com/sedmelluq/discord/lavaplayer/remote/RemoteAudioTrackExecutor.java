@@ -135,6 +135,7 @@ public class RemoteAudioTrackExecutor implements AudioTrackExecutor {
     TrackStateListener currentListener = activeListener;
 
     if (currentListener != null) {
+      trackException = new ExplicitContentException(track);
       currentListener.onTrackExplicit(track);
     }
   }
@@ -273,6 +274,9 @@ public class RemoteAudioTrackExecutor implements AudioTrackExecutor {
   public boolean failedBeforeLoad() {
     return trackException != null && !hasReceivedData;
   }
+
+  @Override
+  public boolean failedForExplicitContent() { return trackException != null && trackException instanceof ExplicitContentException; }
 
   /**
    * @return The expected timecode of the next frame to receive from the remote node.

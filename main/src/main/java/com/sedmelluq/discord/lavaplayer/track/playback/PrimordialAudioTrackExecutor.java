@@ -75,6 +75,9 @@ public class PrimordialAudioTrackExecutor implements AudioTrackExecutor {
   }
 
   @Override
+  public boolean failedForExplicitContent() { return trackInfo != null && trackInfo.explicit && !isAllowedExplicit; }
+
+  @Override
   public boolean isAllowedExplicit() {
     return this.isAllowedExplicit;
   }
