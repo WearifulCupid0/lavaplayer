@@ -62,6 +62,10 @@ public abstract class AudioEventAdapter implements AudioEventListener {
     onTrackStuck(player, track, thresholdMs);
   }
 
+  public void onTrackExplicit(AudioPlayer player, AudioTrack track) {
+
+  }
+
   @Override
   public void onEvent(AudioEvent event) {
     if (event instanceof PlayerPauseEvent) {
@@ -77,6 +81,8 @@ public abstract class AudioEventAdapter implements AudioEventListener {
     } else if (event instanceof TrackStuckEvent) {
       TrackStuckEvent stuck = (TrackStuckEvent) event;
       onTrackStuck(event.player, stuck.track, stuck.thresholdMs, stuck.stackTrace);
+    } else if (event instanceof TrackExplicitEvent) {
+      onTrackExplicit(event.player, ((TrackExplicitEvent) event).track);
     }
   }
 }
