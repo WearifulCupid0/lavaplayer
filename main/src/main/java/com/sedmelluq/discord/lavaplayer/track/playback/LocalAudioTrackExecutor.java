@@ -403,6 +403,10 @@ public class LocalAudioTrackExecutor implements AudioTrackExecutor {
   }
 
   private InterruptedException findInterrupt(Throwable throwable) {
+    if (throwable instanceof ExplicitContentException) {
+      return null;
+    }
+
     InterruptedException exception = findDeepException(throwable, InterruptedException.class);
 
     if (exception == null) {
