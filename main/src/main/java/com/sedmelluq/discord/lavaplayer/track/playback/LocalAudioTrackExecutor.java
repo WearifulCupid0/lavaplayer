@@ -124,7 +124,8 @@ public class LocalAudioTrackExecutor implements AudioTrackExecutor {
     } catch (Throwable e) {
 
       // Check for 403, attempt to clear cipher cache and retry if no retries in the past 5 seconds.
-      if (e.getMessage().contains("status code: 403")
+      if (e.getMessage() != null
+          && e.getMessage().contains("status code: 403")
           && (lastRetry == -1 || lastRetry + RETRY_COOLDOWN <= System.currentTimeMillis())
           && audioTrack.getSourceManager() instanceof YoutubeAudioSourceManager) {
         YoutubeAudioSourceManager sourceManager = (YoutubeAudioSourceManager) audioTrack.getSourceManager();
@@ -158,6 +159,7 @@ public class LocalAudioTrackExecutor implements AudioTrackExecutor {
         if (e instanceof ExplicitContentException) {
           listener.onTrackExplicit(audioTrack);
           trackException = e;
+          interrupt();
         } else {
           FriendlyException exception = ExceptionTools.wrapUnfriendlyExceptions("Something broke when playing the track.", FAULT, e);
           ExceptionTools.log(log, exception, "playback of " + audioTrack.getIdentifier());
