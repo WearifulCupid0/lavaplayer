@@ -18,6 +18,7 @@ public class YoutubeTrackJsonData {
 
   public final Boolean explicit;
 
+
   public YoutubeTrackJsonData(JsonBrowser playerResponse, JsonBrowser polymerArguments, String playerScriptUrl, Boolean explicit) {
     this.playerResponse = playerResponse;
     this.polymerArguments = polymerArguments;

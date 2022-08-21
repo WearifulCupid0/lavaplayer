@@ -252,6 +252,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
 
   private class LoadingRoutes implements YoutubeLinkRouter.Routes<AudioItem> {
 
+
     @Override
     public AudioItem track(String videoId) {
       return loadTrackWithVideoId(videoId, false);

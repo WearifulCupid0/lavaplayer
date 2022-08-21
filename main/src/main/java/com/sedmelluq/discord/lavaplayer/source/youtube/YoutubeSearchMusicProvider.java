@@ -100,7 +100,7 @@ public class YoutubeSearchMusicProvider implements YoutubeSearchMusicResultLoade
         .index(0)
         .get("musicShelfRenderer")
         .get("contents");
-    if (tracks == JsonBrowser.NULL_BROWSER) {
+    if (tracks.isNull()) {
       tracks = jsonBrowser.get("contents")
           .get("tabbedSearchResultsRenderer")
           .get("tabs")
@@ -121,12 +121,13 @@ public class YoutubeSearchMusicProvider implements YoutubeSearchMusicResultLoade
   }
 
   private AudioTrack extractMusicTrack(JsonBrowser jsonBrowser, Function<AudioTrackInfo, AudioTrack> trackFactory) {
-    JsonBrowser thumbnail = jsonBrowser.get("musicResponsiveListItemRenderer").get("thumbnail").get("musicThumbnailRenderer");
-    JsonBrowser columns = jsonBrowser.get("musicResponsiveListItemRenderer").get("flexColumns");
+    JsonBrowser renderer = jsonBrowser.get("musicResponsiveListItemRenderer");
+    JsonBrowser columns = renderer.get("flexColumns");
     if (columns.isNull()) {
       // Somehow don't get track info, ignore
       return null;
     }
+    JsonBrowser thumbnail = renderer.get("thumbnail").get("musicThumbnailRenderer");
     JsonBrowser firstColumn = columns.index(0)
         .get("musicResponsiveListItemFlexColumnRenderer")
         .get("text")
@@ -152,11 +153,16 @@ public class YoutubeSearchMusicProvider implements YoutubeSearchMusicResultLoade
       // The duration element should not have this key, if it does, then duration is probably missing, so return
       return null;
     }
+    List<JsonBrowser> badges = renderer.get("badges").values();
+    boolean explicit = false;
+    for (JsonBrowser badge : badges) {
+      explicit = badge.get("musicInlineBadgeRenderer").get("icon").get("iconType").safeText().equals("MUSIC_EXPLICIT_BADGE");
+    }
 
     long duration = DataFormatTools.durationTextToMillis(lastElement.get("text").text());
 
     AudioTrackInfo info = new AudioTrackInfo(title, author, duration, videoId, false,
-        MUSIC_WATCH_URL + videoId, PBJUtils.getYouTubeMusicThumbnail(thumbnail, videoId));
+        MUSIC_WATCH_URL + videoId, PBJUtils.getYouTubeMusicThumbnail(thumbnail, videoId), explicit);
 
     return trackFactory.apply(info);
   }

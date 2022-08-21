@@ -45,7 +45,7 @@ public class YoutubeConstants {
 
     // YouTube Music constants
     static final String MUSIC_ORIGIN = "https://music.youtube.com";
-    static final String MUSIC_BASE_URL = "https://music.youtube.com/youtubei/v1";
+    static final String MUSIC_BASE_URL = MUSIC_ORIGIN + "/youtubei/v1";
     static final String MUSIC_INNERTUBE_API_KEY = "AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30";
     static final String MUSIC_CLIENT_NAME = "WEB_REMIX";
     static final String MUSIC_CLIENT_VERSION = "0.1";

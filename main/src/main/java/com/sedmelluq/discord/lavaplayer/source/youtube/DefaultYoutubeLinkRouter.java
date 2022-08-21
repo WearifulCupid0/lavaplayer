@@ -24,7 +24,7 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
   private static final Pattern directVideoIdPattern = Pattern.compile("^" + VIDEO_ID_REGEX + "$");
 
   private final Extractor[] extractors = new Extractor[] {
-      new Extractor(directVideoIdPattern, Routes::track),
+      new Extractor(directVideoIdPattern, this::routeDirectVideoId),
       new Extractor(Pattern.compile("^" + PLAYLIST_ID_REGEX + "$"), this::routeDirectPlaylist),
       new Extractor(Pattern.compile("^" + PROTOCOL_REGEX + DOMAIN_REGEX + "/.*"), this::routeFromMainDomain),
       new Extractor(Pattern.compile("^" + PROTOCOL_REGEX + SHORT_DOMAIN_REGEX + "/.*"), this::routeFromShortDomain),
@@ -56,6 +56,9 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
     return null;
   }
 
+  protected <T> T routeDirectVideoId(Routes<T> routes, String videoId) {
+    return routes.track(videoId);
+  }
   protected <T> T routeDirectPlaylist(Routes<T> routes, String id) {
     return routes.playlist(id, null);
   }
