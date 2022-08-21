@@ -16,7 +16,7 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
   private static final String SEARCH_MUSIC_PREFIX = "ytmsearch:";
 
   private static final String PROTOCOL_REGEX = "(?:http://|https://|)";
-  private static final String DOMAIN_REGEX = "(?:www\\.|m\\.|music\\.|)youtube(?:kids|)\\.com";
+  private static final String DOMAIN_REGEX = "(?:www\\.|m\\.|music\\.|studio\\.|)youtube(?:kids|)\\.com";
   private static final String SHORT_DOMAIN_REGEX = "(?:www\\.|)youtu\\.be";
   private static final String VIDEO_ID_REGEX = "(?<v>[a-zA-Z0-9_-]{11})";
   private static final String PLAYLIST_ID_REGEX = "(?<list>(PL|LL|FL|UU)[a-zA-Z0-9_-]+)";
@@ -29,7 +29,8 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
       new Extractor(Pattern.compile("^" + PROTOCOL_REGEX + DOMAIN_REGEX + "/.*"), this::routeFromMainDomain),
       new Extractor(Pattern.compile("^" + PROTOCOL_REGEX + SHORT_DOMAIN_REGEX + "/.*"), this::routeFromShortDomain),
       new Extractor(Pattern.compile("^" + PROTOCOL_REGEX + DOMAIN_REGEX + "/embed/.*"), this::routeFromEmbed),
-      new Extractor(Pattern.compile("^" + PROTOCOL_REGEX + DOMAIN_REGEX + "/shorts/.*"), this::routeFromShorts)
+      new Extractor(Pattern.compile("^" + PROTOCOL_REGEX + DOMAIN_REGEX + "/shorts/.*"), this::routeFromShorts),
+      new Extractor(Pattern.compile("^" + PROTOCOL_REGEX + DOMAIN_REGEX + "/video/.*"), this::routeFromStudio),
   };
 
   @Override
@@ -118,6 +119,11 @@ public class DefaultYoutubeLinkRouter implements YoutubeLinkRouter {
   protected <T> T routeFromShorts(Routes<T> routes, String url) {
     UrlInfo urlInfo = getUrlInfo(url, true);
     return routeFromUrlWithVideoId(routes, urlInfo.path.substring(8), urlInfo);
+  }
+
+  protected <T> T routeFromStudio(Routes<T> routes, String url) {
+    UrlInfo urlInfo = getUrlInfo(url, true);
+    return routeFromUrlWithVideoId(routes, urlInfo.path.substring(7), urlInfo);
   }
 
   private static UrlInfo getUrlInfo(String url, boolean retryValidPart) {
