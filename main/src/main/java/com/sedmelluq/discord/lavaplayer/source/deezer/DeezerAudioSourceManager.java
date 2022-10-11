@@ -141,7 +141,7 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
 
     private AudioItem loadTrack(String id) {
         JsonBrowser track = this.requestApi(DeezerConstants.API_URL + "/track/" + id);
-        if(track.isNull()) {
+        if(track == null || track.get("id").isNull()) {
             return AudioReference.NO_TRACK;
         }
         return buildTrack(track);
@@ -153,7 +153,7 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
                     .addParameter("limit", "100").build();
 
             JsonBrowser json = this.requestApi(uri);
-            if(json.isNull() || json.get("data").index(0).isNull()) {
+            if(json == null || json.isNull() || json.get("data").index(0).isNull()) {
                 return AudioReference.NO_TRACK;
             }
 
@@ -161,7 +161,7 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
             for(JsonBrowser track : json.get("data").values()) {
                 tracks.add(buildTrack(track));
             }
-            JsonBrowser artist = findArtist(json.get("data").index(0).get("contributors").values(), json.get("data").index(0).get("artist").get("id").text());
+            JsonBrowser artist = findArtist(json.get("data").index(0).get("contributors").values(), id);
             return new BasicAudioPlaylist(
                     artist.get("name").safeText(),
                     artist.get("name").safeText(),
@@ -188,7 +188,7 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
 
     private AudioItem loadAlbum(String id) {
         JsonBrowser album = this.requestApi(DeezerConstants.API_URL + "/album/" + id);
-        if(album.isNull()) {
+        if(album == null || album.get("id").isNull()) {
             return AudioReference.NO_TRACK;
         }
 
@@ -210,7 +210,7 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
 
     private AudioItem loadPlaylist(String id) {
         JsonBrowser playlist = this.requestApi(DeezerConstants.API_URL + "/playlist/" + id);
-        if(playlist.isNull()) {
+        if(playlist == null || playlist.get("id").isNull()) {
             return AudioReference.NO_TRACK;
         }
 
@@ -237,7 +237,7 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
                     .addParameter("q", query).build();
 
             JsonBrowser json = this.requestApi(uri);
-            if(json.get("data").values().isEmpty()) {
+            if(json == null || json.get("data").values().isEmpty()) {
                 return AudioReference.NO_TRACK;
             }
 
@@ -273,7 +273,6 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
 
     private JsonBrowser requestApi(URI uri) {
         HttpGet get = new HttpGet(uri);
-        System.out.println(uri.toString());
         get.setHeader("Accept", "application/json");
         try (HttpInterface httpInterface = getHttpInterface()) {
             return HttpClientTools.fetchResponseAsJson(httpInterface, get);
