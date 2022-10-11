@@ -273,7 +273,7 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
 
     private JsonBrowser requestApi(URI uri) {
         HttpGet get = new HttpGet(uri);
-        System.out.println(get.toString());
+        System.out.println(uri.toString());
         get.setHeader("Accept", "application/json");
         try (HttpInterface httpInterface = getHttpInterface()) {
             return HttpClientTools.fetchResponseAsJson(httpInterface, get);
