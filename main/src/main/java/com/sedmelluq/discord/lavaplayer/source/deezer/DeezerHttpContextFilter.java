@@ -76,6 +76,7 @@ public class DeezerHttpContextFilter implements HttpContextFilter {
             try {
                 String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
                 JsonBrowser json = JsonBrowser.parse(responseText);
+                if (json.get("error").isList()) return false;
                 if (!json.get("error").get("VALID_TOKEN_REQUIRED").isNull()) {
                     this.apiToken = null;
                     this.sessionId = null;
