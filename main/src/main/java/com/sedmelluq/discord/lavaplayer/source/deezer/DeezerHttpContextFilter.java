@@ -83,6 +83,7 @@ public class DeezerHttpContextFilter implements HttpContextFilter {
             if (!json.get("error").get("VALID_TOKEN_REQUIRED").isNull()) {
                 this.apiToken = null;
                 this.sessionId = null;
+                this.licenseToken = null;
                 return true;
             }
             return false;
