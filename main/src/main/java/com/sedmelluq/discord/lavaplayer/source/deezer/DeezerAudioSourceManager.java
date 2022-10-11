@@ -66,7 +66,7 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
             return this.loadSearch(reference.identifier.substring(SEARCH_PREFIX.length()).trim());
         }
 
-        if (identifier.startsWith(ISRC_PREFIX) && allowSearch) {
+        if (identifier.startsWith(ISRC_PREFIX)) {
             return this.loadTrackISRC(reference.identifier.substring(ISRC_PREFIX.length()).trim());
         }
 
@@ -273,16 +273,10 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
 
     private JsonBrowser requestApi(URI uri) {
         HttpGet get = new HttpGet(uri);
+        System.out.println(get.toString());
         get.setHeader("Accept", "application/json");
-        try (CloseableHttpResponse response = getHttpInterface().execute(get)) {
-            int statusCode = response.getStatusLine().getStatusCode();
-
-            if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-                throw new IOException("Deezer api request failed with status code: " + statusCode);
-            }
-
-            String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
-            return JsonBrowser.parse(responseText);
+        try (HttpInterface httpInterface = getHttpInterface()) {
+            return HttpClientTools.fetchResponseAsJson(httpInterface, get);
         } catch (IOException e) {
             throw new FriendlyException("Failed to make a request to Deezer Api", FriendlyException.Severity.SUSPICIOUS, e);
         }
