@@ -32,32 +32,9 @@ public class DeezerAudioTrack extends DelegatedAudioTrack {
     @Override
     public void process(LocalAudioTrackExecutor executor) throws Exception {
         try (HttpInterface httpInterface = this.sourceManager.getHttpInterface()) {
-            try (DeezerPersistentHttpStream stream = new DeezerPersistentHttpStream(httpInterface, this.getTrackMediaURI(), this.trackInfo.length, this.getTrackDecryptionKey())) {
+            try (DeezerPersistentHttpStream stream = new DeezerPersistentHttpStream(httpInterface, this.sourceManager.getMediaURL(this.trackInfo.identifier), this.trackInfo.length, this.getTrackDecryptionKey())) {
                 processDelegate(new Mp3AudioTrack(this.trackInfo, stream), executor);
             }
-        }
-    }
-
-    private String getToken() throws Exception {
-        HttpPost postSongData = new HttpPost(DeezerConstants.AJAX_URL + "?method=song.getData");
-        postSongData.setEntity(new StringEntity("{\"sng_id\":\"" + this.trackInfo.identifier + "\"}", ContentType.APPLICATION_JSON));
-        try (CloseableHttpResponse response = this.sourceManager.getHttpInterface().execute(postSongData)) {
-            String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
-            JsonBrowser json = JsonBrowser.parse(responseText);
-            return json.get("results").get("TRACK_TOKEN").text();
-        }
-    }
-
-    private URI getTrackMediaURI() throws Exception {
-        HttpPost postMediaURL = new HttpPost(DeezerConstants.MEDIA_URL);
-        String token = this.getToken();
-        if (token == null) throw  new Exception("Song unavailable");
-        postMediaURL.setEntity(new StringEntity(String.format(DeezerConstants.MEDIA_PAYLOAD, this.sourceManager.getLicenseToken(), token), ContentType.APPLICATION_JSON));
-        try (CloseableHttpResponse response = this.sourceManager.getHttpInterface().execute(postMediaURL)) {
-            String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
-            JsonBrowser json = JsonBrowser.parse(responseText);
-            this.checkForError(json);
-            return new URI(json.get("data").index(0).get("media").index(0).get("sources").index(0).get("url").text());
         }
     }
 
