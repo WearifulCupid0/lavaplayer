@@ -72,19 +72,21 @@ public class DeezerHttpContextFilter implements HttpContextFilter {
 
     @Override
     public boolean onRequestResponse(HttpClientContext context, HttpUriRequest request, HttpResponse response) {
-        if (request.getURI().getHost().contains("api.deezer.com")) return true;
-        try {
-            String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
-            JsonBrowser json = JsonBrowser.parse(responseText);
-            if (!json.get("error").get("VALID_TOKEN_REQUIRED").isNull()) {
-                this.apiToken = null;
-                this.sessionId = null;
-                return true;
+        if (request.getURI().getHost().contains("www.deezer.com")) {
+            try {
+                String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+                JsonBrowser json = JsonBrowser.parse(responseText);
+                if (!json.get("error").get("VALID_TOKEN_REQUIRED").isNull()) {
+                    this.apiToken = null;
+                    this.sessionId = null;
+                    return true;
+                }
+                return false;
+            } catch (Exception e) {
+                return this.onRequestException(context, request, e);
             }
-            return false;
-        } catch (Exception e) {
-            return this.onRequestException(context, request, e);
         }
+        return false;
     }
 
     @Override
