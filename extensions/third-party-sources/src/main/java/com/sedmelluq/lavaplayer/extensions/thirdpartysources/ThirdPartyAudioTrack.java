@@ -23,6 +23,7 @@ public class ThirdPartyAudioTrack extends DelegatedAudioTrack {
 	private static final String QUERY_PATTERN = "%QUERY%";
 
     private final String[] providers = {
+		"dzisrc:" + ISRC_PATTERN,
 		"ytsearch:\"" + ISRC_PATTERN + "\"",
 		"ytmsearch:" + QUERY_PATTERN,
 		"ytsearch:" + QUERY_PATTERN

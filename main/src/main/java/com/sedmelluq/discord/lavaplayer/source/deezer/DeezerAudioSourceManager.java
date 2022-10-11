@@ -2,6 +2,7 @@ package com.sedmelluq.discord.lavaplayer.source.deezer;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
@@ -29,7 +30,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-    private static final String DEEZER_URL_REGEX = "^(?:https://|http://|)(?:www\\.|)deezer\\.com/(?:[a-zA-Z]{2}/)(track|album|playlist|artist)/(\\d+)";
+    private static final String DEEZER_URL_REGEX = "^(?:https://|http://|)(?:www\\.|)deezer\\.com/(?:[a-zA-Z]{2}/|)(track|album|playlist|artist)/(\\d+)";
     private static final String SHARE_URL = "https://deezer.page.link/";
     private static final Pattern deezerUrlPattern = Pattern.compile(DEEZER_URL_REGEX);
     private static final String SEARCH_PREFIX = "dzsearch:";
@@ -117,7 +118,7 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
 
     @Override
     public void shutdown() {
-
+        ExceptionTools.closeWithWarnings(httpInterfaceManager);
     }
 
     @Override
@@ -143,7 +144,7 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
         if(track.isNull()) {
             return AudioReference.NO_TRACK;
         }
-        return buildTrack(track, track.get("album"));
+        return buildTrack(track);
     }
 
     private AudioItem loadArtist(String id) {
@@ -158,7 +159,7 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
 
             List<AudioTrack> tracks = new ArrayList<>();
             for(JsonBrowser track : json.get("data").values()) {
-                tracks.add(buildTrack(track, track.get("album")));
+                tracks.add(buildTrack(track));
             }
             JsonBrowser artist = findArtist(json.get("data").index(0).get("contributors").values(), json.get("data").index(0).get("artist").get("id").text());
             return new BasicAudioPlaylist(
@@ -193,7 +194,7 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
 
         List<AudioTrack> tracks = new ArrayList<>();
         for(JsonBrowser track : album.get("tracks").get("data").values()) {
-            tracks.add(buildTrack(track, album));
+            tracks.add(buildTrack(track));
         }
         return new BasicAudioPlaylist(
                 album.get("title").text(),
@@ -215,7 +216,7 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
 
         List<AudioTrack> tracks = new ArrayList<>();
         for(JsonBrowser track : playlist.get("tracks").get("data").values()) {
-            tracks.add(buildTrack(track, track.get("album")));
+            tracks.add(buildTrack(track));
         }
         return new BasicAudioPlaylist(
                 playlist.get("title").text(),
@@ -236,13 +237,13 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
                     .addParameter("q", query).build();
 
             JsonBrowser json = this.requestApi(uri);
-            if(json.get("data").index(0).isNull()) {
+            if(json.get("data").values().isEmpty()) {
                 return AudioReference.NO_TRACK;
             }
 
             List<AudioTrack> tracks = new ArrayList<>();
             for(JsonBrowser track : json.get("data").values()) {
-                tracks.add(buildTrack(track, track.get("album")));
+                tracks.add(buildTrack(track));
             }
 
             return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
@@ -251,16 +252,15 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
         }
     }
 
-    private AudioTrack buildTrack(JsonBrowser trackInfo, JsonBrowser albumInfo) {
-        String identifier = trackInfo.get("id").text();
+    private AudioTrack buildTrack(JsonBrowser trackInfo) {
         AudioTrackInfo info = new AudioTrackInfo(
                 trackInfo.get("title").safeText(),
                 trackInfo.get("artist").get("name").safeText(),
-                (long) (trackInfo.get("duration").as(Double.class) * 1000.0),
-                identifier,
+                trackInfo.get("duration").asLong(0) * 1000,
+                trackInfo.get("id").text(),
                 false,
                 trackInfo.get("link").text(),
-                albumInfo.get("cover_xl").text(),
+                trackInfo.get("album").get("cover_xl").text(),
                 trackInfo.get("explicit_lyrics").asBoolean(false)
         );
 
@@ -272,7 +272,9 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
     }
 
     private JsonBrowser requestApi(URI uri) {
-        try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(uri))) {
+        HttpGet get = new HttpGet(uri);
+        get.setHeader("Accept", "application/json");
+        try (CloseableHttpResponse response = getHttpInterface().execute(get)) {
             int statusCode = response.getStatusLine().getStatusCode();
 
             if (!HttpClientTools.isSuccessWithContent(statusCode)) {
