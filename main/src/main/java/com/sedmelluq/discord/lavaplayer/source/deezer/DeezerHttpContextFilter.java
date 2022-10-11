@@ -72,6 +72,7 @@ public class DeezerHttpContextFilter implements HttpContextFilter {
 
     @Override
     public boolean onRequestResponse(HttpClientContext context, HttpUriRequest request, HttpResponse response) {
+        if (request.getURI().getHost().contains("api.deezer.com")) return true;
         try {
             String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             JsonBrowser json = JsonBrowser.parse(responseText);
