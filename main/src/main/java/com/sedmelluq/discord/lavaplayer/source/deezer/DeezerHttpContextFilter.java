@@ -96,7 +96,7 @@ public class DeezerHttpContextFilter implements HttpContextFilter {
     }
 
     private void getCredentials() {
-        HttpPost post = new HttpPost(DeezerConstants.AJAX_URL + "?method=deezer.getUserData");
+        HttpPost post = new HttpPost(DeezerConstants.AJAX_URL + "?method=deezer.getUserData&api_token=");
         try (CloseableHttpResponse response = this.audioSourceManager.getHttpInterface().execute(post)) {
             String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             JsonBrowser json = JsonBrowser.parse(responseText);
