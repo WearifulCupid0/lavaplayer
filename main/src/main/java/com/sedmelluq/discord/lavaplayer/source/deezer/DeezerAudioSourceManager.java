@@ -36,8 +36,8 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
     private static final String SEARCH_PREFIX = "dzsearch:";
     private static final String ISRC_PREFIX = "dzisrc:";
     private final HttpInterfaceManager httpInterfaceManager;
-    private final DeezerHttpContextFilter contextFilter;
     private final boolean allowSearch;
+    private String licenseToken;
 
     public DeezerAudioSourceManager() {
         this(true);
@@ -45,13 +45,14 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
     public DeezerAudioSourceManager(boolean allowSearch) {
         this.allowSearch = allowSearch;
         httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
-        contextFilter = new DeezerHttpContextFilter(httpInterfaceManager.getInterface());
-        httpInterfaceManager.setHttpContextFilter(contextFilter);
+        httpInterfaceManager.setHttpContextFilter(new DeezerHttpContextFilter(this));
     }
 
     public String getLicenseToken() {
-        return this.contextFilter.getLicenseToken();
+        return this.licenseToken;
     }
+
+    public void setLicenseToken(String licenseToken) { this.licenseToken = licenseToken; }
 
     @Override
     public String getSourceName() {

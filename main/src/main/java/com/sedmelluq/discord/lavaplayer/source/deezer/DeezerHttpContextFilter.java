@@ -24,17 +24,10 @@ public class DeezerHttpContextFilter implements HttpContextFilter {
     private String apiToken;
     private String sessionId;
 
-    private String licenseToken;
+    public final DeezerAudioSourceManager audioSourceManager;
 
-    public final HttpInterface httpInterface;
-
-    public DeezerHttpContextFilter(HttpInterface httpInterface) {
-        this.httpInterface = httpInterface;
-    }
-
-    public String getLicenseToken() {
-        if (this.licenseToken == null) this.getCredentials();
-        return this.licenseToken;
+    public DeezerHttpContextFilter(DeezerAudioSourceManager audioSourceManager) {
+        this.audioSourceManager = audioSourceManager;
     }
 
     @Override
@@ -49,7 +42,9 @@ public class DeezerHttpContextFilter implements HttpContextFilter {
 
     @Override
     public void onRequest(HttpClientContext context, HttpUriRequest request, boolean isRepetition) {
-        if (request.getURI().getHost().contains("www.deezer.com")) {
+        if (request.getURI().getHost().contains("api.deezer.com")) {
+            return;
+        } else if (request.getURI().getHost().contains("www.deezer.com")) {
             try {
                 URI uri = request.getURI();
                 URIBuilder builder = new URIBuilder(request.getURI());
@@ -83,7 +78,6 @@ public class DeezerHttpContextFilter implements HttpContextFilter {
             if (!json.get("error").get("VALID_TOKEN_REQUIRED").isNull()) {
                 this.apiToken = null;
                 this.sessionId = null;
-                this.licenseToken = null;
                 return true;
             }
             return false;
@@ -99,12 +93,12 @@ public class DeezerHttpContextFilter implements HttpContextFilter {
 
     private void getCredentials() {
         HttpPost post = new HttpPost(DeezerConstants.AJAX_URL + "?method=deezer.getUserData");
-        try (CloseableHttpResponse response = httpInterface.execute(post)) {
+        try (CloseableHttpResponse response = this.audioSourceManager.getHttpInterface().execute(post)) {
             String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             JsonBrowser json = JsonBrowser.parse(responseText);
             this.sessionId = json.get("results").get("SESSION_ID").text();
             this.apiToken = json.get("results").get("checkForm").text();
-            this.licenseToken = json.get("results").get("USER").get("OPTIONS").get("license_token").text();
+            this.audioSourceManager.setLicenseToken(json.get("results").get("USER").get("OPTIONS").get("license_token").text());
             if (this.sessionId == null || this.apiToken == null) throw  new IOException("Failed to fetch new credentials");
         } catch (IOException e) {
             log.error("Failed to update Deezer api token", e);

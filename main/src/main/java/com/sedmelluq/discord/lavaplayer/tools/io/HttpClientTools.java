@@ -254,7 +254,6 @@ public class HttpClientTools {
   public static JsonBrowser fetchResponseAsJson(HttpInterface httpInterface, HttpUriRequest request) throws IOException {
     try (CloseableHttpResponse response = httpInterface.execute(request)) {
       int statusCode = response.getStatusLine().getStatusCode();
-      System.out.println(statusCode);
 
       if (statusCode == HttpStatus.SC_NOT_FOUND) {
         return null;
