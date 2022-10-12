@@ -144,7 +144,9 @@ public class TiktokAudioSourceManager implements AudioSourceManager, HttpConfigu
     }
 
     private String getVideoUrl(String url) {
-        try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(url))) {
+        HttpGet get = new HttpGet(url);
+        get.setConfig(RequestConfig.custom().setRedirectsEnabled(false).build());
+        try (CloseableHttpResponse response = getHttpInterface().execute(get)) {
             return HttpClientTools.getRedirectLocation(url, response);
         } catch (IOException e) {
             throw new FriendlyException("Failed to get video url from mobile tiktok url", SUSPICIOUS, e);
