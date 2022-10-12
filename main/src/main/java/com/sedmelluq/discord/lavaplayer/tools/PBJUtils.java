@@ -94,4 +94,12 @@ public class PBJUtils {
         if (artwork == null && !audioFile.get("User").get("ProfilePictureUrl").isNull()) artwork = audioFile.get("User").get("ProfilePictureUrl").text();
         return artwork;
     }
+
+    public static String getJioSaavnArtwork(JsonBrowser trackData) {
+        JsonBrowser image = trackData.get("image");
+        if (image.isNull()) return null;
+        String imageUrl = image.text();
+        if (imageUrl.length() <= 0) return null;
+        return imageUrl.replace("150x150", "500x500");
+    }
 }
