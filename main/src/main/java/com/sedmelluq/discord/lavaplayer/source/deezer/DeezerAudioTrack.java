@@ -10,14 +10,6 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -43,7 +35,7 @@ public class DeezerAudioTrack extends DelegatedAudioTrack {
         byte[] key = new byte[16];
 
         for (int i = 0; i < 16; i++) {
-            key[i] = (byte) (md5[i] ^ md5[i + 16] ^ DeezerConstants.BLOWFISH.charAt(i));
+            key[i] = (byte) (md5[i] ^ md5[i + 16] ^ this.sourceManager.masterKey.charAt(i));
         }
 
         return key;

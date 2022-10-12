@@ -44,10 +44,13 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
     private String sessionId;
     private String apiToken;
 
-    public DeezerAudioSourceManager() {
-        this(true);
+    public final String masterKey;
+
+    public DeezerAudioSourceManager(String masterKey) {
+        this(masterKey, true);
     }
-    public DeezerAudioSourceManager(boolean allowSearch) {
+    public DeezerAudioSourceManager(String masterKey, boolean allowSearch) {
+        this.masterKey = masterKey;
         this.allowSearch = allowSearch;
         httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
     }
