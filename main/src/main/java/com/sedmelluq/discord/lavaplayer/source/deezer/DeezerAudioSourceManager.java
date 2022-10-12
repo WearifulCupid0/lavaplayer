@@ -50,6 +50,9 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
         this(masterKey, true);
     }
     public DeezerAudioSourceManager(String masterKey, boolean allowSearch) {
+        if (masterKey == null || masterKey.isEmpty()) {
+            throw new NullPointerException("Deezer masterKey can't be null");
+        }
         this.masterKey = masterKey;
         this.allowSearch = allowSearch;
         httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();

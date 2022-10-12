@@ -54,7 +54,7 @@ public class AudioSourceManagers {
     playerManager.registerSourceManager(new BilibiliAudioSourceManager(true));
     playerManager.registerSourceManager(new VimeoAudioSourceManager(true));
     playerManager.registerSourceManager(new iHeartAudioSourceManager(true, containerRegistry));
-    playerManager.registerSourceManager(new DeezerAudioSourceManager(true));
+    playerManager.registerSourceManager(new DeezerAudioSourceManager(null,true));
     playerManager.registerSourceManager(SoundCloudAudioSourceManager.createDefault());
     playerManager.registerSourceManager(new SoundgasmAudioSourceManager());
     playerManager.registerSourceManager(new BandcampAudioSourceManager());
