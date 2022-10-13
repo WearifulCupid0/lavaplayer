@@ -57,6 +57,7 @@ public class GoogleTTSAudioSourceManager implements AudioSourceManager, HttpConf
                 .apply(reference)
                 .setIsStream(false)
                 .setIdentifier(input)
+                .setExplicit(false)
                 .build();
         return new GoogleTTSAudioTrack(trackInfo, language, this);
     }

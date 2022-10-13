@@ -132,7 +132,7 @@ public class GooglePodcastsAudioSourceManager implements AudioSourceManager, Htt
     private AudioItem getSearch(String query) {
         JsonBrowser json = this.callAPI(String.format(GooglePodcastsConstants.SEARCH_PAYLOAD, query));
         if (json == null) return AudioReference.NO_TRACK;
-        List<JsonBrowser> jsons = json.index(1).index(1).index(1).index(0).index(1).index(0).index(0).values();
+        List<JsonBrowser> jsons = json.index(1).index(1).index(1).index(0).index(1).index(0).values();
         if (jsons.size() <= 0) return AudioReference.NO_TRACK;
         List<AudioTrack> tracks = new ArrayList<>();
         jsons.forEach((j) -> tracks.add(buildTrack(j)));
@@ -171,8 +171,7 @@ public class GooglePodcastsAudioSourceManager implements AudioSourceManager, Htt
             JsonBrowser resp = JsonBrowser.parse(responseText.split("\n")[2]);
             JsonBrowser json = resp.index(0).index(2);
             if (json.isNull()) return null;
-            String decoded = URLDecoder.decode(json.text(), StandardCharsets.UTF_8);
-            return JsonBrowser.parse(decoded);
+            return JsonBrowser.parse(json.text());
         } catch (IOException e) {
             throw new FriendlyException("Failed to make a request to Google Podcasts api", FriendlyException.Severity.SUSPICIOUS, e);
         }
