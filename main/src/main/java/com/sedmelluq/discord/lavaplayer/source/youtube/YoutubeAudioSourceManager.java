@@ -122,7 +122,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
     }
 
     this.allowSearch = allowSearch;
-    this.masterTokenUrl = masterTokenUrl;
+    this.masterTokenUrl = masterTokenUrl == null ? YoutubeConstants.DEFAULT_MASTER_TOKEN_BASE_URL : masterTokenUrl;
     this.trackDetailsLoader = trackDetailsLoader;
     this.signatureResolver = signatureResolver;
     this.searchResultLoader = searchResultLoader;
