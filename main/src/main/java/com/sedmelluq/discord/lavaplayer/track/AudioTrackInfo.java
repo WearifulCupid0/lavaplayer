@@ -68,7 +68,7 @@ public class AudioTrackInfo {
    * @param artworkUrl URL to thumbnail of the track.
    */
   public AudioTrackInfo(String title, String author, long length, String identifier, boolean isStream, String uri, String artworkUrl) {
-    this(title, author, length, identifier, isStream, uri, artworkUrl, false);
+    this(title, author, length, identifier, isStream, uri, artworkUrl, null);
   }
 
   /**

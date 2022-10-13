@@ -89,7 +89,7 @@ public class GooglePodcastsAudioSourceManager implements AudioSourceManager, Htt
 
     @Override
     public AudioTrack decodeTrack(AudioTrackInfo trackInfo, DataInput input) throws IOException {
-        return null;
+        return new GooglePodcastsAudioTrack(trackInfo, this);
     }
 
     @Override

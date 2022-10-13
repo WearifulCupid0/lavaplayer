@@ -3,6 +3,7 @@ package com.sedmelluq.discord.lavaplayer.source.google.tts;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
+import com.sedmelluq.discord.lavaplayer.tools.Units;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -11,13 +12,14 @@ import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
-import com.sedmelluq.discord.lavaplayer.track.info.AudioTrackInfoBuilder;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -52,13 +54,16 @@ public class GoogleTTSAudioSourceManager implements AudioSourceManager, HttpConf
         if (!m.find()) return null;
         String language = m.group("language").isEmpty() ? this.language : m.group("language");
         String input = m.group(2);
-        AudioTrackInfo trackInfo = AudioTrackInfoBuilder
-                .empty()
-                .apply(reference)
-                .setIsStream(false)
-                .setIdentifier(input)
-                .setExplicit(false)
-                .build();
+        AudioTrackInfo trackInfo = new AudioTrackInfo(
+                input,
+                "Google TTS",
+                Units.DURATION_MS_UNKNOWN,
+                URLEncoder.encode(input, StandardCharsets.UTF_8),
+                false,
+                null,
+                null,
+                null
+        );
         return new GoogleTTSAudioTrack(trackInfo, language, this);
     }
 

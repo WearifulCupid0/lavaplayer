@@ -25,14 +25,13 @@ public class GoogleTTSAudioTrack extends DelegatedAudioTrack {
 
     @Override
     public void process(LocalAudioTrackExecutor executor) throws Exception {
-        String encoded = URLEncoder.encode(trackInfo.identifier, StandardCharsets.UTF_8);
         URI uri = new URIBuilder("https://translate.google.com/translate_tts")
                 .addParameter("tl", language)
-                .addParameter("q", encoded)
+                .addParameter("q", trackInfo.identifier)
                 .addParameter("ie", "UTF-8")
                 .addParameter("total", "1")
                 .addParameter("idx", "0")
-                .addParameter("textlen", Integer.toString(encoded.length()))
+                .addParameter("textlen", Integer.toString(trackInfo.identifier.length()))
                 .addParameter("client", "tw-ob")
                 .build();
         try (PersistentHttpStream stream = new PersistentHttpStream(this.sourceManager.getInterface(), uri, null)) {
