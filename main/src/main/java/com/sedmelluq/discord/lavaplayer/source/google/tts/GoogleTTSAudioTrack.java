@@ -6,14 +6,11 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.utils.URIBuilder;
 
 import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 
 public class GoogleTTSAudioTrack extends DelegatedAudioTrack {
+    private static final String URL = "https://translate.google.com/translate_tts?tl=%s&q=%s&ie=UTF-8&total=1&idx=0&textlen=5&client=tw-ob";
     public final GoogleTTSAudioSourceManager sourceManager;
     public final String language;
     public GoogleTTSAudioTrack(AudioTrackInfo trackInfo, String language, GoogleTTSAudioSourceManager sourceManager) {
@@ -25,16 +22,7 @@ public class GoogleTTSAudioTrack extends DelegatedAudioTrack {
 
     @Override
     public void process(LocalAudioTrackExecutor executor) throws Exception {
-        URI uri = new URIBuilder("https://translate.google.com/translate_tts")
-                .addParameter("tl", language)
-                .addParameter("q", trackInfo.identifier)
-                .addParameter("ie", "UTF-8")
-                .addParameter("total", "1")
-                .addParameter("idx", "0")
-                .addParameter("textlen", Integer.toString(trackInfo.identifier.length()))
-                .addParameter("client", "tw-ob")
-                .build();
-        try (PersistentHttpStream stream = new PersistentHttpStream(this.sourceManager.getInterface(), uri, null)) {
+        try (PersistentHttpStream stream = new PersistentHttpStream(this.sourceManager.getInterface(), URI.create(String.format(URL, this.language, trackInfo.identifier)), null)) {
             processDelegate(new Mp3AudioTrack(trackInfo, stream), executor);
         }
     }
