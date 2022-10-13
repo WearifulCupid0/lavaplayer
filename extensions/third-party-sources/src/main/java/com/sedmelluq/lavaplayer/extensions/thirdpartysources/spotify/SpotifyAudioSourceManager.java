@@ -321,6 +321,7 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
         String identifier = trackInfo.get("is_local").asBoolean(false) //Local tracks usually set id as null
         ? trackInfo.get("uri").safeText().replace("spotify:local:", "")
         : trackInfo.get("id").safeText();
+        List<JsonBrowser> images = albumInfo.get("images").values();
         AudioTrackInfo info = new AudioTrackInfo(
             trackInfo.get("name").safeText(),
             trackInfo.get("artists").values().size() > 0
@@ -332,7 +333,7 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
             !trackInfo.get("is_local").asBoolean(false)
             ? TRACK_URL + identifier
             : null,
-            albumInfo.get("images").index(0).get("url").text(),
+            images.get(images.size() - 1).get("url").text(),
             trackInfo.get("explicit").asBoolean(false)
         );
 
