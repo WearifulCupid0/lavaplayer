@@ -50,7 +50,7 @@ public class AudioSourceManagers {
    * @param containerRegistry Media container registry to be used by any probing sources.
    */
   public static void registerRemoteSources(AudioPlayerManager playerManager, MediaContainerRegistry containerRegistry) {
-    playerManager.registerSourceManager(new YoutubeAudioSourceManager(true, null, null));
+    playerManager.registerSourceManager(new YoutubeAudioSourceManager(true));
     playerManager.registerSourceManager(new JamendoAudioSourceManager(true));
     playerManager.registerSourceManager(new MixcloudAudioSourceManager(true));
     playerManager.registerSourceManager(new OdyseeAudioSourceManager(true));

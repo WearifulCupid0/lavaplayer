@@ -33,9 +33,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.ANDROID_AUTH_URL;
-import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.CHECKIN_ACCOUNT_URL;
-import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.LOGIN_ACCOUNT_URL;
-import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.SAVE_ACCOUNT_URL;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.TOKEN_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.TOKEN_REFRESH_PAYLOAD;
 import static com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeConstants.TV_AUTH_CODE_PAYLOAD;
@@ -62,7 +59,7 @@ public class YoutubeAccessTokenTracker {
   private static final long DEFAULT_ACCESS_TOKEN_REFRESH_INTERVAL = TimeUnit.HOURS.toMillis(1);
 
   private final Object tokenLock = new Object();
-  private final HttpInterfaceManager httpInterfaceManager;
+  private final YoutubeAudioSourceManager sourceManager;
   private final String email;
   private final String password;
   private String masterToken;
@@ -74,8 +71,8 @@ public class YoutubeAccessTokenTracker {
   private boolean masterTokenFromTV = false;
   private volatile CachedAuthScript cachedAuthScript = null;
 
-  public YoutubeAccessTokenTracker(HttpInterfaceManager httpInterfaceManager, String email, String password) {
-    this.httpInterfaceManager = httpInterfaceManager;
+  public YoutubeAccessTokenTracker(YoutubeAudioSourceManager sourceManager, String email, String password) {
+    this.sourceManager = sourceManager;
     this.email = email;
     this.password = password;
   }
@@ -180,7 +177,7 @@ public class YoutubeAccessTokenTracker {
   }
 
   private String fetchMasterToken() throws IOException {
-    try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
+    try (HttpInterface httpInterface = this.sourceManager.getHttpInterface()) {
       httpInterface.getContext().setAttribute(TOKEN_FETCH_CONTEXT_ATTRIBUTE, true);
 
       return requestMasterToken(httpInterface);
@@ -188,7 +185,7 @@ public class YoutubeAccessTokenTracker {
   }
 
   private String fetchAccessToken() throws IOException {
-    try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
+    try (HttpInterface httpInterface = this.sourceManager.getHttpInterface()) {
       httpInterface.getContext().setAttribute(TOKEN_FETCH_CONTEXT_ATTRIBUTE, true);
 
       return requestAccessToken(httpInterface);
@@ -196,7 +193,7 @@ public class YoutubeAccessTokenTracker {
   }
 
   private String requestMasterToken(HttpInterface httpInterface) throws IOException {
-    HttpPost masterTokenPost = new HttpPost(LOGIN_ACCOUNT_URL);
+    HttpPost masterTokenPost = new HttpPost(this.sourceManager.masterTokenUrl + "/login");
     StringEntity masterTokenPayload = new StringEntity(String.format(TOKEN_PAYLOAD, email, password));
     masterTokenPost.setEntity(masterTokenPayload);
 
@@ -268,7 +265,7 @@ public class YoutubeAccessTokenTracker {
   private void createAndroidAccount(HttpInterface httpInterface, JsonBrowser jsonBrowser) throws IOException {
     log.info("Account " + jsonBrowser.get("email").text() + " don't have Android or YouTube profile, creating new one...");
 
-    HttpPost post = new HttpPost(CHECKIN_ACCOUNT_URL);
+    HttpPost post = new HttpPost(this.sourceManager.masterTokenUrl + "/checkin");
     StringEntity payload = new StringEntity(String.format(TOKEN_PAYLOAD, email, password));
     post.setEntity(payload);
 
@@ -407,7 +404,7 @@ public class YoutubeAccessTokenTracker {
         }
       } else {
         String refreshToken = responseJson.get("refresh_token").text();
-        HttpPost savePost = new HttpPost(SAVE_ACCOUNT_URL);
+        HttpPost savePost = new HttpPost(this.sourceManager.masterTokenUrl + "/tv");
         savePost.setEntity(new StringEntity(String.format(TOKEN_REFRESH_PAYLOAD,
             email,
             password,

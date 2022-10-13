@@ -53,6 +53,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
   private final YoutubePlaylistLoader playlistLoader;
   private final YoutubeLinkRouter linkRouter;
   private final LoadingRoutes loadingRoutes;
+  public final String masterTokenUrl;
 
   /**
    * Create an instance with default settings.
@@ -61,23 +62,27 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
     this(true);
   }
 
+  public YoutubeAudioSourceManager(boolean allowSearch) { this(allowSearch, YoutubeConstants.DEFAULT_MASTER_TOKEN_BASE_URL); }
+
   /**
    * Create an instance.
    * @param allowSearch Whether to allow search queries as identifiers
    */
-  public YoutubeAudioSourceManager(boolean allowSearch) {
-    this(allowSearch, null, null);
+  public YoutubeAudioSourceManager(boolean allowSearch, String masterTokenUrl) {
+    this(allowSearch, masterTokenUrl, null, null);
   }
 
   /**
    * Create an instance.
    * @param allowSearch Whether to allow search queries as identifiers
+   * @param masterTokenUrl https://github.com/Walkyst/YouTube-checkin
    * @param email Email of Google account to auth in, required for playing age restricted tracks
    * @param password Password of Google account to auth in, required for playing age restricted tracks
    */
-  public YoutubeAudioSourceManager(boolean allowSearch, String email, String password) {
+  public YoutubeAudioSourceManager(boolean allowSearch, String masterTokenUrl, String email, String password) {
     this(
         allowSearch,
+        masterTokenUrl,
         email,
         password,
         new DefaultYoutubeTrackDetailsLoader(),
@@ -93,6 +98,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
 
   public YoutubeAudioSourceManager(
       boolean allowSearch,
+      String masterTokenUrl,
       String email,
       String password,
       YoutubeTrackDetailsLoader trackDetailsLoader,
@@ -105,7 +111,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
       YoutubeMixLoader mixLoader
   ) {
     httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
-    accessTokenTracker = new YoutubeAccessTokenTracker(httpInterfaceManager, email, password);
+    accessTokenTracker = new YoutubeAccessTokenTracker(this, email, password);
     YoutubeHttpContextFilter youtubeHttpContextFilter = new YoutubeHttpContextFilter();
     youtubeHttpContextFilter.setTokenTracker(accessTokenTracker);
     httpInterfaceManager.setHttpContextFilter(youtubeHttpContextFilter);
@@ -116,6 +122,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager, HttpConfig
     }
 
     this.allowSearch = allowSearch;
+    this.masterTokenUrl = masterTokenUrl;
     this.trackDetailsLoader = trackDetailsLoader;
     this.signatureResolver = signatureResolver;
     this.searchResultLoader = searchResultLoader;
