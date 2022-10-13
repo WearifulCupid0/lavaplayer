@@ -1,5 +1,7 @@
 package com.sedmelluq.discord.lavaplayer.track;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Meta info for an audio track
  */
@@ -35,7 +37,8 @@ public class AudioTrackInfo {
   /**
    * True if this track is considered explicit.
    */
-  public boolean explicit;
+  @Nullable
+  public Boolean explicit;
 
   /**
    * @param title Track title
@@ -47,7 +50,7 @@ public class AudioTrackInfo {
    * @param artworkUrl Thumbnail of the track
    * @param explicit True if this track is considered explicit.
    */
-  public AudioTrackInfo(String title, String author, long length, String identifier, boolean isStream, String uri, String artworkUrl, Boolean explicit) {
+  public AudioTrackInfo(String title, String author, long length, String identifier, boolean isStream, String uri, String artworkUrl, @Nullable Boolean explicit) {
     this.title = title;
     this.author = author;
     this.length = length;
