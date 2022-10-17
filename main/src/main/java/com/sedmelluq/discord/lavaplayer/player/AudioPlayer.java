@@ -26,6 +26,8 @@ public interface AudioPlayer extends AudioFrameProvider {
    */
   boolean startTrack(AudioTrack track, boolean noInterrupt);
 
+  AudioPlayerOptions getOptions();
+
   /**
    * Stop currently playing track.
    */

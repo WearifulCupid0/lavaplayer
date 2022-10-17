@@ -1,5 +1,6 @@
 package com.sedmelluq.discord.lavaplayer.track;
 
+import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.ExplicitContentException;
@@ -42,6 +43,11 @@ public abstract class BaseAudioTrack implements InternalAudioTrack {
     } else {
       throw new IllegalStateException("Cannot play the same instance of a track twice, use track.makeClone().");
     }
+  }
+
+  @Override
+  public void process(LocalAudioTrackExecutor executor, AudioPlayer player) throws Exception {
+    this.process(executor);
   }
 
   @Override

@@ -2,6 +2,7 @@ package com.sedmelluq.discord.lavaplayer.track.playback;
 
 import com.sedmelluq.discord.lavaplayer.format.AudioDataFormat;
 import com.sedmelluq.discord.lavaplayer.player.AudioConfiguration;
+import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerOptions;
 import com.sedmelluq.discord.lavaplayer.source.youtube.DefaultYoutubeTrackDetailsLoader;
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
@@ -53,22 +54,23 @@ public class LocalAudioTrackExecutor implements AudioTrackExecutor {
   private volatile Throwable trackException;
   private volatile long lastRetry = -1;
   private volatile boolean allowExplicit = true;
+  private  final AudioPlayer audioPlayer;
 
   /**
    * @param audioTrack The audio track that this executor executes
    * @param configuration Configuration to use for audio processing
-   * @param playerOptions Mutable player options (for example volume).
    * @param useSeekGhosting Whether to keep providing old frames continuing from the previous position during a seek
    *                        until frames from the new position arrive.
    * @param bufferDuration The size of the frame buffer in milliseconds
    */
   public LocalAudioTrackExecutor(InternalAudioTrack audioTrack, AudioConfiguration configuration,
-                                 AudioPlayerOptions playerOptions, boolean useSeekGhosting, int bufferDuration) {
+                                 AudioPlayer audioPlayer, boolean useSeekGhosting, int bufferDuration) {
 
     this.audioTrack = audioTrack;
     AudioDataFormat currentFormat = configuration.getOutputFormat();
+    this.audioPlayer = audioPlayer;
     this.frameBuffer = configuration.getFrameBufferFactory().create(bufferDuration, currentFormat, queuedStop);
-    this.processingContext = new AudioProcessingContext(configuration, frameBuffer, playerOptions, currentFormat);
+    this.processingContext = new AudioProcessingContext(configuration, frameBuffer, audioPlayer.getOptions(), currentFormat);
     this.useSeekGhosting = useSeekGhosting;
   }
 
@@ -118,7 +120,7 @@ public class LocalAudioTrackExecutor implements AudioTrackExecutor {
 
     try {
       allowExplicit = listener.isAllowedExplicit();
-      audioTrack.process(this);
+      audioTrack.process(this, this.audioPlayer);
 
       log.debug("Playing track {} finished or was stopped.", audioTrack.getIdentifier());
     } catch (Throwable e) {

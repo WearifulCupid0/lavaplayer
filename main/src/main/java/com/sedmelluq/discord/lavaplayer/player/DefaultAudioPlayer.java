@@ -69,6 +69,10 @@ public class DefaultAudioPlayer implements AudioPlayer, TrackStateListener {
     startTrack(track, false);
   }
 
+  public AudioPlayerOptions getOptions() {
+    return this.options;
+  }
+
   /**
    * @param track The track to start playing, passing null will stop the current track and return false
    * @param noInterrupt Whether to only start if nothing else is playing
@@ -105,7 +109,7 @@ public class DefaultAudioPlayer implements AudioPlayer, TrackStateListener {
 
     dispatchEvent(new TrackStartEvent(this, newTrack));
 
-    manager.executeTrack(this, newTrack, manager.getConfiguration(), options);
+    manager.executeTrack(this, newTrack, manager.getConfiguration(), this);
     return true;
   }
 

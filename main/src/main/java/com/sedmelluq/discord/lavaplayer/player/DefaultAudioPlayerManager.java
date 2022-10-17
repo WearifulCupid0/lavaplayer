@@ -346,32 +346,32 @@ public class DefaultAudioPlayerManager implements AudioPlayerManager {
    * @param listener A listener for track state events
    * @param track The audio track to execute
    * @param configuration The audio configuration to use for executing
-   * @param playerOptions Options of the audio player
    */
   public void executeTrack(TrackStateListener listener, InternalAudioTrack track, AudioConfiguration configuration,
-                           AudioPlayerOptions playerOptions) {
+                           AudioPlayer audioPlayer) {
 
-    final AudioTrackExecutor executor = createExecutorForTrack(track, configuration, playerOptions);
+    final AudioTrackExecutor executor = createExecutorForTrack(track, configuration, audioPlayer);
     track.assignExecutor(executor, true);
 
     trackPlaybackExecutorService.execute(() -> executor.execute(listener));
   }
 
   private AudioTrackExecutor createExecutorForTrack(InternalAudioTrack track, AudioConfiguration configuration,
-                                                    AudioPlayerOptions playerOptions) {
+                                                    AudioPlayer audioPlayer) {
 
     AudioSourceManager sourceManager = track.getSourceManager();
+    AudioPlayerOptions options = audioPlayer.getOptions();
 
     if (remoteNodeManager.isEnabled() && sourceManager != null && sourceManager.isTrackEncodable(track)) {
-      return new RemoteAudioTrackExecutor(track, configuration, remoteNodeManager, playerOptions.volumeLevel);
+      return new RemoteAudioTrackExecutor(track, configuration, remoteNodeManager, options.volumeLevel);
     } else {
       AudioTrackExecutor customExecutor = track.createLocalExecutor(this);
 
       if (customExecutor != null) {
         return customExecutor;
       } else {
-        int bufferDuration = Optional.ofNullable(playerOptions.frameBufferDuration.get()).orElse(frameBufferDuration);
-        return new LocalAudioTrackExecutor(track, configuration, playerOptions, useSeekGhosting, bufferDuration);
+        int bufferDuration = Optional.ofNullable(options.frameBufferDuration.get()).orElse(frameBufferDuration);
+        return new LocalAudioTrackExecutor(track, configuration, audioPlayer, useSeekGhosting, bufferDuration);
       }
     }
   }
