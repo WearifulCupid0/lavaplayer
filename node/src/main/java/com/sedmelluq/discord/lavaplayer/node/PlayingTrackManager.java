@@ -62,7 +62,7 @@ public class PlayingTrackManager {
       if (existingTrack == null) {
         log.info("Track start request for {} (context {}, position {})", message.trackInfo.identifier, message.executorId, message.position);
 
-        manager.executeTrack(playingTrack, audioTrack, message.configuration, playingTrack.playerOptions);
+        manager.executeTrack(playingTrack, audioTrack, message.configuration, playingTrack.playerOptions, null);
         statisticsManager.increaseTrackCount();
       } else {
         log.info("Start request for an already playing track {} (context {}), applying seek to {} from it.",

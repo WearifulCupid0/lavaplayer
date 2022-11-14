@@ -347,20 +347,24 @@ public class DefaultAudioPlayerManager implements AudioPlayerManager {
    * @param track The audio track to execute
    * @param configuration The audio configuration to use for executing
    */
+
   public void executeTrack(TrackStateListener listener, InternalAudioTrack track, AudioConfiguration configuration,
                            AudioPlayer audioPlayer) {
+    executeTrack(listener, track, configuration, audioPlayer.getOptions(), audioPlayer);
+  }
+  public void executeTrack(TrackStateListener listener, InternalAudioTrack track, AudioConfiguration configuration,
+                           AudioPlayerOptions options, AudioPlayer audioPlayer) {
 
-    final AudioTrackExecutor executor = createExecutorForTrack(track, configuration, audioPlayer);
+    final AudioTrackExecutor executor = createExecutorForTrack(track, configuration, options, audioPlayer);
     track.assignExecutor(executor, true);
 
     trackPlaybackExecutorService.execute(() -> executor.execute(listener));
   }
 
   private AudioTrackExecutor createExecutorForTrack(InternalAudioTrack track, AudioConfiguration configuration,
-                                                    AudioPlayer audioPlayer) {
+                                                    AudioPlayerOptions options, AudioPlayer audioPlayer) {
 
     AudioSourceManager sourceManager = track.getSourceManager();
-    AudioPlayerOptions options = audioPlayer.getOptions();
 
     if (remoteNodeManager.isEnabled() && sourceManager != null && sourceManager.isTrackEncodable(track)) {
       return new RemoteAudioTrackExecutor(track, configuration, remoteNodeManager, options.volumeLevel);
