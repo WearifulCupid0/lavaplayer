@@ -2,6 +2,7 @@ package com.sedmelluq.lava.player.extras.stream;
 
 import com.sedmelluq.discord.lavaplayer.filter.PcmFilterFactory;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
+import com.sedmelluq.discord.lavaplayer.player.AudioPlayerOptions;
 import com.sedmelluq.discord.lavaplayer.player.event.*;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -137,6 +138,11 @@ public class StreamAudioPlayer implements AudioPlayer {
 
   @Override
   public  void setAllowedExplicit(boolean value) { fallback.setAllowedExplicit(value); }
+
+  @Override
+  public AudioPlayerOptions getOptions() {
+    return null;
+  }
 
   @Override
   public void destroy() {
