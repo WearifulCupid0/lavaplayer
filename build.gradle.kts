@@ -22,16 +22,4 @@ allprojects {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
   }
-
-  publishing {
-    repositories {
-      maven {
-        setUrl("s3://m2.dv8tion.net/releases")
-        credentials(AwsCredentials::class) {
-          accessKey = project.findProperty("sedmelluqMavenS3AccessKey")?.toString()
-          secretKey = project.findProperty("sedmelluqMavenS3SecretKey")?.toString()
-        }
-      }
-    }
-  }
 }

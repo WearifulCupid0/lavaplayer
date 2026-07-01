@@ -3,10 +3,6 @@ package com.sedmelluq.discord.lavaplayer.track.playback;
 import com.sedmelluq.discord.lavaplayer.format.AudioDataFormat;
 import com.sedmelluq.discord.lavaplayer.player.AudioConfiguration;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
-import com.sedmelluq.discord.lavaplayer.player.AudioPlayerOptions;
-import com.sedmelluq.discord.lavaplayer.source.youtube.DefaultYoutubeTrackDetailsLoader;
-import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
-import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeSignatureCipherManager;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.ExplicitContentException;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
@@ -124,32 +120,6 @@ public class LocalAudioTrackExecutor implements AudioTrackExecutor {
 
       log.debug("Playing track {} finished or was stopped.", audioTrack.getIdentifier());
     } catch (Throwable e) {
-
-      // Check for 403, attempt to clear cipher cache and retry if no retries in the past 5 seconds.
-      if (e.getMessage() != null
-          && e.getMessage().contains("status code: 403")
-          && (lastRetry == -1 || lastRetry + RETRY_COOLDOWN <= System.currentTimeMillis())
-          && audioTrack.getSourceManager() instanceof YoutubeAudioSourceManager) {
-        YoutubeAudioSourceManager sourceManager = (YoutubeAudioSourceManager) audioTrack.getSourceManager();
-        if (sourceManager.getTrackDetailsLoader() instanceof DefaultYoutubeTrackDetailsLoader) {
-          lastRetry = System.currentTimeMillis();
-          log.debug("Detected 403, clearing cipher cache and retrying.");
-
-          DefaultYoutubeTrackDetailsLoader trackDetailsLoader = (DefaultYoutubeTrackDetailsLoader) sourceManager.getTrackDetailsLoader();
-          DefaultYoutubeTrackDetailsLoader.CachedPlayerScript cachedScript = trackDetailsLoader.getCachedPlayerScript();
-
-          // Clear cached scripts and ciphers.
-          if (cachedScript != null) {
-            ((YoutubeSignatureCipherManager) sourceManager.getSignatureResolver()).clearCache(cachedScript.getPlayerScriptUrl());
-            trackDetailsLoader.clearCache();
-          }
-
-          // Attempt to process again.
-          attemptProcess(listener);
-          return;
-        }
-      }
-
       // Temporarily clear the interrupted status so it would not disrupt listener methods.
       interrupt = findInterrupt(e);
 

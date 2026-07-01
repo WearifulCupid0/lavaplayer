@@ -5,41 +5,39 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 /**
- * A helper class to consume the entire contents of a stream into a direct byte buffer. Designed for cases where this is
- * repeated several times, as it supports resetting.
+ * A helper class to consume the entire contents of a stream into a direct byte buffer.
+ * Designed for cases where this is repeated several times, as it supports resetting.
  */
 public class DirectBufferStreamBroker {
+  private static final int COPY_BUFFER_SIZE = 8192;
+
   private final byte[] copyBuffer;
   private final int initialSize;
+
   private int readByteCount;
   private ByteBuffer currentBuffer;
 
-  /**
-   * @param initialSize Initial size of the underlying direct buffer.
-   */
   public DirectBufferStreamBroker(int initialSize) {
     this.initialSize = initialSize;
-    this.copyBuffer = new byte[512];
+    this.copyBuffer = new byte[COPY_BUFFER_SIZE];
     this.currentBuffer = ByteBuffer.allocateDirect(initialSize);
   }
 
-  /**
-   * Reset the buffer to its initial size.
-   */
   public void resetAndCompact() {
-    currentBuffer = ByteBuffer.allocateDirect(initialSize);
+    if (currentBuffer.capacity() == initialSize) {
+      currentBuffer.clear();
+    } else {
+      currentBuffer = ByteBuffer.allocateDirect(initialSize);
+    }
+
+    readByteCount = 0;
   }
 
-  /**
-   * Clear the underlying buffer.
-   */
   public void clear() {
     currentBuffer.clear();
+    readByteCount = 0;
   }
 
-  /**
-   * @return A duplicate of the underlying buffer.
-   */
   public ByteBuffer getBuffer() {
     ByteBuffer buffer = currentBuffer.duplicate();
     buffer.flip();
@@ -50,11 +48,6 @@ public class DirectBufferStreamBroker {
     return currentBuffer.position() < readByteCount;
   }
 
-  /**
-   * Copies the final state after a {@link #consumeNext(InputStream, int, int)} operation into a new byte array.
-   *
-   * @return New byte array containing consumed data.
-   */
   public byte[] extractBytes() {
     byte[] data = new byte[currentBuffer.position()];
     currentBuffer.position(0);
@@ -62,23 +55,13 @@ public class DirectBufferStreamBroker {
     return data;
   }
 
-  /**
-   * Consume an entire stream and append it into the buffer (or clear first if clear parameter is true).
-   *
-   * @param inputStream The input stream to fully consume.
-   * @param maximumSavedBytes Maximum number of bytes to save internally. If this is exceeded, it will continue reading
-   *                          and discarding until maximum read byte count is reached.
-   * @param maximumReadBytes Maximum number of bytes to read.
-   * @return If stream was fully read before {@code maximumReadBytes} was reached, returns {@code true}. Returns
-   *         {@code false} if the number of bytes read is {@code maximumReadBytes}, even if no more data is left in the
-   *         stream.
-   * @throws IOException On read error
-   */
-  public boolean consumeNext(InputStream inputStream, int maximumSavedBytes, int maximumReadBytes) throws IOException {
+  public boolean consumeNext(InputStream inputStream, int maximumSavedBytes, int maximumReadBytes)
+          throws IOException {
     currentBuffer.clear();
     readByteCount = 0;
 
-    ensureCapacity(Math.min(maximumSavedBytes, inputStream.available()));
+    int available = Math.max(0, inputStream.available());
+    ensureCapacity(Math.min(maximumSavedBytes, available));
 
     while (readByteCount < maximumReadBytes) {
       int maximumReadFragment = Math.min(copyBuffer.length, maximumReadBytes - readByteCount);
@@ -88,24 +71,34 @@ public class DirectBufferStreamBroker {
         return true;
       }
 
-      int bytesToSave = Math.min(fragmentLength, maximumSavedBytes - readByteCount);
+      int remainingSavedBytes = Math.max(0, maximumSavedBytes - readByteCount);
+      int bytesToSave = Math.min(fragmentLength, remainingSavedBytes);
 
       if (bytesToSave > 0) {
         ensureCapacity(currentBuffer.position() + bytesToSave);
         currentBuffer.put(copyBuffer, 0, bytesToSave);
       }
+
+      readByteCount += fragmentLength;
     }
 
     return false;
   }
 
   private void ensureCapacity(int capacity) {
-    if (capacity > currentBuffer.capacity()) {
-      ByteBuffer newBuffer = ByteBuffer.allocateDirect(currentBuffer.capacity() << 1);
-      currentBuffer.flip();
-
-      newBuffer.put(currentBuffer);
-      currentBuffer = newBuffer;
+    if (capacity <= currentBuffer.capacity()) {
+      return;
     }
+
+    int newCapacity = currentBuffer.capacity();
+
+    while (newCapacity < capacity) {
+      newCapacity <<= 1;
+    }
+
+    ByteBuffer newBuffer = ByteBuffer.allocateDirect(newCapacity);
+    currentBuffer.flip();
+    newBuffer.put(currentBuffer);
+    currentBuffer = newBuffer;
   }
 }

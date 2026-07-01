@@ -1,5 +1,7 @@
 package com.sedmelluq.discord.lavaplayer.source.tunein;
 
+import com.sedmelluq.discord.lavaplayer.container.MediaContainerRegistry;
+import com.sedmelluq.discord.lavaplayer.source.http.HttpAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
@@ -39,9 +41,11 @@ public class TuneinAudioSourceManager implements AudioSourceManager, HttpConfigu
     private static final Pattern radioDataPattern = Pattern.compile(RADIO_DATA_REGEX);
 
     private final HttpInterfaceManager httpInterfaceManager;
+    private final HttpAudioSourceManager streamSourceManager;
 
     public TuneinAudioSourceManager() {
         httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
+        streamSourceManager = new HttpAudioSourceManager(MediaContainerRegistry.DEFAULT_REGISTRY);
     }
 
     @Override
@@ -87,11 +91,17 @@ public class TuneinAudioSourceManager implements AudioSourceManager, HttpConfigu
     @Override
     public void configureRequests(Function<RequestConfig, RequestConfig> configurator) {
         httpInterfaceManager.configureRequests(configurator);
+        streamSourceManager.configureRequests(configurator);
     }
 
     @Override
     public void configureBuilder(Consumer<HttpClientBuilder> configurator) {
         httpInterfaceManager.configureBuilder(configurator);
+        streamSourceManager.configureBuilder(configurator);
+    }
+
+    public AudioItem loadStream(AudioReference reference) {
+        return streamSourceManager.loadItem(null, reference);
     }
 
     private AudioTrack extractRadioFromPage(String url) {
@@ -108,6 +118,10 @@ public class TuneinAudioSourceManager implements AudioSourceManager, HttpConfigu
 
             if (radio.isNull()) {
                 throw new IOException("Radio data info is empty");
+            }
+
+            if (radio.get("title").safeText().isEmpty()) {
+                radio = radio.get("containers").index(0).get("children").index(0);
             }
 
             AudioTrackInfo trackInfo = new AudioTrackInfo(

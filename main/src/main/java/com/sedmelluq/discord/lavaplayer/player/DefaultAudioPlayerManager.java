@@ -95,6 +95,44 @@ public class DefaultAudioPlayerManager implements AudioPlayerManager {
   private final AudioPlayerLifecycleManager lifecycleManager;
 
 
+
+    public DefaultAudioPlayerManager(ExecutorService playbackExecutorService) {
+      sourceManagers = new ArrayList<>();
+
+      this.trackPlaybackExecutorService = playbackExecutorService;
+      this.trackInfoExecutorService = ExecutorTools.createEagerlyScalingExecutor(
+            1,
+            DEFAULT_LOADER_POOL_SIZE,
+            TimeUnit.SECONDS.toMillis(30),
+            LOADER_QUEUE_CAPACITY,
+            new DaemonThreadFactory("info-loader")
+      );
+
+      scheduledExecutorService = Executors.newScheduledThreadPool(1, new DaemonThreadFactory("manager"));
+      orderedInfoExecutor = new OrderedExecutor(trackInfoExecutorService);
+
+      trackStuckThreshold = TimeUnit.MILLISECONDS.toNanos(10000);
+      configuration = new AudioConfiguration();
+      cleanupThreshold = new AtomicLong(DEFAULT_CLEANUP_THRESHOLD);
+      frameBufferDuration = DEFAULT_FRAME_BUFFER_DURATION;
+      useSeekGhosting = true;
+
+      remoteNodeManager = new RemoteNodeManager(this);
+      garbageCollectionMonitor = new GarbageCollectionMonitor(scheduledExecutorService);
+      lifecycleManager = new AudioPlayerLifecycleManager(scheduledExecutorService, cleanupThreshold);
+      lifecycleManager.initialise();
+    }
+
+    private static ExecutorService createDefaultPlaybackExecutor() {
+      return new ThreadPoolExecutor(
+            1,
+            Integer.MAX_VALUE,
+            10,
+            TimeUnit.SECONDS,
+            new SynchronousQueue<>(),
+            new DaemonThreadFactory("playback")
+      );
+    }
   /**
    * Create a new instance
    */
