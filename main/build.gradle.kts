@@ -62,16 +62,6 @@ tasks.processResources {
   dependsOn(generateVersion)
 }
 
-tasks.register<JavaExec>("sourceManagerHealthCheck") {
-  dependsOn(tasks.testClasses)
-
-  group = "verification"
-  description = "Checks which audio source managers are currently working."
-
-  classpath = sourceSets["test"].runtimeClasspath
-  mainClass.set("com.sedmelluq.discord.lavaplayer.source.SourceManagerHealthCheck")
-}
-
 val sourcesJar by tasks.registering(Jar::class) {
   archiveClassifier.set("sources")
   from(sourceSets["main"].allSource)
