@@ -24,7 +24,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.sedmelluq.discord.lavaplayer.source.jamendo.JamendoConstants.DEFAULT_CLIENT_ID;;
+import static com.sedmelluq.lavaplayer.source.jamendo.JamendoConstants.DEFAULT_CLIENT_ID;;
 
 /**
  * Audio source manager that implements finding Jamendo tracks based on URL.

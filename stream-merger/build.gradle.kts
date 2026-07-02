@@ -3,25 +3,21 @@ plugins {
   `maven-publish`
 }
 
-val moduleName = "lavaplayer-stream-merger"
-version = "0.1.0"
+base {
+  archivesName.set("lavaplayer-stream-merger")
+}
+
+libs.versions.lavaplayer.stream.merger.get()
 
 dependencies {
   implementation(project(":main"))
-  implementation("org.slf4j:slf4j-api:1.7.25")
-}
-
-val sourcesJar by tasks.registering(Jar::class) {
-  archiveClassifier.set("sources")
-  from(sourceSets["main"].allSource)
+  implementation(libs.slf4j)
 }
 
 publishing {
   publications {
     create<MavenPublication>("mavenJava") {
       from(components["java"])
-      artifactId = moduleName
-      artifact(sourcesJar)
     }
   }
 }

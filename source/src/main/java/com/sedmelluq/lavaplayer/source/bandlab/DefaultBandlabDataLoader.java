@@ -9,11 +9,11 @@ import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import java.util.ArrayList;
 import java.util.function.Function;
 
-import static com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabConstants.COLLECTION_BANDLAB_API;
-import static com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabConstants.SONG_POST_BANDLAB_API;
-import static com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabConstants.ALBUM_BANDLAB_API;
-import static com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabConstants.COLLECTION_URI;
-import static com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabConstants.ALBUM_URI;
+import static com.sedmelluq.lavaplayer.source.bandlab.BandlabConstants.COLLECTION_BANDLAB_API;
+import static com.sedmelluq.lavaplayer.source.bandlab.BandlabConstants.SONG_POST_BANDLAB_API;
+import static com.sedmelluq.lavaplayer.source.bandlab.BandlabConstants.ALBUM_BANDLAB_API;
+import static com.sedmelluq.lavaplayer.source.bandlab.BandlabConstants.COLLECTION_URI;
+import static com.sedmelluq.lavaplayer.source.bandlab.BandlabConstants.ALBUM_URI;
 
 public class DefaultBandlabDataLoader extends AbstractBandlabApiLoader implements BandlabDataLoader {
     public AudioTrack loadTrack(String username, String slug, Function<AudioTrackInfo, AudioTrack> trackFactory) {

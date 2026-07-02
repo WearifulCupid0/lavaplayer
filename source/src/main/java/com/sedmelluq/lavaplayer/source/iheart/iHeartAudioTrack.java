@@ -27,8 +27,8 @@ import java.nio.charset.StandardCharsets;
 import static com.sedmelluq.discord.lavaplayer.container.MediaContainerDetectionResult.refer;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 import static com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools.getHeaderValue;
-import static com.sedmelluq.discord.lavaplayer.source.iheart.iHeartConstants.RADIO_ID_API_URL;
-import static com.sedmelluq.discord.lavaplayer.source.iheart.iHeartConstants.EPISODE_API_URL;
+import static com.sedmelluq.lavaplayer.source.iheart.iHeartConstants.RADIO_ID_API_URL;
+import static com.sedmelluq.lavaplayer.source.iheart.iHeartConstants.EPISODE_API_URL;
 
 /**
  * Audio track that handles processing iHeart tracks.

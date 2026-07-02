@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
-import static com.sedmelluq.discord.lavaplayer.source.iheart.iHeartConstants.*;
+import static com.sedmelluq.lavaplayer.source.iheart.iHeartConstants.*;
 
 public class DefaultiHeartApiHandler implements iHeartApiHandler {
     private final HttpInterfaceManager httpInterfaceManager;

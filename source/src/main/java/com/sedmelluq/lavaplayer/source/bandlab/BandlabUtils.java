@@ -5,8 +5,8 @@ import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 
-import static com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabConstants.SINGLE_TRACK_URI;
-import static com.sedmelluq.discord.lavaplayer.source.bandlab.BandlabConstants.TRACK_URI;
+import static com.sedmelluq.lavaplayer.source.bandlab.BandlabConstants.SINGLE_TRACK_URI;
+import static com.sedmelluq.lavaplayer.source.bandlab.BandlabConstants.TRACK_URI;
 
 public class BandlabUtils {
     public static AudioTrackInfo buildTrackInfo(JsonBrowser trackData) {

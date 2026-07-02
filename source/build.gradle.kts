@@ -1,26 +1,27 @@
 plugins {
     `java-library`
     groovy
-    `maven-publish`
 }
 
-group = "com.sedmelluq"
-
-val moduleName = "lavaplayer-source-module"
-version = "0.1.0"
-
-repositories {
-    mavenCentral()
+base {
+    archivesName.set("lavaplayer-source-module")
 }
 
 dependencies {
-    compileOnly(project(":main"))
-    testImplementation(platform("org.junit:junit-bom:5.10.0"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
-}
+    api(project(":main"))
 
-tasks.test {
-    useJUnitPlatform()
+    api(libs.slf4j)
+    api(libs.annotations)
+    api(libs.httpclient)
+
+    implementation(libs.jsoup)
+    implementation(libs.json)
+    implementation(libs.base64)
+
+    implementation(libs.commons.io)
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.groovy)
 }
 
 tasks.register<JavaExec>("sourceManagerHealthCheck") {

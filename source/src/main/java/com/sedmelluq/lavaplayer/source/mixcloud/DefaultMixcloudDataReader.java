@@ -12,7 +12,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.sedmelluq.discord.lavaplayer.source.mixcloud.MixcloudConstants.DECRYPTION_KEY;
+import static com.sedmelluq.lavaplayer.source.mixcloud.MixcloudConstants.DECRYPTION_KEY;
 //import static com.sedmelluq.discord.lavaplayer.source.mixcloud.MixcloudConstants.MANIFEST_AUDIO_URL;
 //import static com.sedmelluq.discord.lavaplayer.source.mixcloud.MixcloudConstants.HLS_AUDIO_URL;
 

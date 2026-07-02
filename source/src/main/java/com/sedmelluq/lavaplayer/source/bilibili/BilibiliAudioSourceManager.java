@@ -33,8 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.net.URI;
 
-import static com.sedmelluq.discord.lavaplayer.source.bilibili.BilibiliConstants.VIEW_API;
-import static com.sedmelluq.discord.lavaplayer.source.bilibili.BilibiliConstants.SEARCH_API;
+import static com.sedmelluq.lavaplayer.source.bilibili.BilibiliConstants.VIEW_API;
+import static com.sedmelluq.lavaplayer.source.bilibili.BilibiliConstants.SEARCH_API;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
 public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfigurable {

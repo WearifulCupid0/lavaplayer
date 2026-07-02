@@ -20,8 +20,8 @@ import java.net.URI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.sedmelluq.discord.lavaplayer.source.bilibili.BilibiliConstants.PLAYER_API;
-import static com.sedmelluq.discord.lavaplayer.source.bilibili.BilibiliConstants.VIEW_API;
+import static com.sedmelluq.lavaplayer.source.bilibili.BilibiliConstants.PLAYER_API;
+import static com.sedmelluq.lavaplayer.source.bilibili.BilibiliConstants.VIEW_API;
 
 /**
  * Audio track that handles processing BiliBili tracks.

@@ -33,9 +33,9 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.sedmelluq.discord.lavaplayer.source.twitch.TwitchConstants.ACCESS_TOKEN_PAYLOAD;
-import static com.sedmelluq.discord.lavaplayer.source.twitch.TwitchConstants.METADATA_PAYLOAD;
-import static com.sedmelluq.discord.lavaplayer.source.twitch.TwitchConstants.TWITCH_GRAPHQL_BASE_URL;
+import static com.sedmelluq.lavaplayer.source.twitch.TwitchConstants.ACCESS_TOKEN_PAYLOAD;
+import static com.sedmelluq.lavaplayer.source.twitch.TwitchConstants.METADATA_PAYLOAD;
+import static com.sedmelluq.lavaplayer.source.twitch.TwitchConstants.TWITCH_GRAPHQL_BASE_URL;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
 /**

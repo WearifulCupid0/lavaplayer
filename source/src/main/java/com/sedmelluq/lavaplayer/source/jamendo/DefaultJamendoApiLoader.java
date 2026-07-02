@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
-import static com.sedmelluq.discord.lavaplayer.source.jamendo.JamendoConstants.*;
+import static com.sedmelluq.lavaplayer.source.jamendo.JamendoConstants.*;
 
 public class DefaultJamendoApiLoader implements JamendoApiLoader {
     private final JamendoAudioSourceManager sourceManager;

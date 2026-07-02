@@ -17,7 +17,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
-import static com.sedmelluq.discord.lavaplayer.source.mixcloud.MixcloudConstants.GRAPHQL_URL;
+import static com.sedmelluq.lavaplayer.source.mixcloud.MixcloudConstants.GRAPHQL_URL;
 
 public class MixcloudHelper {
     public static AudioItem requestGraphql(HttpInterface httpInterface, String body, ApiResponse<AudioItem> response) {

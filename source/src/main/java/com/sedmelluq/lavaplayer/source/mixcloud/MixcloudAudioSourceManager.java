@@ -27,7 +27,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.http.client.config.RequestConfig;
 
-import static com.sedmelluq.discord.lavaplayer.source.mixcloud.MixcloudConstants.*;
+import static com.sedmelluq.lavaplayer.source.mixcloud.MixcloudConstants.*;
 
 public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfigurable {
     private final String TRACK_REGEX = "(?:http://|https://|)?(?:(?:www|beta|m)\\.)?mixcloud\\.com/([^/]+)/([^/]+)";
