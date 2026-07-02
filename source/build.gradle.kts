@@ -7,6 +7,8 @@ base {
     archivesName.set("lavaplayer-source-module")
 }
 
+version = libs.versions.lavaplayer.source.get()
+
 dependencies {
     api(project(":main"))
 

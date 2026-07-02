@@ -101,6 +101,7 @@ fun VersionCatalogBuilder.modules() {
     version("lavaplayer-stream-merger", "0.1.0")
     version("lavaplayer-ext-format-xm", "0.1.0")
     version("lavaplayer-ext-third-party-sources", "0.1.8")
+    version("lavaplayer-source", "0.1.1")
 }
 
 fun VersionCatalogBuilder.others() {
