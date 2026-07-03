@@ -10,7 +10,6 @@ include(
     ":common",
     ":main",
     ":source",
-    ":node",
     ":stream-merger",
     ":test-samples",
     ":extensions:third-party-sources",

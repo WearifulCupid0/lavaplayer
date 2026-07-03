@@ -17,14 +17,14 @@ public class AudioSourceManagers {
   }
 
   /**
-   * Registers all built-in remote audio sources to the specified player manager. Local file audio source must be
-   * registered separately.
+   * Registers all built-in remote audio sources to the specified player manager.
    *
    * @param playerManager Player manager to register the source managers to
    * @param containerRegistry Media container registry to be used by any probing sources.
    */
   public static void registerRemoteSources(AudioPlayerManager playerManager, MediaContainerRegistry containerRegistry) {
-    playerManager.registerSourceManager(new HttpAudioSourceManager(containerRegistry));
+    registerHttpSource(playerManager, containerRegistry);
+    registerLocalSource(playerManager, containerRegistry);
   }
 
   /**
@@ -44,5 +44,24 @@ public class AudioSourceManagers {
    */
   public static void registerLocalSource(AudioPlayerManager playerManager, MediaContainerRegistry containerRegistry) {
     playerManager.registerSourceManager(new LocalAudioSourceManager(containerRegistry));
+  }
+
+  /**
+   * Registers the http url source manager to the specified player manager.
+   *
+   * @param playerManager Player manager to register the source manager to
+   */
+  public static void registerHttpSource(AudioPlayerManager playerManager) {
+    registerHttpSource(playerManager, MediaContainerRegistry.DEFAULT_REGISTRY);
+  }
+
+  /**
+   * Registers the http url source manager to the specified player manager.
+   *
+   * @param playerManager Player manager to register the source manager to
+   * @param containerRegistry Media container registry to be used by the http source.
+   */
+  public static void registerHttpSource(AudioPlayerManager playerManager, MediaContainerRegistry containerRegistry) {
+    playerManager.registerSourceManager(new HttpAudioSourceManager(containerRegistry));
   }
 }

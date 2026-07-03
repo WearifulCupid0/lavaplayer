@@ -29,5 +29,8 @@ public interface AudioTrackInfoProvider {
    */
   String getUri();
 
+  /**
+   * @return Artwork URL, or <code>null</code> if this provider does not know it.
+   */
   String getArtworkUrl();
 }

@@ -5,7 +5,6 @@ import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.lavaplayer.source.bandcamp.BandcampAudioSourceManager;
-import com.sedmelluq.lavaplayer.source.bandlab.BandlabAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.bilibili.BilibiliAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.clyp.ClypAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.deezer.DeezerAudioSourceManager;
@@ -95,9 +94,6 @@ public class SourceManagerHealthCheck {
 
         cases.add(new Case("reverbnation", ReverbnationAudioSourceManager::new,
                 "https://www.reverbnation.com/paredaodofunkoficial/song/24395949-clean-bandit-feat-jess-glynne-rather"));
-
-        cases.add(new Case("bandlab", BandlabAudioSourceManager::new,
-                "https://www.bandlab.com/track/8557ba3e-be23-f011-8b3d-000d3aa44618?revId=8457ba3e-be23-f011-8b3d-000d3aa44618"));
 
         cases.add(new Case("rumble", RumbleAudioSourceManager::new,
                 "https://rumble.com/v6rdhsm-golden-by-harry-styles.html?e9s=src_v1_s%2Csrc_v1_s_o&sci=a05a85b2-dcf1-4966-ac6f-e315943fbf44"));
