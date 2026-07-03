@@ -35,3 +35,11 @@ tasks.register<JavaExec>("sourceManagerHealthCheck") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.sedmelluq.lavaplayer.source.SourceManagerHealthCheck")
 }
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+        }
+    }
+}
