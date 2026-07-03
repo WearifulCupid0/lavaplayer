@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Abstract instance of a class which holds native resources that must be freed.
  */
-public abstract class NativeResourceHolder {
+public abstract class NativeResourceHolder implements AutoCloseable {
   private static final Logger log = LoggerFactory.getLogger(NativeResourceHolder.class);
 
   private final AtomicBoolean released = new AtomicBoolean();
@@ -26,7 +26,7 @@ public abstract class NativeResourceHolder {
    * Free up native resources of the decoder. Using other methods after this will throw IllegalStateException.
    */
   public void close() {
-    closeInternal(false);
+    closeInternal();
   }
 
   /**
@@ -34,19 +34,9 @@ public abstract class NativeResourceHolder {
    */
   protected abstract void freeResources();
 
-  private synchronized void closeInternal(boolean inFinalizer) {
+  private synchronized void closeInternal() {
     if (released.compareAndSet(false, true)) {
-      if (inFinalizer) {
-        log.warn("Should have been closed before finalization ({}).", this.getClass().getName());
-      }
-
       freeResources();
     }
-  }
-
-  @Override
-  protected void finalize() throws Throwable {
-    super.finalize();
-    closeInternal(true);
   }
 }
