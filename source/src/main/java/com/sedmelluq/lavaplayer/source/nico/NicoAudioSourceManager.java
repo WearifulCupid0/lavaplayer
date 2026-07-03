@@ -4,14 +4,12 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
+import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
-import com.sedmelluq.discord.lavaplayer.track.AudioItem;
-import com.sedmelluq.discord.lavaplayer.track.AudioReference;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
+import com.sedmelluq.discord.lavaplayer.track.*;
 import org.apache.http.Header;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -28,8 +26,12 @@ import org.jsoup.parser.Parser;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -45,26 +47,38 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 public class NicoAudioSourceManager implements AudioSourceManager, HttpConfigurable {
     private static final String TRACK_URL_REGEX = "^(?:http://|https://|)(?:www\\.|)nicovideo\\.jp/watch/(.{2}[0-9]+)(?:\\?.*|)$";
 
+    private static final String SEARCH_API_URL = "https://www.nicovideo.jp/search/%s?responseType=json";
+
+    private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0";
+
+    public static final String SEARCH_PREFIX = "nvsearch:";
     private static final Pattern trackUrlPattern = Pattern.compile(TRACK_URL_REGEX);
 
     private final HttpInterfaceManager httpInterfaceManager;
     private final AtomicBoolean loggedIn;
+    private final Boolean allowSearch;
 
     public NicoAudioSourceManager() {
-        this(null, null);
+        this(true);
+    }
+
+    public NicoAudioSourceManager(boolean allowSearch) {
+        this(null, null, allowSearch);
     }
 
     /**
      * @param email    Site account email
      * @param password Site account password
      */
-    public NicoAudioSourceManager(String email, String password) {
+    public NicoAudioSourceManager(String email, String password, boolean allowSearch) {
         httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
         loggedIn = new AtomicBoolean();
         // Log in at the start
         if (!DataFormatTools.isNullOrEmpty(email) && !DataFormatTools.isNullOrEmpty(password)) {
             logIn(email,password);
         }
+
+        this.allowSearch = allowSearch;
     }
 
     @Override
@@ -80,7 +94,49 @@ public class NicoAudioSourceManager implements AudioSourceManager, HttpConfigura
             return loadTrack(trackMatcher.group(1));
         }
 
+        if (reference.identifier.startsWith(SEARCH_PREFIX) && allowSearch) {
+            return loadSearch(reference.identifier.substring(SEARCH_PREFIX.length()));
+        }
+
         return null;
+    }
+
+    private AudioPlaylist loadSearch(String query) {
+        try (HttpInterface httpInterface = getHttpInterface()) {
+            HttpGet get = new HttpGet(buildSearchURI(query));
+            get.addHeader("user-agent", USER_AGENT);
+            try (CloseableHttpResponse response = httpInterface.execute(get)) {
+                HttpClientTools.assertSuccessWithContent(response, "search api response");
+
+                JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
+
+                List<AudioTrack> tracks = new ArrayList<>();
+
+                for (JsonBrowser item : json.get("data").get("response").get("$getSearchVideoV2").get("data").get("items").values()) {
+                    if (!json.isNull())
+                        tracks.add(extractTrack(item));
+                }
+
+                return BasicAudioPlaylist.createSearchResults(query, tracks);
+            }
+        } catch (IOException e) {
+            throw new FriendlyException("Error occurred when loading search results.", SUSPICIOUS, e);
+        }
+    }
+
+    private AudioTrack extractTrack(JsonBrowser json) {
+        String id = json.get("id").text();
+        AudioTrackInfo trackInfo = new AudioTrackInfo(
+                json.get("title").text(),
+                json.get("owner").get("name").text(),
+                json.get("duration").asLong(0) * 1000,
+                id,
+                false,
+                getWatchUrl(id),
+                json.get("thumbnail").get("nHdUrl").text()
+        );
+
+        return new NicoAudioTrack(trackInfo, this);
     }
 
     private AudioTrack loadTrack(String videoId) {
@@ -194,5 +250,9 @@ public class NicoAudioSourceManager implements AudioSourceManager, HttpConfigura
 
     private static String getWatchUrl(String videoId) {
         return "https://www.nicovideo.jp/watch/" + videoId;
+    }
+
+    private static String buildSearchURI(String query) {
+        return String.format(SEARCH_API_URL, URLEncoder.encode(query, StandardCharsets.UTF_8));
     }
 }

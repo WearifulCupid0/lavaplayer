@@ -7,8 +7,8 @@ import com.sedmelluq.lavaplayer.source.bilibili.BilibiliAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.clyp.ClypAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.iheart.iHeartAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.jamendo.JamendoAudioSourceManager;
-import com.sedmelluq.lavaplayer.source.jiosaavn.JioSaavnAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.mixcloud.MixcloudAudioSourceManager;
+import com.sedmelluq.lavaplayer.source.nico.NicoAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.ocremix.OcremixAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.odysee.OdyseeAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.reverbnation.ReverbnationAudioSourceManager;
@@ -45,7 +45,7 @@ public class NativeAudioSourceManagers {
     playerManager.registerSourceManager(new BilibiliAudioSourceManager(true));
     playerManager.registerSourceManager(new VimeoAudioSourceManager());
     playerManager.registerSourceManager(new iHeartAudioSourceManager(true, containerRegistry));
-    playerManager.registerSourceManager(new JioSaavnAudioSourceManager(true));
+    playerManager.registerSourceManager(new NicoAudioSourceManager());
     playerManager.registerSourceManager(SoundCloudAudioSourceManager.createDefault());
     playerManager.registerSourceManager(new SoundgasmAudioSourceManager());
     playerManager.registerSourceManager(new BandcampAudioSourceManager());

@@ -11,6 +11,7 @@ import com.sedmelluq.lavaplayer.source.deezer.DeezerAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.iheart.iHeartAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.jamendo.JamendoAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.mixcloud.MixcloudAudioSourceManager;
+import com.sedmelluq.lavaplayer.source.nico.NicoAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.ocremix.OcremixAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.odysee.OdyseeAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.reverbnation.ReverbnationAudioSourceManager;
@@ -26,6 +27,8 @@ import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import org.apache.http.client.config.RequestConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +38,7 @@ import java.util.function.Supplier;
 
 public class SourceManagerHealthCheck {
     private static final int TIMEOUT_SECONDS = Integer.getInteger("sm.timeout", 45);
+    private static final Logger log = LoggerFactory.getLogger(SourceManagerHealthCheck.class);
 
     public static void main(String[] args) {
         List<Case> cases = new ArrayList<>();
@@ -69,8 +73,11 @@ public class SourceManagerHealthCheck {
         cases.add(new Case("soundgasm", SoundgasmAudioSourceManager::new,
                 ""));
 
+        cases.add(new Case("nico", NicoAudioSourceManager::new,
+                "nvsearch:Harry Styles"));
+
         cases.add(new Case("streamable", StreamableAudioSourceManager::new,
-                "https://streamable.com/moo"));
+                "https://streamable.com/dk74g7"));
 
         cases.add(new Case("ocremix", OcremixAudioSourceManager::new,
                 "https://ocremix.org/remix/OCR04243"));
@@ -180,6 +187,7 @@ public class SourceManagerHealthCheck {
         @Override
         public void loadFailed(FriendlyException exception) {
             result = new Result("FAIL", exception.severity + ": " + exception.getMessage());
+            exception.printStackTrace();
         }
     }
 
