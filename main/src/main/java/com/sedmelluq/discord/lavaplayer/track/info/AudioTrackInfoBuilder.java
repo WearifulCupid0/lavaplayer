@@ -22,6 +22,7 @@ public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
   private String artworkUrl;
   private Boolean isStream;
   private Boolean explicit = null;
+  private String isrc = null;
 
   private AudioTrackInfoBuilder() {
 
@@ -56,6 +57,9 @@ public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
   public String getArtworkUrl() {
     return artworkUrl;
   }
+
+  @Override
+  public String getIsrc() { return isrc; }
 
   public AudioTrackInfoBuilder setTitle(String value) {
     title = DataFormatTools.defaultOnNull(value, title);
@@ -97,6 +101,11 @@ public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
     return this;
   }
 
+  public AudioTrackInfoBuilder setIsrc(String value) {
+    isrc = value;
+    return this;
+  }
+
 
   /**
    * @param provider The track info provider to apply to the builder.
@@ -112,7 +121,8 @@ public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
         .setLength(provider.getLength())
         .setIdentifier(provider.getIdentifier())
         .setUri(provider.getUri())
-        .setArtworkUrl(provider.getArtworkUrl());
+        .setArtworkUrl(provider.getArtworkUrl())
+        .setIsrc(provider.getIsrc());
   }
 
   /**
@@ -129,7 +139,8 @@ public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
         DataFormatTools.defaultOnNull(isStream, finalLength == DURATION_MS_UNKNOWN),
         uri,
         artworkUrl,
-        explicit
+        explicit,
+        isrc
     );
   }
 
@@ -172,7 +183,8 @@ public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
             .setIsStream(trackInfo.isStream)
             .setUri(trackInfo.uri)
             .setArtworkUrl(trackInfo.artworkUrl)
-            .setExplicit(trackInfo.explicit);
+            .setExplicit(trackInfo.explicit)
+            .setIsrc(trackInfo.isrc);
   }
 
   /**

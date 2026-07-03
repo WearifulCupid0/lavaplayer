@@ -26,6 +26,8 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -38,7 +40,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 public class OdyseeAudioSourceManager implements AudioSourceManager, HttpConfigurable {
   private static final Logger log = LoggerFactory.getLogger(OdyseeAudioSourceManager.class);
 
-  private static final String TRACK_URL_REGEX = "^(?:http://|https://|)(?:www\\.|)odysee\\.com/@([a-zA-Z0-9-_:]+)/([a-zA-Z0-9-_:]+)";
+  private static final String TRACK_URL_REGEX = "^(?:https?://)?(?:www\\.)?odysee\\.com/@(?<uploader>[^/?#]+)/(?<videoName>[^/?#]+)/*(?:[?#].*)?$";
   private static final String SEARCH_PREFIX = "odsearch:";
 
   private static final Pattern TRACK_URL_PATTERN = Pattern.compile(TRACK_URL_REGEX);
@@ -66,7 +68,7 @@ public class OdyseeAudioSourceManager implements AudioSourceManager, HttpConfigu
     Matcher trackMatcher = TRACK_URL_PATTERN.matcher(reference.identifier);
 
     if (trackMatcher.matches() && trackMatcher.groupCount() == 2) {
-      return loadTrack(trackMatcher.group(1), trackMatcher.group(2));
+      return loadTrack(decodeUrlPathSegment(trackMatcher.group("uploader")), decodeUrlPathSegment(trackMatcher.group("videoName")));
     }
 
     if (this.allowSearch) {
@@ -84,18 +86,28 @@ public class OdyseeAudioSourceManager implements AudioSourceManager, HttpConfigu
     try (HttpInterface httpInterface = getHttpInterface()) {
       HttpPost post = new HttpPost(OdyseeConstants.API_URL);
 
-      post.setEntity(new StringEntity(String.format(OdyseeConstants.RESOLVE_PAYLOAD, "lbry://@" + uploader + "/" + videoName), ContentType.APPLICATION_JSON));
+      String param = String.format("lbry://@%s/%s", uploader, videoName);
+
+      post.setEntity(new StringEntity(String.format(OdyseeConstants.RESOLVE_PAYLOAD, param), ContentType.APPLICATION_JSON));
 
       try (CloseableHttpResponse response = httpInterface.execute(post)) {
         HttpClientTools.assertSuccessWithContent(response, "video api response");
 
         JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
 
-        return extractTrackFromJson(json.get("result").get("lbry://@" + uploader + "/" + videoName));
+        return extractTrackFromJson(json.get("result").get(param));
       }
     } catch (IOException e) {
       throw new FriendlyException("Error occurred when extracting video info.", SUSPICIOUS, e);
     }
+  }
+
+  private static String decodeUrlPathSegment(String value) {
+    if (value == null) {
+      return null;
+    }
+
+    return URLDecoder.decode(value.replace("+", "%2B"), StandardCharsets.UTF_8);
   }
 
   private AudioTrack extractTrackFromJson(JsonBrowser json) throws IOException {
@@ -149,7 +161,7 @@ public class OdyseeAudioSourceManager implements AudioSourceManager, HttpConfigu
       urls.add(String.format("%s#%s", item.get("name").safeText(), item.get("claimId").safeText()));
     }
 
-    return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", loadTracksFromSearchResult(urls), null, true);
+    return BasicAudioPlaylist.createSearchResults(query, loadTracksFromSearchResult(urls));
   }
 
   private List<AudioTrack> loadTracksFromSearchResult(List<String> urls) {

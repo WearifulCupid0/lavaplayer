@@ -33,4 +33,6 @@ public interface AudioTrackInfoProvider {
    * @return Artwork URL, or <code>null</code> if this provider does not know it.
    */
   String getArtworkUrl();
+
+  String getIsrc();
 }

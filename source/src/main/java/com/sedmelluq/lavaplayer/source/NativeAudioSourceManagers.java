@@ -3,7 +3,6 @@ package com.sedmelluq.lavaplayer.source;
 import com.sedmelluq.discord.lavaplayer.container.MediaContainerRegistry;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.lavaplayer.source.bandcamp.BandcampAudioSourceManager;
-import com.sedmelluq.lavaplayer.source.bandlab.BandlabAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.bilibili.BilibiliAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.clyp.ClypAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.iheart.iHeartAudioSourceManager;
@@ -56,7 +55,6 @@ public class NativeAudioSourceManagers {
     playerManager.registerSourceManager(new TwitchStreamAudioSourceManager());
     playerManager.registerSourceManager(new ClypAudioSourceManager());
     playerManager.registerSourceManager(new ReverbnationAudioSourceManager());
-    playerManager.registerSourceManager(new BandlabAudioSourceManager());
     playerManager.registerSourceManager(new RumbleAudioSourceManager());
   }
 }

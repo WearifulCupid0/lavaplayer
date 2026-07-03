@@ -380,7 +380,7 @@ public class Mp3TrackProvider implements AudioTrackInfoProvider {
     }
 
     @Override
-    public String getISRC() {
+    public String getIsrc() {
         return getIdv3Tag(ISRC_TAG);
     }
 

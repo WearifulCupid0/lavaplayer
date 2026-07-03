@@ -15,6 +15,14 @@ public class BasicAudioPlaylist implements AudioPlaylist {
   private final AudioTrack selectedTrack;
   private final boolean isSearchResult;
 
+  public static AudioPlaylist createSearchResults(String query, List<AudioTrack> tracks) {
+    return createSearchResults(query, tracks, null);
+  }
+
+  public static AudioPlaylist createSearchResults(String query, List<AudioTrack> tracks, AudioTrack selectedTrack) {
+      return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, selectedTrack, true);
+  }
+
   /**
    * @param name Name of the playlist
    * @param creator Creator of the playlist

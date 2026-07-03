@@ -309,7 +309,7 @@ public class DefaultAudioPlayerManager implements AudioPlayerManager {
 
     AudioTrackInfo trackInfo = new AudioTrackInfo(input.readUTF(), input.readUTF(), input.readLong(), input.readUTF(),
             input.readBoolean(), version >= 2 ? DataFormatTools.readNullableText(input) : null,
-            DataFormatTools.readNullableText(input), DataFormatTools.readNullableBoolean(input));
+            DataFormatTools.readNullableText(input), DataFormatTools.readNullableBoolean(input), DataFormatTools.readNullableText(input));
     AudioTrack track = decodeTrackDetails(trackInfo, input);
     long position = input.readLong();
 

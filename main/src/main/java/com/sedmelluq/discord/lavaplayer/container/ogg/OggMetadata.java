@@ -58,7 +58,7 @@ public class OggMetadata implements AudioTrackInfoProvider {
     }
 
     @Override
-    public String getISRC() {
+    public String getIsrc() {
         return tags.get(ISRC_FIELD);
     }
 }

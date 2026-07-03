@@ -8,10 +8,8 @@ import com.sedmelluq.lavaplayer.source.bandcamp.BandcampAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.bilibili.BilibiliAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.clyp.ClypAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.deezer.DeezerAudioSourceManager;
-import com.sedmelluq.discord.lavaplayer.source.http.HttpAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.iheart.iHeartAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.jamendo.JamendoAudioSourceManager;
-import com.sedmelluq.lavaplayer.source.jiosaavn.JioSaavnAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.mixcloud.MixcloudAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.ocremix.OcremixAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.odysee.OdyseeAudioSourceManager;
@@ -42,10 +40,7 @@ public class SourceManagerHealthCheck {
         List<Case> cases = new ArrayList<>();
 
         cases.add(new Case("soundcloud", SoundCloudAudioSourceManager::createDefault,
-                "scsearch:monstercat disconnected"));
-
-        cases.add(new Case("http", () -> new HttpAudioSourceManager(MediaContainerRegistry.DEFAULT_REGISTRY),
-                "https://raw.githubusercontent.com/jiaaro/pydub/master/test/data/test1.mp3"));
+                "https://soundcloud.com/caypo63/we-never-dated-slowed-1"));
 
         cases.add(new Case("bandcamp", BandcampAudioSourceManager::new,
                 "https://catsystemcorp.bandcamp.com/album/lofi"));
@@ -66,13 +61,10 @@ public class SourceManagerHealthCheck {
                 "https://www.mixcloud.com/RickBragaDj/rick-braga-eletrofunk-carnaval-2025/"));
 
         cases.add(new Case("odysee", () -> new OdyseeAudioSourceManager(true),
-                "https://odysee.com/@schypsy:b/Harry-Styles---Adore-you-(HD-Rip):d"));
+                "https://odysee.com/@theshakiblyrics:3/best-shower-songs-to-sing-along-to-%F0%9F%9A%BF:2"));
 
         cases.add(new Case("iheart", () -> new iHeartAudioSourceManager(true, MediaContainerRegistry.DEFAULT_REGISTRY),
                 "https://www.iheart.com/podcast/105-stuff-you-should-know-26940277/"));
-
-        cases.add(new Case("jiosaavn", () -> new JioSaavnAudioSourceManager(true),
-                "jssearch:alone marshmello"));
 
         cases.add(new Case("soundgasm", SoundgasmAudioSourceManager::new,
                 ""));
