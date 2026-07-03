@@ -270,7 +270,7 @@ public class DefaultAudioPlayerManager implements AudioPlayerManager {
     };
   }
 
-  private void dispatchItemLoadFailure(String identifier, AudioLoadResultHandler resultHandler, Throwable throwable) {
+  public void dispatchItemLoadFailure(String identifier, AudioLoadResultHandler resultHandler, Throwable throwable) {
     FriendlyException exception = ExceptionTools.wrapUnfriendlyExceptions("Something went wrong when looking up the track", FAULT, throwable);
     ExceptionTools.log(log, exception, "loading item " + identifier);
 
@@ -462,7 +462,7 @@ public class DefaultAudioPlayerManager implements AudioPlayerManager {
     trackInfoExecutorService.setMaximumPoolSize(poolSize);
   }
 
-  private boolean checkSourcesForItem(AudioReference reference, AudioLoadResultHandler resultHandler, boolean[] reported) {
+  public boolean checkSourcesForItem(AudioReference reference, AudioLoadResultHandler resultHandler, boolean[] reported) {
     AudioReference currentReference = reference;
 
     for (int redirects = 0; redirects < MAXIMUM_LOAD_REDIRECTS && currentReference.identifier != null; redirects++) {

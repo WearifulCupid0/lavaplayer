@@ -4,17 +4,17 @@ plugins {
 }
 
 base {
-    archivesName.set("lavaplayer-ext-third-party-sources")
+    archivesName.set("lavaplayer-ext-redis-cache")
 }
 
-version = libs.versions.lavaplayer.ext.third.party.sources.get()
+version = libs.versions.lavaplayer.ext.redis.cache.get()
 
 dependencies {
     compileOnly(project(":main"))
 
-    implementation(libs.commons.io)
+    implementation(libs.lettuce)
     implementation(libs.slf4j)
-    implementation(libs.jsoup)
+    implementation(libs.commons.io)
 }
 
 publishing {

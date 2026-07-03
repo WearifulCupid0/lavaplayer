@@ -13,7 +13,8 @@ include(
     ":stream-merger",
     ":test-samples",
     ":extensions:third-party-sources",
-    ":extensions:format-xm"
+    ":extensions:format-xm",
+    ":extensions:redis-cache"
 )
 
 project(":extensions").name = "extensions-project"
@@ -62,6 +63,7 @@ fun VersionCatalogBuilder.versions() {
     version("logback", "1.1.8")
     version("ibxm-fork", "a75")
     version("jaad", "0.1.3")
+    version("lettuce", "6.7.1.RELEASE")
 }
 
 fun VersionCatalogBuilder.plugins() {
@@ -100,12 +102,14 @@ fun VersionCatalogBuilder.modules() {
     version("lavaplayer-stream-merger", "0.1.0")
     version("lavaplayer-ext-format-xm", "0.1.0")
     version("lavaplayer-ext-third-party-sources", "0.1.8")
+    version("lavaplayer-ext-redis-cache", "0.1.0")
     version("lavaplayer-source", "0.1.1")
 }
 
 fun VersionCatalogBuilder.others() {
     library("logback-classic", "ch.qos.logback", "logback-classic").versionRef("logback")
     library("ibxm-fork", "com.github.walkyst", "ibxm-fork").versionRef("ibxm-fork")
+    library("lettuce", "io.lettuce", "lettuce-core").versionRef("lettuce")
 }
 
 fun VersionCatalogBuilder.natives() {
