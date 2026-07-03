@@ -1,6 +1,7 @@
 package com.sedmelluq.lavaplayer.source.streamable;
 
 import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack;
+import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.PersistentHttpStream;
@@ -52,13 +53,12 @@ public class StreamableAudioTrack extends DelegatedAudioTrack {
     }
 
     private String loadPlaybackUrl(HttpInterface httpInterface) throws IOException {
-        try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(trackInfo.identifier))) {
+        try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(StreamableAudioSourceManager.API_URL + trackInfo.identifier))) {
             HttpClientTools.assertSuccessWithContent(response, "video page");
 
-            String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
-            Document document = Jsoup.parse(html);
+            JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
             
-            return document.selectFirst("meta[property=og:video:secure_url]").attr("content");
+            return json.get("files").get("mp4").get("url").text();
         }
     }
 
