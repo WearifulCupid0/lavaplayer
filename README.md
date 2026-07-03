@@ -1,28 +1,38 @@
 # LavaPlayer Fork
 
-A maintained personal fork of [`sedmelluq/lavaplayer`](https://github.com/sedmelluq/lavaplayer), focused on Discord music bots and custom audio source managers.
+A maintained personal fork of [`sedmelluq/lavaplayer`](https://github.com/sedmelluq/lavaplayer), focused on Discord music bots, modular source managers, and optional extensions such as Redis-based load result caching.
 
 LavaPlayer loads audio from supported sources, decodes or passes through audio when possible, and provides Opus frames that can be sent to Discord voice connections.
 
 This fork is public, but it is primarily maintained for the author's own bot and use cases. API compatibility with the original LavaPlayer or with other forks is not guaranteed.
 
+## Important module note
+
+The main `lavaplayer` artifact intentionally includes only the core player plus the two basic source managers:
+
+- `HttpAudioSourceManager`
+- `LocalAudioSourceManager`
+
+External platform source managers such as SoundCloud, Bandcamp, Vimeo, Twitch, TuneIn, Odysee, Bilibili, Clyp, ReverbNation and similar sources are **not bundled in the main artifact**. To use those sources, add the `lavaplayer-source-module` artifact and register them from `NativeAudioSourceManagers`.
+
 ## Highlights
 
 - Java 11 compatible.
 - Gradle multi-module project.
+- Core artifact kept lightweight: HTTP and local files only.
+- External music/video/radio source managers available through a separate source module.
 - Built-in support for common audio containers such as MP3, FLAC, WAV, MP4/M4A, Matroska/WebM, OGG, AAC, M3U and PLS.
-- Built-in remote source managers for music, video and radio sources.
 - Optional Redis-based load result cache extension.
 - JitPack-friendly build.
 
 ## Important notes
 
 - YouTube support is not bundled in this fork.
-- Some source managers depend on external websites and can break when those websites change.
+- External source managers depend on third-party websites and can break when those websites change.
 - This project is not affiliated with the original LavaPlayer project, Lavalink, Discord, or any supported audio platform.
-- For production bots, always apply your own queue limits, request cooldowns, playlist limits and source restrictions.
+- For public bots, always apply your own queue limits, request cooldowns, playlist limits and source restrictions.
 
-## Installation
+## Installation with JitPack
 
 This repository is intended to be consumed through [JitPack](https://jitpack.io).
 
@@ -93,35 +103,33 @@ Common modules:
 
 | Artifact | Description |
 |---|---|
-| `lavaplayer` | Main LavaPlayer library. |
+| `lavaplayer` | Main LavaPlayer library. Includes core playback, HTTP source and local file source. |
 | `lava-common` | Shared/common utilities used by the project. |
-| `lavaplayer-source-module` | Source-related module and source manager tooling. |
+| `lavaplayer-source-module` | Optional external source managers such as SoundCloud, Bandcamp, Vimeo, Twitch, TuneIn, Odysee, Bilibili, Clyp and others. |
 | `lavaplayer-stream-merger` | Stream merger module. |
 | `lavaplayer-ext-format-xm` | Optional XM format extension. |
-| `lavaplayer-ext-third-party-sources` | Optional third-party source extension. |
+| `lavaplayer-ext-third-party-sources` | Optional third-party/resolver source extension. |
 | `lavaplayer-ext-redis-cache` | Optional Redis cache extension. |
 
-Example with the Redis cache extension:
+## Basic usage: core only
 
-```kotlin
-dependencies {
-    implementation("com.github.WearifulCupid0.lavaplayer:lavaplayer:VERSION")
-    implementation("com.github.WearifulCupid0.lavaplayer:lavaplayer-ext-redis-cache:VERSION")
-}
-```
-
-## Basic usage
-
-Create a single `AudioPlayerManager` for your application and register the sources you want to use.
+Create a single `AudioPlayerManager` for your application and register the built-in core sources.
 
 ```java
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
-import com.sedmelluq.lavaplayer.source.NativeAudioSourceManagers;
+import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
 
 AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
 
-NativeAudioSourceManagers.registerNativeSources(playerManager);
+// In the main artifact, this registers HTTP and local-file support only.
+AudioSourceManagers.registerRemoteSources(playerManager);
+```
+
+You can also register them explicitly:
+
+```java
+AudioSourceManagers.registerHttpSource(playerManager);
 AudioSourceManagers.registerLocalSource(playerManager);
 ```
 
@@ -132,6 +140,37 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 
 AudioPlayer player = playerManager.createPlayer();
 ```
+
+## Using external source managers
+
+To use platform sources such as SoundCloud, Bandcamp, Vimeo, Twitch, TuneIn, Odysee, Bilibili, Clyp or ReverbNation, install the source module too.
+
+```kotlin
+dependencies {
+    implementation("com.github.WearifulCupid0.lavaplayer:lavaplayer:VERSION")
+    implementation("com.github.WearifulCupid0.lavaplayer:lavaplayer-source-module:VERSION")
+}
+```
+
+Then register the native external sources:
+
+```java
+import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
+import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
+import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
+import com.sedmelluq.lavaplayer.source.NativeAudioSourceManagers;
+
+AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
+
+// Core sources from the main artifact.
+AudioSourceManagers.registerHttpSource(playerManager);
+AudioSourceManagers.registerLocalSource(playerManager);
+
+// External source managers from lavaplayer-source-module.
+NativeAudioSourceManagers.registerNativeSources(playerManager);
+```
+
+For public bots, consider registering only the source managers you actually want to expose instead of registering every available source.
 
 ## Loading tracks
 
@@ -246,21 +285,15 @@ Recommended cache behavior:
 
 ## Source managers
 
-Remote sources are registered through:
+The source manager layout is intentionally modular:
 
-```java
-NativeAudioSourceManagers.registerNativeSources(playerManager);
-```
+| Location | Source managers                                                                                                                                                                                |
+|---|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `lavaplayer` main artifact | HTTP URLs and local files only.                                                                                                                                                                |
+| `lavaplayer-source-module` | External native sources such as SoundCloud, Bandcamp, Vimeo, Twitch, TuneIn, Clyp, ReverbNation, Streamable, Odysee, Rumble, Bilibili, Jamendo, Mixcloud, iHeart, Nico, Ocremix and Soundgasm. |
+| `lavaplayer-ext-third-party-sources` | Optional resolver/third-party sources that doesn't play audio natively.                                                                                                                        |
 
-Local files are registered separately:
-
-```java
-AudioSourceManagers.registerLocalSource(playerManager);
-```
-
-The current built-in source set may include sources such as SoundCloud, Bandcamp, Vimeo, Twitch streams, TuneIn, Clyp, ReverbNation, Streamable, Odysee, Rumble, Bilibili, Jamendo, Mixcloud, iHeart, JioSaavn and HTTP URLs.
-
-Some sources are more stable than others. For public bots, consider registering only the source managers you actually want to expose.
+This means installing only `lavaplayer` gives you a small core. Install `lavaplayer-source-module` when you want the external native source managers.
 
 ## Performance recommendations for Discord bots
 
@@ -326,6 +359,12 @@ Consumers can use:
 
 ```kotlin
 implementation("com.github.WearifulCupid0.lavaplayer:lavaplayer:vX.Y.Z")
+```
+
+For external sources:
+
+```kotlin
+implementation("com.github.WearifulCupid0.lavaplayer:lavaplayer-source-module:vX.Y.Z")
 ```
 
 ## License

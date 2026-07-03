@@ -9,7 +9,7 @@ rootProject.name = "lavaplayer"
 include(
     ":common",
     ":main",
-    ":source",
+    ":source-module",
     ":stream-merger",
     ":test-samples",
     ":extensions:third-party-sources",
