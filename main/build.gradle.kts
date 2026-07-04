@@ -3,7 +3,7 @@ plugins {
 }
 
 base {
-  archivesName.set("lavaplayer")
+  archivesName.set("lavaplayer-main")
 }
 
 dependencies {
