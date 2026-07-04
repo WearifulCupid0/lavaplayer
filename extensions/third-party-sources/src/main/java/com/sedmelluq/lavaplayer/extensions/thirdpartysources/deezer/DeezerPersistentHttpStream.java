@@ -1,4 +1,4 @@
-package com.sedmelluq.lavaplayer.source.deezer;
+package com.sedmelluq.lavaplayer.extensions.thirdpartysources.deezer;
 
 import com.sedmelluq.discord.lavaplayer.tools.io.ByteBufferInputStream;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;

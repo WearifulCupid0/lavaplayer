@@ -297,6 +297,12 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
         if (!artworkJson.get("height").isNull()) {
             height = artworkJson.get("height").text();
         }
+
+        String isrc = attributes.get("isrc").text();
+        if (isrc != null && !this.isrcCache.containsKey(identifier)) {
+            this.isrcCache.put(identifier, isrc);
+        }
+
         AudioTrackInfo info = new AudioTrackInfo(
             attributes.get("name").safeText(),
             attributes.get("artistName").safeText(),
@@ -305,15 +311,11 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
             false,
             attributes.get("url").text(),
             attributes.get("artwork").get("url").text().replace("{w}x{h}", width + "x" + height),
-            attributes.get("contentRating").safeText().equals("explicit")
+            attributes.get("contentRating").safeText().equals("explicit"),
+            isrc
         );
 
-        String isrc = attributes.get("isrc").text();
-        if (isrc != null && !this.isrcCache.containsKey(identifier)) {
-            this.isrcCache.put(identifier, isrc);
-        }
-
-        return new ThirdPartyAudioTrack(info, isrc, this);
+        return new ThirdPartyAudioTrack(info, this);
     }
 
     private JsonBrowser requestApi(String uri) {

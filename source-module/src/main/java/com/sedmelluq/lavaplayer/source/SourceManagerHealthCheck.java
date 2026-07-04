@@ -7,7 +7,6 @@ import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.lavaplayer.source.bandcamp.BandcampAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.bilibili.BilibiliAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.clyp.ClypAudioSourceManager;
-import com.sedmelluq.lavaplayer.source.deezer.DeezerAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.iheart.iHeartAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.jamendo.JamendoAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.mixcloud.MixcloudAudioSourceManager;
@@ -54,9 +53,6 @@ public class SourceManagerHealthCheck {
 
         cases.add(new Case("bilibili", () -> new BilibiliAudioSourceManager(true),
                 "https://www.bilibili.com/video/BV1GJ411x7h7"));
-
-        cases.add(new Case("deezer", () -> new DeezerAudioSourceManager(null, true),
-                "https://www.deezer.com/track/3135556"));
 
         cases.add(new Case("jamendo", () -> new JamendoAudioSourceManager(true),
                 "https://www.jamendo.com/track/1889981"));

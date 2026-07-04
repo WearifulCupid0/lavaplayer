@@ -30,16 +30,14 @@ public class ThirdPartyAudioTrack extends DelegatedAudioTrack {
 	};
 
 	protected final ThirdPartyAudioSourceManager sourceManager;
-	protected String isrc;
 
-	public ThirdPartyAudioTrack(AudioTrackInfo trackInfo, String isrc, ThirdPartyAudioSourceManager sourceManager) {
+	public ThirdPartyAudioTrack(AudioTrackInfo trackInfo, ThirdPartyAudioSourceManager sourceManager) {
 		super(trackInfo);
-		this.isrc = isrc;
 		this.sourceManager = sourceManager;
 	}
 
 	public String getISRC() {
-		return this.isrc;
+		return this.trackInfo.isrc;
 	}
 
 	private String getTrackTitle() {
@@ -56,13 +54,14 @@ public class ThirdPartyAudioTrack extends DelegatedAudioTrack {
 
 		for(String provider : this.providers) {
 			if(provider.contains(ISRC_PATTERN)) {
-				if(this.isrc != null) {
-					provider = provider.replace(ISRC_PATTERN, this.isrc.replaceAll("-", ""));
+				String isrc = this.getISRC();
+				if(isrc != null) {
+					provider = provider.replace(ISRC_PATTERN, isrc.replaceAll("-", ""));
 				} else {
                     if(this.sourceManager.isFetchIsrcEnabled()) {
-                        this.isrc = this.sourceManager.fetchIsrc(this);
-                        if(this.isrc != null) {
-                            provider = provider.replace(ISRC_PATTERN, this.isrc.replaceAll("-", ""));
+                        isrc = this.sourceManager.fetchIsrc(this);
+                        if(isrc != null) {
+                            provider = provider.replace(ISRC_PATTERN, isrc.replaceAll("-", ""));
                         }
                     }
 
@@ -106,7 +105,7 @@ public class ThirdPartyAudioTrack extends DelegatedAudioTrack {
 		}
 
 		if (track != null) {
-			processDelegate((InternalAudioTrack) track, executor);
+			processDelegate((InternalAudioTrack) track);
 			return;
 		}
 
@@ -143,6 +142,6 @@ public class ThirdPartyAudioTrack extends DelegatedAudioTrack {
 
 	@Override
 	protected AudioTrack makeShallowClone() {
-		return new ThirdPartyAudioTrack(this.trackInfo, this.isrc, this.sourceManager);
+		return new ThirdPartyAudioTrack(this.trackInfo, this.sourceManager);
 	}
 }

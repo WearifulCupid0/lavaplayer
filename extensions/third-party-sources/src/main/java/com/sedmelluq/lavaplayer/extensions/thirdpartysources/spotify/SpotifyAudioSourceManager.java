@@ -322,6 +322,12 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
         ? trackInfo.get("uri").safeText().replace("spotify:local:", "")
         : trackInfo.get("id").safeText();
         List<JsonBrowser> images = albumInfo.get("images").values();
+
+        String isrc = trackInfo.get("external_ids").get("isrc").text();
+        if (isrc != null && !this.isrcCache.containsKey(identifier)) {
+            this.isrcCache.put(identifier, isrc);
+        }
+
         AudioTrackInfo info = new AudioTrackInfo(
             trackInfo.get("name").safeText(),
             trackInfo.get("artists").values().size() > 0
@@ -334,15 +340,11 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
             ? TRACK_URL + identifier
             : null,
             images.get(images.size() - 1).get("url").text(),
-            trackInfo.get("explicit").asBoolean(false)
+            trackInfo.get("explicit").asBoolean(false),
+            isrc
         );
 
-        String isrc = trackInfo.get("external_ids").get("isrc").text();
-        if (isrc != null && !this.isrcCache.containsKey(identifier)) {
-            this.isrcCache.put(identifier, isrc);
-        }
-
-        return new ThirdPartyAudioTrack(info, isrc, this);
+        return new ThirdPartyAudioTrack(info, this);
     }
 
     private JsonBrowser requestApi(String uri) {

@@ -1,7 +1,7 @@
-package com.sedmelluq.lavaplayer.source.deezer;
+package com.sedmelluq.lavaplayer.extensions.thirdpartysources.deezer;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
@@ -32,7 +32,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigurable {
+public class DeezerAudioSourceManager implements ThirdPartyAudioSourceManager, HttpConfigurable {
     private static final String DEEZER_URL_REGEX = "^(?:https://|http://|)(?:www\\.|)deezer\\.com/(?:[a-zA-Z]{2}/|)(track|album|playlist|artist)/(\\d+)";
     private static final String SHARE_URL = "https://deezer.page.link/";
     private static final Pattern deezerUrlPattern = Pattern.compile(DEEZER_URL_REGEX);
@@ -46,16 +46,19 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
 
     public final String masterKey;
 
+    public DeezerAudioSourceManager() { this(null, true); }
+    public DeezerAudioSourceManager(boolean allowSearch) { this(null, allowSearch); }
     public DeezerAudioSourceManager(String masterKey) {
         this(masterKey, true);
     }
     public DeezerAudioSourceManager(String masterKey, boolean allowSearch) {
-        if (masterKey == null || masterKey.isEmpty()) {
-            throw new NullPointerException("Deezer masterKey can't be null");
-        }
         this.masterKey = masterKey;
         this.allowSearch = allowSearch;
         httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
+    }
+
+    public boolean canPlayNative() {
+        return this.masterKey != null && !this.masterKey.isEmpty();
     }
 
     @Override
@@ -266,7 +269,8 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
                 false,
                 trackInfo.get("link").text(),
                 trackInfo.get("album").get("cover_xl").text(),
-                trackInfo.get("explicit_lyrics").asBoolean(false)
+                trackInfo.get("explicit_lyrics").asBoolean(false),
+                trackInfo.get("isrc").text()
         );
 
         return new DeezerAudioTrack(info, this);
@@ -336,5 +340,6 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
         if (response.get("error").isList()) return false;
         return !response.get("error").get("VALID_TOKEN_REQUIRED").isNull();
     }
+
 
 }

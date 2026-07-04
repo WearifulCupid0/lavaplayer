@@ -7,7 +7,6 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.PersistentHttpStream;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
-import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +26,7 @@ public class YandexMusicAudioTrack extends ThirdPartyAudioTrack {
    * @param sourceManager Source manager which was used to find this track
    */
   public YandexMusicAudioTrack(AudioTrackInfo trackInfo, YandexMusicAudioSourceManager sourceManager) {
-    super(trackInfo, null, sourceManager);
+    super(trackInfo, sourceManager);
     this.sourceManager = sourceManager;
   }
 
@@ -38,7 +37,7 @@ public class YandexMusicAudioTrack extends ThirdPartyAudioTrack {
       if (trackMediaUrl != null) {
         log.debug("Starting Yandex Music track from URL: {}", trackMediaUrl);
         try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(trackMediaUrl), null)) {
-          processDelegate(new Mp3AudioTrack(trackInfo, stream), localExecutor);
+          processDelegate(new Mp3AudioTrack(trackInfo, stream));
         }
       } else {
         super.process(localExecutor);

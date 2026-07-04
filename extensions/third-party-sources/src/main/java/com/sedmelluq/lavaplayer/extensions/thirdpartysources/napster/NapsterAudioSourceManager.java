@@ -289,6 +289,12 @@ public class NapsterAudioSourceManager extends ThirdPartyAudioSourceManager impl
     private AudioTrack buildTrack(JsonBrowser trackInfo) {
         String identifier = trackInfo.get("id").text();
         String albumId = trackInfo.get("albumId").text();
+
+        String isrc = trackInfo.get("isrc").text();
+        if (isrc != null && !this.isrcCache.containsKey(identifier)) {
+            this.isrcCache.put(identifier, isrc);
+        }
+
         AudioTrackInfo info = new AudioTrackInfo(
             trackInfo.get("name").safeText(),
             trackInfo.get("artistName").safeText(),
@@ -297,15 +303,11 @@ public class NapsterAudioSourceManager extends ThirdPartyAudioSourceManager impl
             false,
             TRACK_URL + identifier,
             albumId != null ? String.format(CDN_URL, albumId) : null,
-            trackInfo.get("isExplicit").asBoolean(false)
+            trackInfo.get("isExplicit").asBoolean(false),
+            isrc
         );
 
-        String isrc = trackInfo.get("isrc").text();
-        if (isrc != null && !this.isrcCache.containsKey(identifier)) {
-            this.isrcCache.put(identifier, isrc);
-        }
-
-        return new ThirdPartyAudioTrack(info, isrc, this);
+        return new ThirdPartyAudioTrack(info, this);
     }
 
     private JsonBrowser requestApi(String uri) {

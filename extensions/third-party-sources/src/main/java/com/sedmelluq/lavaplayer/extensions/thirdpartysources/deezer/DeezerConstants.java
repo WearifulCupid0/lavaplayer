@@ -1,4 +1,4 @@
-package com.sedmelluq.lavaplayer.source.deezer;
+package com.sedmelluq.lavaplayer.extensions.thirdpartysources.deezer;
 
 public class DeezerConstants {
     static final String API_URL = "https://api.deezer.com";

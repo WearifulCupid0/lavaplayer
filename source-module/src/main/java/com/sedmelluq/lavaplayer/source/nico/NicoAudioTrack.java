@@ -66,7 +66,7 @@ public class NicoAudioTrack extends DelegatedAudioTrack {
                 heartbeatIntervalMs,
                 initialHeartbeatPayload
             )) {
-                processDelegate(new MpegAudioTrack(trackInfo, stream), localExecutor);
+                processDelegate(new MpegAudioTrack(trackInfo, stream));
             }
         }
     }

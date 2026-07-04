@@ -1,4 +1,4 @@
-package com.sedmelluq.lavaplayer.source.deezer;
+package com.sedmelluq.lavaplayer.extensions.thirdpartysources.deezer;
 
 import com.sedmelluq.discord.lavaplayer.container.mp3.Mp3AudioTrack;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
@@ -8,6 +8,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioTrack;
 import org.apache.commons.codec.binary.Hex;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -23,9 +24,12 @@ public class DeezerAudioTrack extends DelegatedAudioTrack {
     @Override
     public void process(LocalAudioTrackExecutor executor) throws Exception {
         try (HttpInterface httpInterface = this.sourceManager.getHttpInterface()) {
-            try (DeezerPersistentHttpStream stream = new DeezerPersistentHttpStream(httpInterface, this.sourceManager.getMediaURL(this.trackInfo.identifier), this.trackInfo.length, this.getTrackDecryptionKey())) {
-                processDelegate(new Mp3AudioTrack(this.trackInfo, stream), executor);
+            if (this.sourceManager.canPlayNative()) {
+                try (DeezerPersistentHttpStream stream = new DeezerPersistentHttpStream(httpInterface, this.sourceManager.getMediaURL(this.trackInfo.identifier), this.trackInfo.length, this.getTrackDecryptionKey())) {
+                    processDelegate(new Mp3AudioTrack(this.trackInfo, stream));
+                }
             }
+            processDelegate(new ThirdPartyAudioTrack(trackInfo, this.sourceManager));
         }
     }
 

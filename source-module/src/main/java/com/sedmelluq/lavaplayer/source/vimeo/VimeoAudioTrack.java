@@ -54,12 +54,11 @@ public class VimeoAudioTrack extends DelegatedAudioTrack {
 
             if (playbackFormat.isHls) {
                 processDelegate(
-                    new HlsStreamTrack(trackInfo, extractHlsAudioPlaylistUrl(httpInterface, playbackFormat.url), sourceManager.getHttpInterfaceManager(), true),
-                    localExecutor
+                    new HlsStreamTrack(trackInfo, extractHlsAudioPlaylistUrl(httpInterface, playbackFormat.url), sourceManager.getHttpInterfaceManager(), true)
                 );
             } else {
                 try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(playbackFormat.url), null)) {
-                    processDelegate(new MpegAudioTrack(trackInfo, stream), localExecutor);
+                    processDelegate(new MpegAudioTrack(trackInfo, stream));
                 }
             }
         }

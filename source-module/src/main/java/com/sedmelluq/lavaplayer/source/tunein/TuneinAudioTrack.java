@@ -59,7 +59,7 @@ public class TuneinAudioTrack extends DelegatedAudioTrack {
                 );
             }
 
-            processDelegate((InternalAudioTrack) delegate, localExecutor);
+            processDelegate((InternalAudioTrack) delegate);
         }
     }
 

@@ -283,6 +283,12 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
         JsonBrowser artist = trackInfo.get("artist").isNull()
         ? trackInfo.get("artists").index(0)
         : trackInfo.get("artist");
+
+        String isrc = trackInfo.get("isrc").text();
+        if (isrc != null && !this.isrcCache.containsKey(identifier)) {
+            this.isrcCache.put(identifier, isrc);
+        }
+
         AudioTrackInfo info = new AudioTrackInfo(
             trackInfo.get("title").safeText(),
             artist.get("name").safeText(),
@@ -291,15 +297,11 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
             false,
             TRACK_URL + identifier,
             artworkId != null ? String.format(CDN_URL, artworkId.replaceAll("-", "/")) : imageUrl,
-            trackInfo.get("explicit").asBoolean(false)
+            trackInfo.get("explicit").asBoolean(false),
+            isrc
         );
 
-        String isrc = trackInfo.get("isrc").text();
-        if (isrc != null && !this.isrcCache.containsKey(identifier)) {
-            this.isrcCache.put(identifier, isrc);
-        }
-
-        return new ThirdPartyAudioTrack(info, isrc, this);
+        return new ThirdPartyAudioTrack(info, this);
     }
 
     private JsonBrowser requestApi(String uri) {

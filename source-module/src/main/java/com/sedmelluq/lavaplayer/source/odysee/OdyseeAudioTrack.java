@@ -48,7 +48,7 @@ public class OdyseeAudioTrack extends DelegatedAudioTrack {
       log.debug("Starting Odysee track from URL: {}", playbackUrl);
 
       try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(playbackUrl), null)) {
-        processDelegate(new MpegAudioTrack(trackInfo, stream), executor);
+        processDelegate(new MpegAudioTrack(trackInfo, stream));
       }
     } catch (IOException e) {
       throw new FriendlyException("Loading track from Odysee failed.", SUSPICIOUS, e);

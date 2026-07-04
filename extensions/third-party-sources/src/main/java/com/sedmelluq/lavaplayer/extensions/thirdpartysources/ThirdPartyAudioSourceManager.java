@@ -38,13 +38,12 @@ public abstract class ThirdPartyAudioSourceManager implements AudioSourceManager
 	}
 
 	@Override
-	public void encodeTrack(AudioTrack track, DataOutput output) throws IOException{
-		ThirdPartyAudioTrack audioTrack = ((ThirdPartyAudioTrack) track);
-		DataFormatTools.writeNullableText(output, audioTrack.getISRC());
+	public void encodeTrack(AudioTrack track, DataOutput output) throws IOException {
+
 	}
 
 	@Override
 	public AudioTrack decodeTrack(AudioTrackInfo trackInfo, DataInput input) throws IOException{
-		return new ThirdPartyAudioTrack(trackInfo, DataFormatTools.readNullableText(input), this);
+		return new ThirdPartyAudioTrack(trackInfo, this);
 	}
 }

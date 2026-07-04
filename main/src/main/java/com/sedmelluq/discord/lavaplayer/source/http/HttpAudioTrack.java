@@ -50,7 +50,7 @@ public class HttpAudioTrack extends DelegatedAudioTrack {
       log.debug("Starting http track from URL: {}", trackInfo.identifier);
 
       try (PersistentHttpStream inputStream = new PersistentHttpStream(httpInterface, new URI(trackInfo.identifier), Units.CONTENT_LENGTH_UNKNOWN)) {
-        processDelegate((InternalAudioTrack) containerTrackFactory.createTrack(trackInfo, inputStream), localExecutor);
+        processDelegate((InternalAudioTrack) containerTrackFactory.createTrack(trackInfo, inputStream));
       }
     }
   }

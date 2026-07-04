@@ -42,7 +42,7 @@ public class LocalAudioTrack extends DelegatedAudioTrack {
   @Override
   public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
     try (LocalSeekableInputStream inputStream = new LocalSeekableInputStream(file)) {
-      processDelegate((InternalAudioTrack) containerTrackFactory.createTrack(trackInfo, inputStream), localExecutor);
+      processDelegate((InternalAudioTrack) containerTrackFactory.createTrack(trackInfo, inputStream));
     }
   }
 

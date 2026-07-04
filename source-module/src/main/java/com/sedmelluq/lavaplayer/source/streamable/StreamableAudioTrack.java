@@ -9,17 +9,13 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.jsoup.nodes.Document;
-import org.jsoup.Jsoup;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 
 /**
  * Audio track that handles processing Streamable tracks.
@@ -47,7 +43,7 @@ public class StreamableAudioTrack extends DelegatedAudioTrack {
             log.debug("Starting Streamable track from URL: {}", playbackUrl);
 
             try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(playbackUrl), null)) {
-                processDelegate(new MpegAudioTrack(trackInfo, stream), localExecutor);
+                processDelegate(new MpegAudioTrack(trackInfo, stream));
             }
         }
     }
