@@ -46,7 +46,7 @@ public class BilibiliAudioTrack extends DelegatedAudioTrack {
             log.debug("Starting BiliBili track from URL: {}", playbackUrl);
 
             try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(playbackUrl), Units.CONTENT_LENGTH_UNKNOWN)) {
-                processDelegate(new MpegAudioTrack(trackInfo, stream));
+                processDelegate(new MpegAudioTrack(trackInfo, stream), localExecutor);
             }
         }
     }

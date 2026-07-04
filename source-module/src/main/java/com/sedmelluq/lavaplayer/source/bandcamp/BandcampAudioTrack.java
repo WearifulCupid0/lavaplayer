@@ -46,7 +46,7 @@ public class BandcampAudioTrack extends DelegatedAudioTrack {
       log.debug("Starting Bandcamp track from URL: {}", trackMediaUrl);
 
       try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(trackMediaUrl), null)) {
-        processDelegate(new Mp3AudioTrack(trackInfo, stream));
+        processDelegate(new Mp3AudioTrack(trackInfo, stream), localExecutor);
       }
     }
   }

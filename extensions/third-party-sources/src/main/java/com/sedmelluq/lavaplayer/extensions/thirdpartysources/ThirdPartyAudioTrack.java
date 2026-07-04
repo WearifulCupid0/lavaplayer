@@ -105,7 +105,7 @@ public class ThirdPartyAudioTrack extends DelegatedAudioTrack {
 		}
 
 		if (track != null) {
-			processDelegate((InternalAudioTrack) track);
+			processDelegate((InternalAudioTrack) track, executor);
 			return;
 		}
 

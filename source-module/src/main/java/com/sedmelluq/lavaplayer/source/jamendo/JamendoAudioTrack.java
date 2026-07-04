@@ -35,7 +35,7 @@ public class JamendoAudioTrack extends DelegatedAudioTrack {
       String trackMediaUrl = "https://mp3d.jamendo.com/download/track/" + trackInfo.identifier + "/mp32/";
       log.debug("Starting Jamendo track from URL: {}", trackMediaUrl);
       try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(trackMediaUrl), null)) {
-        processDelegate(new Mp3AudioTrack(trackInfo, stream));
+        processDelegate(new Mp3AudioTrack(trackInfo, stream), localExecutor);
       }
     }
   }

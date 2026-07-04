@@ -35,7 +35,7 @@ public class SoundgasmAudioTrack extends DelegatedAudioTrack {
             String trackMediaUrl = String.format("https://media.soundgasm.net/sounds/%s.m4a", trackInfo.identifier);
             log.debug("Starting Soundgasm track from URL: {}", trackMediaUrl);
             try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(trackMediaUrl), null)) {
-                processDelegate(new MpegAudioTrack(trackInfo, stream));
+                processDelegate(new MpegAudioTrack(trackInfo, stream), localExecutor);
             }
         }
     }

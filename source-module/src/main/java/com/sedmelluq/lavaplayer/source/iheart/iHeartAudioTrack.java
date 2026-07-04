@@ -71,7 +71,7 @@ public class iHeartAudioTrack extends DelegatedAudioTrack {
                     MediaContainerHints hints = MediaContainerHints.from(getHeaderValue(inputStream.getCurrentResponse(), "Content-Type"), null);
                     result = new MediaContainerDetection(sourceManager.getMediaContainerRegistry(), new AudioReference(mediaUrl, null), inputStream, hints).detectContainer();
                 }
-                processDelegate((InternalAudioTrack) result.getContainerDescriptor().createTrack(trackInfo, inputStream));
+                processDelegate((InternalAudioTrack) result.getContainerDescriptor().createTrack(trackInfo, inputStream), localExecutor);
             }
         }
     }

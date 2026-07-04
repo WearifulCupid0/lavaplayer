@@ -26,10 +26,10 @@ public class DeezerAudioTrack extends DelegatedAudioTrack {
         try (HttpInterface httpInterface = this.sourceManager.getHttpInterface()) {
             if (this.sourceManager.canPlayNative()) {
                 try (DeezerPersistentHttpStream stream = new DeezerPersistentHttpStream(httpInterface, this.sourceManager.getMediaURL(this.trackInfo.identifier), this.trackInfo.length, this.getTrackDecryptionKey())) {
-                    processDelegate(new Mp3AudioTrack(this.trackInfo, stream));
+                    processDelegate(new Mp3AudioTrack(this.trackInfo, stream), executor);
                 }
             }
-            processDelegate(new ThirdPartyAudioTrack(trackInfo, this.sourceManager));
+            processDelegate(new ThirdPartyAudioTrack(trackInfo, this.sourceManager), executor);
         }
     }
 

@@ -26,8 +26,6 @@ import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import org.apache.http.client.config.RequestConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +35,6 @@ import java.util.function.Supplier;
 
 public class SourceManagerHealthCheck {
     private static final int TIMEOUT_SECONDS = Integer.getInteger("sm.timeout", 45);
-    private static final Logger log = LoggerFactory.getLogger(SourceManagerHealthCheck.class);
 
     public static void main(String[] args) {
         List<Case> cases = new ArrayList<>();

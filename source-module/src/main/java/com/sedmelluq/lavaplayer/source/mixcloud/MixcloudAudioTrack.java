@@ -77,7 +77,7 @@ public class MixcloudAudioTrack extends DelegatedAudioTrack {
         throw new IOException("Invalid status code for Mixcloud stream: " + stream.checkStatusCode());
       }
 
-      processDelegate(new MpegAudioTrack(trackInfo, stream));
+      processDelegate(new MpegAudioTrack(trackInfo, stream), localExecutor);
     }
   }
 
@@ -93,7 +93,7 @@ public class MixcloudAudioTrack extends DelegatedAudioTrack {
         throw new IOException("Invalid status code for Mixcloud stream: " + stream.checkStatusCode());
       }
 
-      processDelegate(new Mp3AudioTrack(trackInfo, stream));
+      processDelegate(new Mp3AudioTrack(trackInfo, stream), localExecutor);
     }
   }
 

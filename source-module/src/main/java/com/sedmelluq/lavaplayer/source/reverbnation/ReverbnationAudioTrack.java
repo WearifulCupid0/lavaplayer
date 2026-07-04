@@ -46,7 +46,7 @@ public class ReverbnationAudioTrack extends DelegatedAudioTrack {
       log.debug("Starting Reverbnation track from URL: {}", trackMediaUrl);
 
       try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(trackMediaUrl), null)) {
-        processDelegate(new Mp3AudioTrack(trackInfo, stream));
+        processDelegate(new Mp3AudioTrack(trackInfo, stream), localExecutor);
       }
     }
   }

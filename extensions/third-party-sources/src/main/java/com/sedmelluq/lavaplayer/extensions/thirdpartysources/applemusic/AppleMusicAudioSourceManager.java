@@ -1,47 +1,65 @@
 package com.sedmelluq.lavaplayer.extensions.thirdpartysources.applemusic;
 
-import com.sedmelluq.discord.lavaplayer.tools.io.*;
-import com.sedmelluq.lavaplayer.extensions.thirdpartysources.*;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
+import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
+import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
+import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
+import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
+import com.sedmelluq.discord.lavaplayer.tools.io.ThreadLocalHttpInterfaceManager;
 import com.sedmelluq.discord.lavaplayer.track.AudioItem;
+import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
+import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
-import com.sedmelluq.discord.lavaplayer.track.AudioReference;
-import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
-
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioSourceManager;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioTrack;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.impl.client.HttpClientBuilder;
 
-import java.net.URI;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import static com.sedmelluq.lavaplayer.extensions.thirdpartysources.applemusic.AppleMusicConstants.*;
-import static com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
+import static com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN;
 
 public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager implements HttpConfigurable {
-    private static final String APPLEMUSIC_URL_REGEX = "^(?:https://|http://|)(?:www\\.|)music\\.apple\\.com/(?:[a-zA-Z]{2}/)(?<type>artist|playlist|album|music\\-video)/(?:.*/|)(?<identifier>[a-zA-Z0-9-_\\.]+)";
-    private static final String TRACK_ID_REGEX = "i=(\\d+)";
-
-    private static final Pattern appleMusicUrlPattern = Pattern.compile(APPLEMUSIC_URL_REGEX);
-    private static final Pattern trackIdPattern = Pattern.compile(TRACK_ID_REGEX);
+    private static final String BASE_URL = "https://api.music.apple.com";
+    private static final String DEFAULT_STOREFRONT = "us";
 
     private static final String SEARCH_PREFIX = "amsearch:";
 
+    private static final Pattern APPLE_MUSIC_URL_PATTERN = Pattern.compile(
+            "^(?:https?://)?(?:www\\.)?music\\.apple\\.com/" +
+                    "(?<storefront>[a-zA-Z]{2})/" +
+                    "(?<type>artist|playlist|album|music-video)/" +
+                    "(?:[^/?#]+/)?" +
+                    "(?<id>[A-Za-z0-9._-]+)" +
+                    "(?:\\?(?<query>[^#]*))?" +
+                    "(?:#.*)?$",
+            Pattern.CASE_INSENSITIVE
+    );
+
     private final Map<String, String> isrcCache = new HashMap<>();
+
     private final boolean allowSearch;
     private final AppleMusicTokenTracker tokenTracker;
     private final HttpInterfaceManager httpInterfaceManager;
@@ -56,14 +74,18 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
 
     public AppleMusicAudioSourceManager(boolean allowSearch, boolean fetchIsrc, AudioPlayerManager playerManager) {
         super(playerManager, fetchIsrc);
+
         this.allowSearch = allowSearch;
-        
+
         this.httpInterfaceManager = new ThreadLocalHttpInterfaceManager(
                 HttpClientTools.createSharedCookiesHttpBuilder(),
                 RequestConfig.custom()
-                .setConnectTimeout(10000)
-                .build()
+                        .setConnectTimeout(10_000)
+                        .setSocketTimeout(20_000)
+                        .setConnectionRequestTimeout(10_000)
+                        .build()
         );
+
         this.tokenTracker = new AppleMusicTokenTracker(httpInterfaceManager);
         this.httpInterfaceManager.setHttpContextFilter(new AppleMusicHttpContextFilter(this.tokenTracker));
     }
@@ -75,31 +97,46 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
 
     @Override
     public AudioItem loadItem(AudioPlayerManager playerManager, AudioReference reference) {
-        if (reference.identifier.startsWith(SEARCH_PREFIX) && allowSearch) {
-            return this.loadSearch(reference.identifier.substring(SEARCH_PREFIX.length()).trim());
+        String identifier = reference.identifier;
+
+        if (identifier == null) {
+            return null;
         }
 
-        Matcher matcher = appleMusicUrlPattern.matcher(reference.identifier);
-        if (matcher.find()) {
-            String id = matcher.group("identifier");
-            
-            switch (matcher.group("type")) {
-                case "album": {
-                    Matcher trackIdMatcher = trackIdPattern.matcher(reference.identifier);
-                    String trackId = null;
-                    if (trackIdMatcher.find()) {
-                        trackId = trackIdMatcher.group(1);
-                    }
-                    return this.loadAlbumOrTrack(id, trackId);
-                }
-                case "playlist": return this.loadPlaylist(id);
-                case "artist": return this.loadArtist(id);
-                case "music-video": return this.loadMusicVideo(id);
-                default: return null;
+        if (identifier.regionMatches(true, 0, SEARCH_PREFIX, 0, SEARCH_PREFIX.length())) {
+            if (!allowSearch) {
+                return null;
             }
+
+            return loadSearch(DEFAULT_STOREFRONT, identifier.substring(SEARCH_PREFIX.length()).trim());
         }
 
-        return null;
+        AppleMusicUrl appleMusicUrl = parseUrl(identifier);
+
+        if (appleMusicUrl == null) {
+            return null;
+        }
+
+        switch (appleMusicUrl.type) {
+            case "album":
+                if (appleMusicUrl.trackId != null && !appleMusicUrl.trackId.isEmpty()) {
+                    return loadTrack(appleMusicUrl.storefront, appleMusicUrl.trackId);
+                }
+
+                return loadAlbum(appleMusicUrl.storefront, appleMusicUrl.id);
+
+            case "playlist":
+                return loadPlaylist(appleMusicUrl.storefront, appleMusicUrl.id);
+
+            case "artist":
+                return loadArtist(appleMusicUrl.storefront, appleMusicUrl.id);
+
+            case "music-video":
+                return loadMusicVideo(appleMusicUrl.storefront, appleMusicUrl.id);
+
+            default:
+                return null;
+        }
     }
 
     @Override
@@ -109,30 +146,39 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
 
     @Override
     public void shutdown() {
-        //nothing to shutdown
+        // Nothing to shutdown.
     }
-    
+
+    @Override
     public String fetchIsrc(AudioTrack track) {
-        if (track.getInfo().uri == null) return null;
-        
+        if (track == null || track.getInfo() == null || track.getInfo().uri == null) {
+            return null;
+        }
+
         String identifier = track.getIdentifier();
-        if (this.isrcCache.containsKey(identifier)) return this.isrcCache.get(identifier);
-        
-        JsonBrowser json = this.requestApi(TRACK_API_URL + identifier);
+
+        if (identifier == null) {
+            return null;
+        }
+
+        if (isrcCache.containsKey(identifier)) {
+            return isrcCache.get(identifier);
+        }
+
+        AppleMusicUrl appleMusicUrl = parseUrl(track.getInfo().uri);
+        String storefront = appleMusicUrl != null ? appleMusicUrl.storefront : DEFAULT_STOREFRONT;
+
+        JsonBrowser json = requestApi(trackUri(storefront, identifier));
         String isrc = json.get("data").index(0).get("attributes").get("isrc").text();
+
         if (isrc != null) {
-            if (!this.isrcCache.containsKey(identifier)) {
-                this.isrcCache.put(identifier, isrc);
-            }
+            isrcCache.put(identifier, isrc);
             return isrc;
         }
-        
+
         return null;
     }
 
-    /**
-     * @return Get an HTTP interface for a playing track.
-     */
     public HttpInterface getHttpInterface() {
         return httpInterfaceManager.getInterface();
     }
@@ -148,33 +194,53 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
     }
 
     public AppleMusicTokenTracker getTokenTracker() {
-        return this.tokenTracker;
+        return tokenTracker;
     }
 
-    private AudioItem loadSearch(String query) {
-        try {
-            URI uri = new URIBuilder(SEARCH_API_URL)
-            .addParameter("limit", "25")
-            .addParameter("term", query).build();
+    private AudioItem loadSearch(String storefront, String query) {
+        if (query == null || query.isEmpty()) {
+            return AudioReference.NO_TRACK;
+        }
 
-            JsonBrowser json = this.requestApi(uri);
-            if(json.get("results").get("songs").get("data").index(0).isNull()) {
+        try {
+            URI uri = new URIBuilder(searchUri(storefront))
+                    .addParameter("limit", "25")
+                    .addParameter("term", query)
+                    .addParameter("types", "songs")
+                    .build();
+
+            JsonBrowser json = requestApi(uri);
+            JsonBrowser data = json.get("results").get("songs").get("data");
+
+            if (data.index(0).isNull()) {
                 return AudioReference.NO_TRACK;
             }
 
             List<AudioTrack> tracks = new ArrayList<>();
-            for(JsonBrowser track : json.get("results").get("songs").get("data").values()) {
+
+            for (JsonBrowser track : data.values()) {
                 tracks.add(buildTrack(track));
             }
 
-            return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
+            return BasicAudioPlaylist.createSearchResults(query, tracks);
         } catch (Exception e) {
-            throw new FriendlyException("Failed to load AppleMusic search result", SUSPICIOUS, e);
+            throw new FriendlyException("Failed to load Apple Music search result.", SUSPICIOUS, e);
         }
     }
 
-    private AudioItem loadMusicVideo(String videoId) {
-        JsonBrowser video = this.requestApi(String.format(VIDEO_API_URL, videoId)).get("data").index(0);
+    private AudioItem loadTrack(String storefront, String trackId) {
+        JsonBrowser track = requestApi(trackUri(storefront, trackId)).get("data").index(0);
+
+        if (track.isNull()) {
+            return AudioReference.NO_TRACK;
+        }
+
+        return buildTrack(track);
+    }
+
+    private AudioItem loadMusicVideo(String storefront, String videoId) {
+        JsonBrowser video = requestApi(musicVideoUri(storefront, videoId)).get("data").index(0);
+
         if (video.isNull()) {
             return AudioReference.NO_TRACK;
         }
@@ -182,158 +248,283 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
         return buildTrack(video);
     }
 
-    private AudioItem loadPlaylist(String playlistId) {
-        JsonBrowser playlist = this.requestApi(String.format(PLAYLIST_API_URL, playlistId)).get("data").index(0);
-        if(playlist.isNull()) {
+    private AudioItem loadPlaylist(String storefront, String playlistId) {
+        JsonBrowser playlist = requestApi(playlistUri(storefront, playlistId)).get("data").index(0);
+
+        if (playlist.isNull()) {
             return AudioReference.NO_TRACK;
         }
 
-        List<AudioTrack> tracks = new ArrayList<>();
-        JsonBrowser tracksJson = playlist.get("relationships").get("tracks");
-        for(JsonBrowser track : tracksJson.get("data").values()) {
-            tracks.add(buildTrack(track));
-        }
-        String next = tracksJson.get("next").text();
-        while(next != null && !next.isEmpty()) {
-            tracksJson = this.requestApi(BASE_URL + next);
-            next = tracksJson.get("next").text();
-            for(JsonBrowser track : tracksJson.get("data").values()) {
-                tracks.add(buildTrack(track));
-            }
-        }
         JsonBrowser attributes = playlist.get("attributes");
-        return new BasicAudioPlaylist(
-            attributes.get("name").safeText(),
-            attributes.get("curatorName").safeText(),
-            attributes.get("artwork").get("url").safeText().replace("{w}x{h}", "800x800"),
-            attributes.get("url").text(),
-            "playlist",
-            tracks,
-            null,
-            false
-        );
-    }
-
-    private AudioItem loadAlbumOrTrack(String albumId, String trackId) {
-        JsonBrowser album = this.requestApi(String.format(ALBUM_API_URL, albumId)).get("data").index(0);
-        if(album.isNull()) {
-            return AudioReference.NO_TRACK;
-        }
-
         List<AudioTrack> tracks = new ArrayList<>();
-        JsonBrowser tracksJson = album.get("relationships").get("tracks");
-        for(JsonBrowser track : tracksJson.get("data").values()) {
-            tracks.add(buildTrack(track));
-        }
+
+        JsonBrowser tracksJson = playlist.get("relationships").get("tracks");
+        appendTracks(tracks, tracksJson);
+
         String next = tracksJson.get("next").text();
-        while(next != null && !next.isEmpty()) {
-            tracksJson = this.requestApi(BASE_URL + next);
+
+        while (next != null && !next.isEmpty()) {
+            tracksJson = requestApi(resolveNextUri(next));
+            appendTracks(tracks, tracksJson);
             next = tracksJson.get("next").text();
-            for(JsonBrowser track : tracksJson.get("data").values()) {
-                tracks.add(buildTrack(track));
-            }
         }
-        JsonBrowser attributes = album.get("attributes");
+
         return new BasicAudioPlaylist(
-            attributes.get("name").safeText(),
-            attributes.get("artistName").safeText(),
-            attributes.get("artwork").get("url").safeText().replace("{w}x{h}", "800x800"),
-            attributes.get("url").text(),
-            attributes.get("isSingle").asBoolean(false) ? "single" : "album",
-            tracks,
-            findSelectedTrack(tracks, trackId),
-            false
+                attributes.get("name").safeText(),
+                attributes.get("curatorName").safeText(),
+                formatArtworkUrl(attributes.get("artwork"), "800", "800"),
+                attributes.get("url").text(),
+                "playlist",
+                tracks,
+                null,
+                false
         );
     }
 
-    private AudioTrack findSelectedTrack(List<AudioTrack> tracks, String trackId) {
-        if (trackId != null) {
-            for (AudioTrack track : tracks) {
-                if (trackId.equals(track.getIdentifier())) {
-                    return track;
-                }
-            }
-        }
-    
-        return null;
-    }
+    private AudioItem loadAlbum(String storefront, String albumId) {
+        JsonBrowser album = requestApi(albumUri(storefront, albumId)).get("data").index(0);
 
-    private AudioItem loadArtist(String artistId) {
-        JsonBrowser artist = this.requestApi(String.format(ARTIST_API_URL, artistId)).get("data").index(0).get("attributes");
-        if(artist.isNull()) {
+        if (album.isNull()) {
             return AudioReference.NO_TRACK;
         }
 
-        JsonBrowser json = this.requestApi(String.format(ARTIST_TRACK_API_URL, artistId));
+        JsonBrowser attributes = album.get("attributes");
+        List<AudioTrack> tracks = new ArrayList<>();
+
+        JsonBrowser tracksJson = album.get("relationships").get("tracks");
+        appendTracks(tracks, tracksJson);
+
+        String next = tracksJson.get("next").text();
+
+        while (next != null && !next.isEmpty()) {
+            tracksJson = requestApi(resolveNextUri(next));
+            appendTracks(tracks, tracksJson);
+            next = tracksJson.get("next").text();
+        }
+
+        return new BasicAudioPlaylist(
+                attributes.get("name").safeText(),
+                attributes.get("artistName").safeText(),
+                formatArtworkUrl(attributes.get("artwork"), "800", "800"),
+                attributes.get("url").text(),
+                attributes.get("isSingle").asBoolean(false) ? "single" : "album",
+                tracks,
+                null,
+                false
+        );
+    }
+
+    private AudioItem loadArtist(String storefront, String artistId) {
+        JsonBrowser artist = requestApi(artistUri(storefront, artistId)).get("data").index(0).get("attributes");
+
+        if (artist.isNull()) {
+            return AudioReference.NO_TRACK;
+        }
+
+        JsonBrowser json = requestApi(artistTopSongsUri(storefront, artistId));
+
         if (json.get("data").index(0).isNull()) {
             return AudioReference.NO_TRACK;
         }
 
         List<AudioTrack> tracks = new ArrayList<>();
-        for(JsonBrowser track : json.get("data").values()) {
+
+        for (JsonBrowser track : json.get("data").values()) {
             tracks.add(buildTrack(track));
         }
+
         return new BasicAudioPlaylist(
-            artist.get("name").safeText(),
-            artist.get("name").safeText(),
-            null,
-            artist.get("url").safeText(),
-            "artist",
-            tracks,
-            null,
-            false
+                artist.get("name").safeText(),
+                artist.get("name").safeText(),
+                null,
+                artist.get("url").safeText(),
+                "artist",
+                tracks,
+                null,
+                false
         );
+    }
+
+    private void appendTracks(List<AudioTrack> tracks, JsonBrowser tracksJson) {
+        for (JsonBrowser track : tracksJson.get("data").values()) {
+            tracks.add(buildTrack(track));
+        }
     }
 
     private AudioTrack buildTrack(JsonBrowser trackInfo) {
         JsonBrowser attributes = trackInfo.get("attributes");
-        String identifier = trackInfo.get("id").text();
-        JsonBrowser artworkJson = attributes.get("artwork");
-        String width = "800";
-        if (!artworkJson.get("width").isNull()) {
-            width = artworkJson.get("width").text();
-        }
-        String height = "800";
-        if (!artworkJson.get("height").isNull()) {
-            height = artworkJson.get("height").text();
-        }
 
+        String identifier = trackInfo.get("id").text();
+        String title = attributes.get("name").safeText();
+        String author = attributes.get("artistName").safeText();
+        long duration = attributes.get("durationInMillis").asLong(DURATION_MS_UNKNOWN);
+        String uri = attributes.get("url").text();
+        String artworkUrl = formatArtworkUrl(attributes.get("artwork"), "800", "800");
+        boolean explicit = "explicit".equalsIgnoreCase(attributes.get("contentRating").safeText());
         String isrc = attributes.get("isrc").text();
-        if (isrc != null && !this.isrcCache.containsKey(identifier)) {
-            this.isrcCache.put(identifier, isrc);
-        }
 
         AudioTrackInfo info = new AudioTrackInfo(
-            attributes.get("name").safeText(),
-            attributes.get("artistName").safeText(),
-            attributes.get("durationInMillis").asLong(DURATION_MS_UNKNOWN),
-            identifier,
-            false,
-            attributes.get("url").text(),
-            attributes.get("artwork").get("url").text().replace("{w}x{h}", width + "x" + height),
-            attributes.get("contentRating").safeText().equals("explicit"),
-            isrc
+                title,
+                author,
+                duration,
+                identifier,
+                false,
+                uri,
+                artworkUrl,
+                explicit,
+                isrc
         );
+
+        if (isrc != null && !isrc.isEmpty()) {
+            isrcCache.put(identifier, isrc);
+        }
 
         return new ThirdPartyAudioTrack(info, this);
     }
 
     private JsonBrowser requestApi(String uri) {
-        return this.requestApi(URI.create(uri));
+        return requestApi(URI.create(uri));
     }
 
     private JsonBrowser requestApi(URI uri) {
-        try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(uri))) {
+        try (HttpInterface httpInterface = getHttpInterface();
+             CloseableHttpResponse response = httpInterface.execute(new HttpGet(uri))) {
             int statusCode = response.getStatusLine().getStatusCode();
 
             if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-                throw new IOException("AppleMusic api request failed with status code: " + statusCode);
+                throw new IOException("Apple Music API request failed with status code: " + statusCode);
             }
 
             String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             return JsonBrowser.parse(responseText);
         } catch (IOException e) {
-            throw new FriendlyException("Failed to make a request to AppleMusic Api", SUSPICIOUS, e);
+            throw new FriendlyException("Failed to make a request to Apple Music API.", SUSPICIOUS, e);
+        }
+    }
+
+    private static AppleMusicUrl parseUrl(String identifier) {
+        Matcher matcher = APPLE_MUSIC_URL_PATTERN.matcher(identifier);
+
+        if (!matcher.matches()) {
+            return null;
+        }
+
+        String storefront = matcher.group("storefront").toLowerCase(Locale.ROOT);
+        String type = matcher.group("type").toLowerCase(Locale.ROOT);
+        String id = matcher.group("id");
+        String query = matcher.group("query");
+
+        String trackId = getQueryParameter(query, "i");
+
+        return new AppleMusicUrl(storefront, type, id, trackId);
+    }
+
+    private static String getQueryParameter(String query, String name) {
+        if (query == null || query.isEmpty()) {
+            return null;
+        }
+
+        String[] parts = query.split("&");
+
+        for (String part : parts) {
+            int separator = part.indexOf('=');
+
+            if (separator <= 0) {
+                continue;
+            }
+
+            String key = urlDecode(part.substring(0, separator));
+            String value = urlDecode(part.substring(separator + 1));
+
+            if (name.equals(key)) {
+                return value;
+            }
+        }
+
+        return null;
+    }
+
+    private static String urlDecode(String value) {
+        return URLDecoder.decode(value.replace("+", "%2B"), StandardCharsets.UTF_8);
+    }
+
+    private static String formatArtworkUrl(JsonBrowser artwork, String defaultWidth, String defaultHeight) {
+        if (artwork == null || artwork.isNull()) {
+            return null;
+        }
+
+        String url = artwork.get("url").text();
+
+        if (url == null || url.isEmpty()) {
+            return null;
+        }
+
+        String width = artwork.get("width").text();
+
+        if (width == null || width.isEmpty()) {
+            width = defaultWidth;
+        }
+
+        String height = artwork.get("height").text();
+
+        if (height == null || height.isEmpty()) {
+            height = defaultHeight;
+        }
+
+        return url.replace("{w}x{h}", width + "x" + height);
+    }
+
+    private static String resolveNextUri(String next) {
+        if (next.startsWith("http://") || next.startsWith("https://")) {
+            return next;
+        }
+
+        return BASE_URL + next;
+    }
+
+    private static String catalogBase(String storefront) {
+        return BASE_URL + "/v1/catalog/" + storefront;
+    }
+
+    private static String searchUri(String storefront) {
+        return catalogBase(storefront) + "/search";
+    }
+
+    private static String trackUri(String storefront, String trackId) {
+        return catalogBase(storefront) + "/songs/" + trackId;
+    }
+
+    private static String musicVideoUri(String storefront, String videoId) {
+        return catalogBase(storefront) + "/music-videos/" + videoId;
+    }
+
+    private static String playlistUri(String storefront, String playlistId) {
+        return catalogBase(storefront) + "/playlists/" + playlistId;
+    }
+
+    private static String albumUri(String storefront, String albumId) {
+        return catalogBase(storefront) + "/albums/" + albumId;
+    }
+
+    private static String artistUri(String storefront, String artistId) {
+        return catalogBase(storefront) + "/artists/" + artistId;
+    }
+
+    private static String artistTopSongsUri(String storefront, String artistId) {
+        return artistUri(storefront, artistId) + "/view/top-songs";
+    }
+
+    private static class AppleMusicUrl {
+        private final String storefront;
+        private final String type;
+        private final String id;
+        private final String trackId;
+
+        private AppleMusicUrl(String storefront, String type, String id, String trackId) {
+            this.storefront = storefront;
+            this.type = type;
+            this.id = id;
+            this.trackId = trackId;
         }
     }
 }

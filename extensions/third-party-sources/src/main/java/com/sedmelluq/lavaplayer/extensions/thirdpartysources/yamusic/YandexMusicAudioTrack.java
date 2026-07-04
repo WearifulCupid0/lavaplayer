@@ -37,7 +37,7 @@ public class YandexMusicAudioTrack extends ThirdPartyAudioTrack {
       if (trackMediaUrl != null) {
         log.debug("Starting Yandex Music track from URL: {}", trackMediaUrl);
         try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(trackMediaUrl), null)) {
-          processDelegate(new Mp3AudioTrack(trackInfo, stream));
+          processDelegate(new Mp3AudioTrack(trackInfo, stream), localExecutor);
         }
       } else {
         super.process(localExecutor);

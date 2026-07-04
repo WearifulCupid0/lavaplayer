@@ -28,16 +28,17 @@ public class AppleMusicHttpContextFilter implements HttpContextFilter {
     public void onRequest(HttpClientContext context, HttpUriRequest request, boolean isRepetition) {
         request.setHeader("User-Agent", ThirdPartyAudioSourceManager.USER_AGENT);
         if (request.getURI().getHost().contains("api.music.apple.com")) {
-            request.setHeader("Authorization", tokenTracker.getFormmatedToken());
+            request.setHeader("Authorization", "Bearer " + tokenTracker.getToken());
             request.setHeader("Origin", "https://music.apple.com");
             request.setHeader("Referer", "https://music.apple.com/");
+            request.setHeader("Accept", "application/json");
         }
     }
 
     @Override
     public boolean onRequestResponse(HttpClientContext context, HttpUriRequest request, HttpResponse response) {
         if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-            tokenTracker.updateToken();
+            tokenTracker.getToken();
             return true;
         }
         return false;

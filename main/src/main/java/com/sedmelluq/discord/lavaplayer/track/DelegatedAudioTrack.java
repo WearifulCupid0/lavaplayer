@@ -1,6 +1,7 @@
 package com.sedmelluq.discord.lavaplayer.track;
 
 import com.sedmelluq.discord.lavaplayer.tools.ExplicitContentException;
+import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
 
 /**
  * Audio track which delegates its processing to another track. The delegate does not have to be known when the
@@ -16,7 +17,7 @@ public abstract class DelegatedAudioTrack extends BaseAudioTrack {
     super(trackInfo);
   }
 
-  protected synchronized void processDelegate(InternalAudioTrack delegate)
+  protected synchronized void processDelegate(InternalAudioTrack delegate, LocalAudioTrackExecutor localExecutor)
       throws Exception {
 
     this.delegate = delegate;

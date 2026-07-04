@@ -1,16 +1,14 @@
 package com.sedmelluq.lavaplayer.extensions.thirdpartysources.deezer;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
+import com.sedmelluq.discord.lavaplayer.tools.io.*;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
 import com.sedmelluq.discord.lavaplayer.track.*;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -24,6 +22,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,9 +31,10 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class DeezerAudioSourceManager implements ThirdPartyAudioSourceManager, HttpConfigurable {
+public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager implements HttpConfigurable {
     private static final String DEEZER_URL_REGEX = "^(?:https://|http://|)(?:www\\.|)deezer\\.com/(?:[a-zA-Z]{2}/|)(track|album|playlist|artist)/(\\d+)";
     private static final String SHARE_URL = "https://deezer.page.link/";
+    private static final String NEW_SHARE_URL = "https://link.deezer.com/";
     private static final Pattern deezerUrlPattern = Pattern.compile(DEEZER_URL_REGEX);
     private static final String SEARCH_PREFIX = "dzsearch:";
     private static final String ISRC_PREFIX = "dzisrc:";
@@ -46,15 +46,26 @@ public class DeezerAudioSourceManager implements ThirdPartyAudioSourceManager, H
 
     public final String masterKey;
 
-    public DeezerAudioSourceManager() { this(null, true); }
-    public DeezerAudioSourceManager(boolean allowSearch) { this(null, allowSearch); }
-    public DeezerAudioSourceManager(String masterKey) {
-        this(masterKey, true);
+    public DeezerAudioSourceManager(AudioPlayerManager playerManager) { this(playerManager, null, true, true); }
+    public DeezerAudioSourceManager(AudioPlayerManager playerManager, boolean allowSearch) { this(playerManager, null, allowSearch, true); }
+    public DeezerAudioSourceManager(AudioPlayerManager playerManager, String masterKey) {
+        this(playerManager, masterKey, true, true);
     }
-    public DeezerAudioSourceManager(String masterKey, boolean allowSearch) {
+    public DeezerAudioSourceManager(AudioPlayerManager playerManager, String masterKey, boolean allowSearch, boolean fetchIsrc) {
+        super(playerManager, fetchIsrc);
+
         this.masterKey = masterKey;
         this.allowSearch = allowSearch;
-        httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
+        this.httpInterfaceManager = new ThreadLocalHttpInterfaceManager(
+                HttpClientTools.createSharedCookiesHttpBuilder()
+                        .disableCookieManagement(),
+                RequestConfig.custom()
+                        .setConnectTimeout(10_000)
+                        .setSocketTimeout(20_000)
+                        .setConnectionRequestTimeout(10_000)
+                        .setCookieSpec(CookieSpecs.IGNORE_COOKIES)
+                        .build()
+        );
     }
 
     public boolean canPlayNative() {
@@ -78,11 +89,39 @@ public class DeezerAudioSourceManager implements ThirdPartyAudioSourceManager, H
             return this.loadTrackISRC(reference.identifier.substring(ISRC_PREFIX.length()).trim());
         }
 
+        if (identifier.startsWith(NEW_SHARE_URL)) {
+            HttpGet request = new HttpGet(identifier);
+            request.setConfig(RequestConfig.custom().setRedirectsEnabled(false).build());
+            try (CloseableHttpResponse response = getHttpInterface().execute(request)) {
+                if (response.getStatusLine().getStatusCode() == 302 || response.getStatusLine().getStatusCode() == 301) {
+                    String location = response.getFirstHeader("Location").getValue();
+                    URI uri = URI.create(location);
+                    String query = uri.getRawQuery();
+                    if (query != null && !query.isBlank()) {
+                        for (String part : query.split("&")) {
+                            int separator = part.indexOf('=');
+                            if (separator > 0) {
+                                String key = URLDecoder.decode(part.substring(0, separator), StandardCharsets.UTF_8);
+                                String value = URLDecoder.decode(part.substring(separator + 1), StandardCharsets.UTF_8);
+
+                                if (key.equals("awf") && value.startsWith("https://www.deezer.com/")) {
+                                    return this.loadItem(playerManager, new AudioReference(value, reference.title));
+                                }
+                            }
+                        }
+                    }
+                }
+                return null;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         if (identifier.startsWith(SHARE_URL)) {
             HttpGet request = new HttpGet(identifier);
             request.setConfig(RequestConfig.custom().setRedirectsEnabled(false).build());
             try (CloseableHttpResponse response = getHttpInterface().execute(request)) {
-                if (response.getStatusLine().getStatusCode() == 302) {
+                if (response.getStatusLine().getStatusCode() == 302 || response.getStatusLine().getStatusCode() == 301) {
                     String location = response.getFirstHeader("Location").getValue();
                     if (location.startsWith("https://www.deezer.com/")) {
                         return this.loadItem(playerManager, new AudioReference(location, reference.title));

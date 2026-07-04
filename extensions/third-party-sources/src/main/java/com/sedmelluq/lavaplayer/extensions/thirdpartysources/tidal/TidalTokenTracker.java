@@ -1,115 +1,222 @@
 package com.sedmelluq.lavaplayer.extensions.thirdpartysources.tidal;
 
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.util.EntityUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicNameValuePair;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TidalTokenTracker {
-    private static final Logger log = LoggerFactory.getLogger(TidalTokenTracker.class);
+    private static final long REFRESH_EARLY_MILLIS = 60_000L;
 
-    private static final String MAIN_PAGE_URL = "https://listen.tidal.com";
-    private static final long TOKEN_REFRESH_INTERVAL = TimeUnit.HOURS.toMillis(1);
-    private static final String PAGE_APP_SCRIPT_REGEX = "src=\"/app\\.([a-zA-Z0-9-_]+)\\.js\"";
-    private static final String APP_SCRIPT_TOKEN_REGEX = "(?:[a-zA-Z]{2})\\(\\)\\?\"(?:[a-zA-Z0-9-_]+)\":\"([a-zA-Z0-9-_]+)\"";
+    private final Object lock = new Object();
+    private final CloseableHttpClient httpClient;
 
-    private static final Pattern pageAppScriptPattern = Pattern.compile(PAGE_APP_SCRIPT_REGEX);
-    private static final Pattern appScriptTokenPattern = Pattern.compile(APP_SCRIPT_TOKEN_REGEX);
+    private volatile String clientId;
+    private volatile String clientSecret;
 
-    private final Object tokenLock = new Object();
-    private final HttpInterfaceManager httpInterfaceManager;
-    private String token;
-    private long lastTokenUpdate;
+    private String accessToken;
+    private String tokenType;
+    private long expiresAtMillis;
 
-    public TidalTokenTracker(HttpInterfaceManager httpInterfaceManager) {
-        this.httpInterfaceManager = httpInterfaceManager;
+    public TidalTokenTracker() {
+        this(null, null);
     }
 
-    /**
-     * Updates the Token if more than {@link #TOKEN_REFRESH_INTERVAL} time has passed since last updated.
-     */
-    public void updateToken() {
-        synchronized (tokenLock) {
-            long now = System.currentTimeMillis();
-            if (now - lastTokenUpdate < TOKEN_REFRESH_INTERVAL) {
-                log.debug("TIDAL token was recently updated, not updating again right away.");
-                return;
-            }
+    public TidalTokenTracker(String clientId, String clientSecret) {
+        this.clientId = firstNonBlank(clientId, getPropertyOrEnv("TIDAL_CLIENT_ID"));
+        this.clientSecret = firstNonBlank(clientSecret, getPropertyOrEnv("TIDAL_CLIENT_SECRET"));
 
-            lastTokenUpdate = now;
-            log.info("Updating TIDAL token (current is {}).", token);
-
-            try {
-                token = findTokenFromSite();
-                log.info("Updating TIDAL token succeeded, new ID is {}.", token);
-            } catch (Exception e) {
-                log.error("TIDAL token update failed.", e);
-            }
-        }
+        this.httpClient = HttpClientBuilder.create()
+                .setDefaultRequestConfig(RequestConfig.custom()
+                        .setConnectTimeout(10_000)
+                        .setSocketTimeout(20_000)
+                        .setConnectionRequestTimeout(10_000)
+                        .build())
+                .disableCookieManagement()
+                .build();
     }
 
     public String getToken() {
-        synchronized (tokenLock) {
-            if (token == null) {
-                updateToken();
+        synchronized (lock) {
+            long now = System.currentTimeMillis();
+
+            if (accessToken != null && now < expiresAtMillis - REFRESH_EARLY_MILLIS) {
+                return accessToken;
             }
 
-            return token;
+            refreshToken();
+
+            if (accessToken == null || accessToken.isBlank()) {
+                throw new IllegalStateException("Could not obtain TIDAL access token.");
+            }
+
+            return accessToken;
         }
     }
 
-    private String findTokenFromSite() throws IOException {
-        try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
-            String id = findApplicationScriptId(httpInterface);
-            return findTokenFromScriptId(id, httpInterface);
+    public String getAuthorizationHeader() {
+        synchronized (lock) {
+            String token = getToken();
+            String type = firstNonBlank(tokenType, "Bearer");
+
+            return type + " " + token;
         }
     }
 
-    private String findApplicationScriptId(HttpInterface httpInterface) throws IOException {
-        try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(MAIN_PAGE_URL))) {
-            int statusCode = response.getStatusLine().getStatusCode();
+    public void setCredentials(String clientId, String clientSecret) {
+        synchronized (lock) {
+            this.clientId = normalize(clientId);
+            this.clientSecret = normalize(clientSecret);
 
-            if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-                throw new IOException("Invalid status code for main page response: " + statusCode);
-            }
+            this.accessToken = null;
+            this.tokenType = null;
+            this.expiresAtMillis = 0;
+        }
+    }
 
-            String page = EntityUtils.toString(response.getEntity());
-            Matcher scriptMatcher = pageAppScriptPattern.matcher(page);
+    public boolean hasCredentials() {
+        return !isBlank(clientId) && !isBlank(clientSecret);
+    }
 
-            if (scriptMatcher.find()) {
-                return scriptMatcher.group(1);
-            } else {
-                throw new IllegalStateException("Could not find application script from main page.");
+    public boolean forceUpdateToken() {
+        synchronized (lock) {
+            this.accessToken = null;
+            this.tokenType = null;
+            this.expiresAtMillis = 0;
+
+            try {
+                refreshToken();
+                return accessToken != null && !accessToken.isBlank();
+            } catch (RuntimeException e) {
+                return false;
             }
         }
     }
 
-    private String findTokenFromScriptId(String id, HttpInterface httpInterface) throws IOException {
-        String url = MAIN_PAGE_URL + "/app." + id + ".js";
-        try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(url))) {
-            int statusCode = response.getStatusLine().getStatusCode();
+    public void shutdown() {
+        try {
+            httpClient.close();
+        } catch (IOException ignored) {
+            // Ignore close failure.
+        }
+    }
 
-            if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-                throw new IOException("Invalid status code for script page response: " + statusCode);
+    private void refreshToken() {
+        String id = firstNonBlank(clientId, getPropertyOrEnv("TIDAL_CLIENT_ID"));
+        String secret = firstNonBlank(clientSecret, getPropertyOrEnv("TIDAL_CLIENT_SECRET"));
+
+        if (isBlank(id) || isBlank(secret)) {
+            throw new IllegalStateException(
+                    "TIDAL credentials are not configured. " +
+                            "Use new TidalTokenTracker(clientId, clientSecret), setCredentials(...), " +
+                            "or set TIDAL_CLIENT_ID and TIDAL_CLIENT_SECRET."
+            );
+        }
+
+        try {
+            HttpPost request = new HttpPost(TidalConstants.AUTH_URL);
+
+            request.setHeader("Accept", "application/json");
+            request.setHeader("Content-Type", "application/x-www-form-urlencoded");
+            request.setHeader("Origin", "https://tidal.com");
+            request.setHeader("Referer", "https://tidal.com/");
+            request.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+
+            List<NameValuePair> params = new ArrayList<>();
+            params.add(new BasicNameValuePair("client_id", id));
+            params.add(new BasicNameValuePair("client_secret", secret));
+            params.add(new BasicNameValuePair("grant_type", "client_credentials"));
+
+            request.setEntity(new UrlEncodedFormEntity(params, StandardCharsets.UTF_8));
+
+            try (CloseableHttpResponse response = httpClient.execute(request)) {
+                int statusCode = response.getStatusLine().getStatusCode();
+
+                String body = response.getEntity() != null
+                        ? IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8)
+                        : "";
+
+                if (statusCode < 200 || statusCode >= 300) {
+                    throw new IllegalStateException("TIDAL token request failed with status " + statusCode + ": " + body);
+                }
+
+                JsonBrowser json = JsonBrowser.parse(body);
+
+                String newAccessToken = json.get("access_token").text();
+
+                if (isBlank(newAccessToken)) {
+                    throw new IllegalStateException("TIDAL token response did not contain access_token: " + body);
+                }
+
+                long expiresInSeconds = parseLong(json.get("expires_in").text(), 3600L);
+
+                this.accessToken = newAccessToken;
+                this.tokenType = firstNonBlank(json.get("token_type").text(), "Bearer");
+                this.expiresAtMillis = System.currentTimeMillis() + expiresInSeconds * 1000L;
+
+                this.clientId = id;
+                this.clientSecret = secret;
             }
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to refresh TIDAL access token.", e);
+        }
+    }
 
-            String page = EntityUtils.toString(response.getEntity());
-            Matcher tokenMatcher = appScriptTokenPattern.matcher(page);
+    private static String getPropertyOrEnv(String name) {
+        String property = System.getProperty(name);
 
-            if (tokenMatcher.find()) {
-                return tokenMatcher.group(1);
-            } else {
-                throw new IllegalStateException("Could not find application token from script page.");
+        if (!isBlank(property)) {
+            return property;
+        }
+
+        return System.getenv(name);
+    }
+
+    private static String normalize(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String normalized = value.trim();
+
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    private static String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (!isBlank(value)) {
+                return value.trim();
             }
+        }
+
+        return null;
+    }
+
+    private static long parseLong(String value, long defaultValue) {
+        if (isBlank(value)) {
+            return defaultValue;
+        }
+
+        try {
+            return Long.parseLong(value.trim());
+        } catch (NumberFormatException e) {
+            return defaultValue;
         }
     }
 }

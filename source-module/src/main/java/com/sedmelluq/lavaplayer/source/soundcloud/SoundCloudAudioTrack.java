@@ -47,7 +47,7 @@ public class SoundCloudAudioTrack extends DelegatedAudioTrack {
     SoundCloudM3uInfo m3uInfo = sourceManager.getFormatHandler().getM3uInfo(identifier);
 
     if (m3uInfo != null) {
-      processDelegate(new SoundCloudM3uAudioTrack(trackInfo, httpInterface, m3uInfo));
+      processDelegate(new SoundCloudM3uAudioTrack(trackInfo, httpInterface, m3uInfo), localExecutor);
       return;
     }
 
@@ -78,7 +78,7 @@ public class SoundCloudAudioTrack extends DelegatedAudioTrack {
         throw new IOException("Invalid status code for soundcloud stream: " + stream.checkStatusCode());
       }
 
-      processDelegate(new Mp3AudioTrack(trackInfo, stream));
+      processDelegate(new Mp3AudioTrack(trackInfo, stream), localExecutor);
     }
   }
 

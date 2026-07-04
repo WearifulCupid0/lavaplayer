@@ -43,7 +43,7 @@ public class StreamableAudioTrack extends DelegatedAudioTrack {
             log.debug("Starting Streamable track from URL: {}", playbackUrl);
 
             try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(playbackUrl), null)) {
-                processDelegate(new MpegAudioTrack(trackInfo, stream));
+                processDelegate(new MpegAudioTrack(trackInfo, stream), localExecutor);
             }
         }
     }

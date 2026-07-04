@@ -56,7 +56,7 @@ public class ClypAudioTrack extends DelegatedAudioTrack {
             String mp3Url = trackInfo.get("Mp3Url").isNull() ? trackInfo.get("SecureMp3Url").text() : trackInfo.get("Mp3Url").text();
             if (mp3Url != null) {
                 try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(mp3Url), null)) {
-                    processDelegate(new Mp3AudioTrack(this.trackInfo, stream));
+                    processDelegate(new Mp3AudioTrack(this.trackInfo, stream), localExecutor);
                     return;
                 }
             }
@@ -64,7 +64,7 @@ public class ClypAudioTrack extends DelegatedAudioTrack {
             String oggUrl = trackInfo.get("OggUrl").isNull() ? trackInfo.get("SecureOggUrl").text() : trackInfo.get("OggUrl").text();
             if (oggUrl != null) {
                 try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(oggUrl), null)) {
-                    processDelegate(new OggAudioTrack(this.trackInfo, stream));
+                    processDelegate(new OggAudioTrack(this.trackInfo, stream), localExecutor);
                     return;
                 }
             }

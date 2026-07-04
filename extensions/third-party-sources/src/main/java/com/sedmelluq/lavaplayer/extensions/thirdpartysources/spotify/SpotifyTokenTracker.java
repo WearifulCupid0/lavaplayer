@@ -1,150 +1,110 @@
 package com.sedmelluq.lavaplayer.extensions.thirdpartysources.spotify;
 
-import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
-
-import org.apache.commons.io.IOUtils;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
 
 public class SpotifyTokenTracker {
-    private static final Logger log = LoggerFactory.getLogger(SpotifyTokenTracker.class);
+    private static final String TOKEN_URL = "https://accounts.spotify.com/api/token";
 
-    private static final String CREDENTIALS_PAYLOAD = "client_id=%s&client_secret=%s&grant_type=client_credentials";
-    private static final String TOKEN_GENERATOR_URL = "https://open.spotify.com/get_access_token?reason=transport&productType=embed";
-    private static final String CREDENTIALS_URL = "https://accounts.spotify.com/api/token";
-    
+    private final String clientId;
+    private final String clientSecret;
+    private final ObjectMapper mapper = new ObjectMapper();
+
+    private volatile String accessToken;
+    private volatile long expiresAtMillis;
+
     private final HttpInterfaceManager httpInterfaceManager;
 
-    private final String clientSecret;
-    private String clientId;
-
-    private String token;
-    private String tokenType;
-    private long expiresMs;
-    private boolean anonymous;
-
-    public SpotifyTokenTracker(HttpInterfaceManager httpInterfaceManager) {
-        this(httpInterfaceManager, null, null);
-    }
-
     public SpotifyTokenTracker(HttpInterfaceManager httpInterfaceManager, String clientId, String clientSecret) {
+        this.clientId = firstNonBlank(clientId, getPropertyOrEnv("SPOTIFY_CLIENT_ID"));
+        this.clientSecret = firstNonBlank(clientSecret, getPropertyOrEnv("SPOTIFY_CLIENT_SECRET"));
         this.httpInterfaceManager = httpInterfaceManager;
-
-        this.clientId = clientId;
-        this.clientSecret = clientSecret;
     }
 
-    public String getClientId() {
-        return this.clientId;
-    }
+    public synchronized String getToken() {
+        long now = System.currentTimeMillis();
 
-    public String getClientSecret() {
-        return this.clientSecret;
-    }
-
-    public boolean needUpdate() {
-        return token == null || System.currentTimeMillis() >= expiresMs;
-    }
-
-    public void updateToken() {
-        if(!needUpdate()) {
-            log.debug("Spotify access token was recently updated, not updating again right away.");
-            return;
+        if (accessToken != null && now < expiresAtMillis - 60_000) {
+            return accessToken;
         }
 
-        log.info("Updating Spotify access token.");
+        refreshToken();
+        return accessToken;
+    }
 
+    private void refreshToken() {
         try {
-            if(this.clientId != null && this.clientSecret != null) updateWithClient();
-            else updateWithoutClient();
-            log.info("Updating Spotify access token succeeded.");
+            HttpPost request = new HttpPost(TOKEN_URL);
+
+            String credentials = clientId + ":" + clientSecret;
+            String encodedCredentials = Base64.getEncoder()
+                    .encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
+
+            request.setHeader("Authorization", "Basic " + encodedCredentials);
+            request.setHeader("Content-Type", "application/x-www-form-urlencoded");
+
+            List<NameValuePair> params = new ArrayList<>();
+            params.add(new BasicNameValuePair("grant_type", "client_credentials"));
+
+            request.setEntity(new UrlEncodedFormEntity(params, StandardCharsets.UTF_8));
+
+            try (CloseableHttpResponse response = httpInterfaceManager.getInterface().execute(request)) {
+                int statusCode = response.getStatusLine().getStatusCode();
+                String body = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+
+                if (statusCode < 200 || statusCode >= 300) {
+                    throw new IllegalStateException("Spotify token request failed with status " + statusCode + ": " + body);
+                }
+
+                JsonNode json = mapper.readTree(body);
+
+                this.accessToken = json.get("access_token").asText();
+                int expiresIn = json.get("expires_in").asInt();
+
+                this.expiresAtMillis = Instant.now()
+                        .plusSeconds(Math.max(60, expiresIn))
+                        .toEpochMilli();
+            }
         } catch (Exception e) {
-            log.error("Spotify access token update failed.", e);
+            throw new IllegalStateException("Failed to refresh Spotify access token.", e);
         }
     }
 
-    private void updateWithoutClient() throws IOException {
-        HttpGet get = new HttpGet(TOKEN_GENERATOR_URL);
-        get.setHeader("Content-Type", "application/json");
-        get.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.59");
-        try (CloseableHttpResponse response = httpInterfaceManager.getInterface().execute(get)) {
-            int statusCode = response.getStatusLine().getStatusCode();
+    private static String getPropertyOrEnv(String name) {
+        String property = System.getProperty(name);
 
-            if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-                throw new IOException("Spotify access token request failed with status code: " + statusCode);
-            }
-
-            String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
-            JsonBrowser json = JsonBrowser.parse(responseText);
-            if (json.isNull()) {
-                throw new IOException("Spotify access token not found.");
-            }
-
-            this.clientId = json.get("clientId").text();
-            this.token = json.get("accessToken").text();
-            this.tokenType = "Bearer";
-            this.expiresMs = json.get("accessTokenExpirationTimestampMs").as(Long.class);
-            this.anonymous = json.get("isAnonymous").asBoolean(true);
+        if (!isBlank(property)) {
+            return property;
         }
+
+        return System.getenv(name);
     }
 
-    private void updateWithClient() throws IOException {
-        HttpPost post = new HttpPost(CREDENTIALS_URL);
-        post.setHeader("Content-Type", "application/x-www-form-urlencoded");
-        post.setEntity(new StringEntity(String.format(CREDENTIALS_PAYLOAD, this.clientId, this.clientSecret)));
-        try (CloseableHttpResponse response = httpInterfaceManager.getInterface().execute(post)) {
-            int statusCode = response.getStatusLine().getStatusCode();
+    private static boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
 
-            if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-                throw new IOException("Spotify access token request failed with status code: " + statusCode);
+    private static String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (!isBlank(value)) {
+                return value.trim();
             }
-
-            String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
-            JsonBrowser json = JsonBrowser.parse(responseText);
-            if (json.isNull()) {
-                throw new IOException("Spotify access token not found.");
-            }
-
-            this.token = json.get("access_token").text();
-            this.tokenType = json.get("token_type").text();
-            this.expiresMs = ((long) (json.get("expires_in").as(Double.class) * 1000.0)) + System.currentTimeMillis();
-            this.anonymous = false;
         }
-    }
 
-    public String getFormmatedToken() {
-        if (this.needUpdate()) this.updateToken();
-        return this.tokenType + " " + this.token;
-    }
-
-    public String getToken() {
-        if (this.needUpdate()) this.updateToken();
-        return this.token;
-    }
-
-    public String getTokenType() {
-        if (this.needUpdate()) this.updateToken();
-        return this.tokenType;
-    }
-
-    public long getExpiresMs() {
-        if (this.needUpdate()) this.updateToken();
-        return this.expiresMs;
-    }
-
-    public boolean getAnonymous() {
-        if (this.needUpdate()) this.updateToken();
-        return this.anonymous;
+        return null;
     }
 }

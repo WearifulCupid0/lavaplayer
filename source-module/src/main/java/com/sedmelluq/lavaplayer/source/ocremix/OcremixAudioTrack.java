@@ -37,7 +37,7 @@ public class OcremixAudioTrack extends DelegatedAudioTrack {
             log.debug("Starting Overcloked Remix track from URL: {}", trackInfo.identifier);
 
             try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(trackInfo.identifier), null)) {
-                processDelegate(new Mp3AudioTrack(trackInfo, stream));
+                processDelegate(new Mp3AudioTrack(trackInfo, stream), localExecutor);
             }
         }
     }

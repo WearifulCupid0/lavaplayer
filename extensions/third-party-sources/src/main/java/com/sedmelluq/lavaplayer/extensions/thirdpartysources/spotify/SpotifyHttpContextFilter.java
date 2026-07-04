@@ -26,7 +26,7 @@ public class SpotifyHttpContextFilter implements HttpContextFilter {
     @Override
     public void onRequest(HttpClientContext context, HttpUriRequest request, boolean isRepetition) {
         if (request.getURI().getHost().contains("api.spotify.com")) {
-            request.setHeader("Authorization", tokenTracker.getFormmatedToken());
+            request.setHeader("Authorization", "Bearer " + tokenTracker.getToken());
             request.setHeader("Content-Type", "application/json");
         }
     }
@@ -34,7 +34,7 @@ public class SpotifyHttpContextFilter implements HttpContextFilter {
     @Override
     public boolean onRequestResponse(HttpClientContext context, HttpUriRequest request, HttpResponse response) {
         if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-            tokenTracker.updateToken();
+            tokenTracker.getToken();
             return true;
         }
         return false;

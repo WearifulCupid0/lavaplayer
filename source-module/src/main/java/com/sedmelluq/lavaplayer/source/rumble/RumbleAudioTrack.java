@@ -43,7 +43,7 @@ public class RumbleAudioTrack extends DelegatedAudioTrack {
             log.debug("Starting Rumble track from URL: {}", playbackUrl);
 
             try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(playbackUrl), null)) {
-                processDelegate(new MpegAudioTrack(trackInfo, stream));
+                processDelegate(new MpegAudioTrack(trackInfo, stream), executor);
             }
         } catch (IOException e) {
             throw new FriendlyException("Loading track from Rumble failed.", SUSPICIOUS, e);
