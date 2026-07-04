@@ -2,6 +2,7 @@ package com.sedmelluq.lavaplayer.extensions.thirdpartysources.deezer;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.tools.io.*;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.SourceTools;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
@@ -54,7 +55,7 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
     public DeezerAudioSourceManager(AudioPlayerManager playerManager, String masterKey, boolean allowSearch, boolean fetchIsrc) {
         super(playerManager, fetchIsrc);
 
-        this.masterKey = masterKey;
+        this.masterKey = SourceTools.firstNonBlank(masterKey, SourceTools.getPropertyOrEnv("DEEZER_MASTER_KEY"));
         this.allowSearch = allowSearch;
         this.httpInterfaceManager = new ThreadLocalHttpInterfaceManager(
                 HttpClientTools.createSharedCookiesHttpBuilder()

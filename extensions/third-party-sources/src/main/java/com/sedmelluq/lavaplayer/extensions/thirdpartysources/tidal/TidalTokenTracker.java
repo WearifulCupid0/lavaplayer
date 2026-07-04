@@ -1,6 +1,7 @@
 package com.sedmelluq.lavaplayer.extensions.thirdpartysources.tidal;
 
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.SourceTools;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
@@ -34,8 +35,8 @@ public class TidalTokenTracker {
     }
 
     public TidalTokenTracker(String clientId, String clientSecret) {
-        this.clientId = firstNonBlank(clientId, getPropertyOrEnv("TIDAL_CLIENT_ID"));
-        this.clientSecret = firstNonBlank(clientSecret, getPropertyOrEnv("TIDAL_CLIENT_SECRET"));
+        this.clientId = SourceTools.firstNonBlank(clientId, SourceTools.getPropertyOrEnv("TIDAL_CLIENT_ID"));
+        this.clientSecret = SourceTools.firstNonBlank(clientSecret, SourceTools.getPropertyOrEnv("TIDAL_CLIENT_SECRET"));
 
         this.httpClient = HttpClientBuilder.create()
                 .setDefaultRequestConfig(RequestConfig.custom()
@@ -68,7 +69,7 @@ public class TidalTokenTracker {
     public String getAuthorizationHeader() {
         synchronized (lock) {
             String token = getToken();
-            String type = firstNonBlank(tokenType, "Bearer");
+            String type = SourceTools.firstNonBlank(tokenType, "Bearer");
 
             return type + " " + token;
         }
@@ -76,8 +77,8 @@ public class TidalTokenTracker {
 
     public void setCredentials(String clientId, String clientSecret) {
         synchronized (lock) {
-            this.clientId = normalize(clientId);
-            this.clientSecret = normalize(clientSecret);
+            this.clientId = SourceTools.normalize(clientId);
+            this.clientSecret = SourceTools.normalize(clientSecret);
 
             this.accessToken = null;
             this.tokenType = null;
@@ -86,7 +87,7 @@ public class TidalTokenTracker {
     }
 
     public boolean hasCredentials() {
-        return !isBlank(clientId) && !isBlank(clientSecret);
+        return !SourceTools.isBlank(clientId) && !SourceTools.isBlank(clientSecret);
     }
 
     public boolean forceUpdateToken() {
@@ -113,10 +114,10 @@ public class TidalTokenTracker {
     }
 
     private void refreshToken() {
-        String id = firstNonBlank(clientId, getPropertyOrEnv("TIDAL_CLIENT_ID"));
-        String secret = firstNonBlank(clientSecret, getPropertyOrEnv("TIDAL_CLIENT_SECRET"));
+        String id = SourceTools.firstNonBlank(clientId, SourceTools.getPropertyOrEnv("TIDAL_CLIENT_ID"));
+        String secret = SourceTools.firstNonBlank(clientSecret, SourceTools.getPropertyOrEnv("TIDAL_CLIENT_SECRET"));
 
-        if (isBlank(id) || isBlank(secret)) {
+        if (SourceTools.isBlank(id) || SourceTools.isBlank(secret)) {
             throw new IllegalStateException(
                     "TIDAL credentials are not configured. " +
                             "Use new TidalTokenTracker(clientId, clientSecret), setCredentials(...), " +
@@ -156,14 +157,14 @@ public class TidalTokenTracker {
 
                 String newAccessToken = json.get("access_token").text();
 
-                if (isBlank(newAccessToken)) {
+                if (SourceTools.isBlank(newAccessToken)) {
                     throw new IllegalStateException("TIDAL token response did not contain access_token: " + body);
                 }
 
-                long expiresInSeconds = parseLong(json.get("expires_in").text(), 3600L);
+                long expiresInSeconds = SourceTools.parseLong(json.get("expires_in").text(), 3600L);
 
                 this.accessToken = newAccessToken;
-                this.tokenType = firstNonBlank(json.get("token_type").text(), "Bearer");
+                this.tokenType = SourceTools.firstNonBlank(json.get("token_type").text(), "Bearer");
                 this.expiresAtMillis = System.currentTimeMillis() + expiresInSeconds * 1000L;
 
                 this.clientId = id;
@@ -171,52 +172,6 @@ public class TidalTokenTracker {
             }
         } catch (Exception e) {
             throw new IllegalStateException("Failed to refresh TIDAL access token.", e);
-        }
-    }
-
-    private static String getPropertyOrEnv(String name) {
-        String property = System.getProperty(name);
-
-        if (!isBlank(property)) {
-            return property;
-        }
-
-        return System.getenv(name);
-    }
-
-    private static String normalize(String value) {
-        if (value == null) {
-            return null;
-        }
-
-        String normalized = value.trim();
-
-        return normalized.isEmpty() ? null : normalized;
-    }
-
-    private static boolean isBlank(String value) {
-        return value == null || value.trim().isEmpty();
-    }
-
-    private static String firstNonBlank(String... values) {
-        for (String value : values) {
-            if (!isBlank(value)) {
-                return value.trim();
-            }
-        }
-
-        return null;
-    }
-
-    private static long parseLong(String value, long defaultValue) {
-        if (isBlank(value)) {
-            return defaultValue;
-        }
-
-        try {
-            return Long.parseLong(value.trim());
-        } catch (NumberFormatException e) {
-            return defaultValue;
         }
     }
 }

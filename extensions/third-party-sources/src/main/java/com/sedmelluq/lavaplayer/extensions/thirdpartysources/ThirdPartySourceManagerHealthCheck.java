@@ -9,7 +9,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.applemusic.AppleMusicAudioSourceManager;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.deezer.DeezerAudioSourceManager;
-import com.sedmelluq.lavaplayer.extensions.thirdpartysources.spotify.SpotifyAudioSourceManager;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.pandora.PandoraAudioSourceManager;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.tidal.TidalAudioSourceManager;
 import org.apache.http.client.config.RequestConfig;
 
@@ -42,6 +42,12 @@ public class ThirdPartySourceManagerHealthCheck {
                 SpotifyAudioSourceManager::new,
                 "https://open.spotify.com/track/2BqfIlpahcebJPeu1IUTEo?si=2f01a169b9d94109"
         ));*/
+
+        cases.add(new Case(
+                "pandora",
+                PandoraAudioSourceManager::new,
+                "https://www.pandora.com/artist/sombr/we-never-dated/we-never-dated/TRbXlpZj7w467VJ?part=ug-desktop&corr=208736787122632984"
+        ));
 
         cases.add(new Case(
                 "tidal",

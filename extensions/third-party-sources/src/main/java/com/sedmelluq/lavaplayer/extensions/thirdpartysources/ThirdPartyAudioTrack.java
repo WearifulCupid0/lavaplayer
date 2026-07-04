@@ -10,6 +10,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.InternalAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.deezer.DeezerAudioSourceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,6 +74,11 @@ public class ThirdPartyAudioTrack extends DelegatedAudioTrack {
 			provider = provider.replace(QUERY_PATTERN, getTrackTitle());
 			AudioItem result = loadItem(provider);
 			if (result != null) {
+				if (result instanceof ThirdPartyAudioTrack) {
+					AudioSourceManager audioSourceManager = ((ThirdPartyAudioTrack) result).getSourceManager();
+					if (!(audioSourceManager instanceof DeezerAudioSourceManager) || !((DeezerAudioSourceManager) audioSourceManager).canPlayNative())
+						throw new RuntimeException("A third party audio track can be native played.");
+				}
 				if (result instanceof InternalAudioTrack) {
 					track = result;
 					break;

@@ -3,11 +3,11 @@ package com.sedmelluq.lavaplayer.extensions.thirdpartysources.spotify;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.SourceTools;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
@@ -30,8 +30,8 @@ public class SpotifyTokenTracker {
     private final HttpInterfaceManager httpInterfaceManager;
 
     public SpotifyTokenTracker(HttpInterfaceManager httpInterfaceManager, String clientId, String clientSecret) {
-        this.clientId = firstNonBlank(clientId, getPropertyOrEnv("SPOTIFY_CLIENT_ID"));
-        this.clientSecret = firstNonBlank(clientSecret, getPropertyOrEnv("SPOTIFY_CLIENT_SECRET"));
+        this.clientId = SourceTools.firstNonBlank(clientId, SourceTools.getPropertyOrEnv("SPOTIFY_CLIENT_ID"));
+        this.clientSecret = SourceTools.firstNonBlank(clientSecret, SourceTools.getPropertyOrEnv("SPOTIFY_CLIENT_SECRET"));
         this.httpInterfaceManager = httpInterfaceManager;
     }
 
@@ -82,29 +82,5 @@ public class SpotifyTokenTracker {
         } catch (Exception e) {
             throw new IllegalStateException("Failed to refresh Spotify access token.", e);
         }
-    }
-
-    private static String getPropertyOrEnv(String name) {
-        String property = System.getProperty(name);
-
-        if (!isBlank(property)) {
-            return property;
-        }
-
-        return System.getenv(name);
-    }
-
-    private static boolean isBlank(String value) {
-        return value == null || value.trim().isEmpty();
-    }
-
-    private static String firstNonBlank(String... values) {
-        for (String value : values) {
-            if (!isBlank(value)) {
-                return value.trim();
-            }
-        }
-
-        return null;
     }
 }

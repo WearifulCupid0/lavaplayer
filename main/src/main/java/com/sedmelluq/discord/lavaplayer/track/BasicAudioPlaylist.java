@@ -15,6 +15,10 @@ public class BasicAudioPlaylist implements AudioPlaylist {
   private final AudioTrack selectedTrack;
   private final boolean isSearchResult;
 
+  public static AudioPlaylist createRecommendations(String name, List<AudioTrack> tracks) {
+    return new BasicAudioPlaylist(name, null, null, null, "recommendations", tracks, null, false);
+  }
+
   public static AudioPlaylist createSearchResults(String query, List<AudioTrack> tracks) {
     return createSearchResults(query, tracks, null);
   }
