@@ -24,6 +24,10 @@ allprojects {
   version = projectVersion
 }
 
+plugins {
+  id("de.undercouch.download") version "5.4.0" apply false
+}
+
 subprojects {
   apply(plugin = "java-library")
   apply(plugin = "maven-publish")

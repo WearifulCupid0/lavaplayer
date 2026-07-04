@@ -1,6 +1,8 @@
 @file:Suppress("UnstableApiUsage")
 
 import org.gradle.api.initialization.dsl.VersionCatalogBuilder
+import org.gradle.kotlin.dsl.plugin
+import org.gradle.kotlin.dsl.version
 
 rootProject.name = "lavaplayer"
 
@@ -14,7 +16,9 @@ include(
     ":test-samples",
     ":extensions:third-party-sources",
     ":extensions:format-xm",
-    ":extensions:redis-cache"
+    ":extensions:redis-cache",
+    ":natives",
+    ":natives-publish"
 )
 
 project(":extensions").name = "extensions-project"
@@ -48,6 +52,7 @@ dependencyResolutionManagement {
 fun VersionCatalogBuilder.versions() {
     version("project", "0.1.0")
     version("java", "11")
+    version("maven-publish-plugin", "0.32.0")
 
     version("slf4j", "1.7.25")
     version("commons-io", "2.6")
@@ -70,6 +75,12 @@ fun VersionCatalogBuilder.plugins() {
     val vanniktech = version("vanniktech-maven-publish", "0.32.0")
     plugin("vanniktech-maven-publish", "com.vanniktech.maven.publish").versionRef(vanniktech)
     plugin("vanniktech-maven-publish-base", "com.vanniktech.maven.publish.base").versionRef(vanniktech)
+
+    plugin("maven-publish", "com.vanniktech.maven.publish")
+        .versionRef("maven-publish-plugin")
+
+    plugin("maven-publish-base", "com.vanniktech.maven.publish.base")
+        .versionRef("maven-publish-plugin")
 }
 
 fun VersionCatalogBuilder.common() {
