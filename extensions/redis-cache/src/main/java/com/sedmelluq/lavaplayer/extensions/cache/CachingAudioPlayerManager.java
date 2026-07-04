@@ -9,6 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 
 public class CachingAudioPlayerManager extends DefaultAudioPlayerManager implements AudioPlayerManager {
     private static final Logger log = LoggerFactory.getLogger(CachingAudioPlayerManager.class);
@@ -26,6 +28,15 @@ public class CachingAudioPlayerManager extends DefaultAudioPlayerManager impleme
         }
 
         super.shutdown();
+    }
+
+    @Override
+    public Future<Void> loadItem(final AudioReference reference, final AudioLoadResultHandler resultHandler) {
+        try {
+            return getTrackInfoExecutorService().submit(createItemLoader(reference, resultHandler));
+        } catch (RejectedExecutionException e) {
+            return handleLoadRejected(reference.identifier, resultHandler, e);
+        }
     }
 
     private Callable<Void> createItemLoader(final AudioReference reference, final AudioLoadResultHandler resultHandler) {

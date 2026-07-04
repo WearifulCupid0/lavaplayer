@@ -238,13 +238,17 @@ public class DefaultAudioPlayerManager implements AudioPlayerManager {
     }
   }
 
-  private Future<Void> handleLoadRejected(String identifier, AudioLoadResultHandler resultHandler, RejectedExecutionException e) {
+  public Future<Void> handleLoadRejected(String identifier, AudioLoadResultHandler resultHandler, RejectedExecutionException e) {
     FriendlyException exception = new FriendlyException("Cannot queue loading a track, queue is full.", SUSPICIOUS, e);
     ExceptionTools.log(log, exception, "queueing item " + identifier);
 
     resultHandler.loadFailed(exception);
 
     return ExecutorTools.COMPLETED_VOID;
+  }
+
+  public ThreadPoolExecutor getTrackInfoExecutorService() {
+    return trackInfoExecutorService;
   }
 
   private Callable<Void> createItemLoader(final AudioReference reference, final AudioLoadResultHandler resultHandler) {
