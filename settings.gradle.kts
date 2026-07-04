@@ -115,6 +115,7 @@ fun VersionCatalogBuilder.modules() {
     version("lavaplayer-ext-third-party-sources", "0.1.8")
     version("lavaplayer-ext-redis-cache", "0.1.0")
     version("lavaplayer-source", "0.1.1")
+    version("lavaplayer-main", "0.1.1")
 }
 
 fun VersionCatalogBuilder.others() {

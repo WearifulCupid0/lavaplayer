@@ -6,6 +6,8 @@ base {
   archivesName.set("lavaplayer-main")
 }
 
+version = libs.versions.lavaplayer.main.get()
+
 dependencies {
   api(libs.slf4j)
   api(libs.annotations)
