@@ -39,7 +39,10 @@ subprojects {
     targetCompatibility = version
 
     withSourcesJar()
-    withJavadocJar()
+
+    if (project.name != "natives-publish") {
+      withJavadocJar()
+    }
   }
 
   tasks.withType<JavaCompile>().configureEach {
