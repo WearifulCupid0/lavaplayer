@@ -85,7 +85,8 @@ public class AudioTrackInfo {
    */
   public AudioTrackInfo(String title, String author, long length, String identifier, boolean isStream, String uri, String artworkUrl, @Nullable Boolean explicit, @Nullable String isrc) {
     this.title = title;
-    this.artists.add(new AudioTrackAuthorInfo(author));
+    if (author != null && !author.isBlank())
+      this.artists.add(new AudioTrackAuthorInfo(author));
     this.length = length;
     this.identifier = identifier;
     this.isStream = isStream;
@@ -106,6 +107,18 @@ public class AudioTrackInfo {
    */
   public AudioTrackInfo(String title, List<AudioTrackAuthorInfo> author, long length, String identifier, boolean isStream, String uri, String artworkUrl) {
     this(title, author, length, identifier, isStream, uri, artworkUrl, null, null);
+  }
+
+  /**
+   * @param title Track title
+   * @param length Length of the track in milliseconds
+   * @param identifier Audio source specific track identifier
+   * @param isStream True if this track is a stream
+   * @param uri URL of the track or path to its file
+   * @param artworkUrl URL to thumbnail of the track
+   */
+  public AudioTrackInfo(String title, long length, String identifier, boolean isStream, String uri, String artworkUrl) {
+    this(title, new ArrayList<>(), length, identifier, isStream, uri, artworkUrl, null, null);
   }
 
   /**

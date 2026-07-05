@@ -486,8 +486,7 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
                 firstRelationshipArtistName(trackResource, document),
                 firstIncludedAttribute(document, "artists", "name"),
                 attributes.get("artistName").text(),
-                attributes.get("artists").index(0).get("name").text(),
-                "Unknown artist"
+                attributes.get("artists").index(0).get("name").text()
         );
 
         long duration = parseDurationMillis(attributes);

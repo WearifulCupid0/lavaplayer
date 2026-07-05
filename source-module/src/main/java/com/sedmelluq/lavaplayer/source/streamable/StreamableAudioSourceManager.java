@@ -111,7 +111,6 @@ public class StreamableAudioSourceManager implements AudioSourceManager, HttpCon
 
             AudioTrackInfo trackInfo = new AudioTrackInfo(
                 json.get("title").text(),
-                "Unknown author",
                 (long) (json.get("files").get("original").get("duration").as(Double.class) * 1000.0),
                 id,
                 false,

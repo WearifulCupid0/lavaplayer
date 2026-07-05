@@ -199,8 +199,9 @@ public class PandoraAudioSourceManager extends ThirdPartyAudioSourceManager impl
             return null;
         }
 
+        List<AudioTrackAuthorInfo> artists = new ArrayList<>();
         String author = track.get("artistName").text();
-        if (author == null || author.isEmpty()) author = "unknown";
+        if (!SourceTools.isBlank(author)) artists.add(new AudioTrackAuthorInfo(author));
         long duration = track.get("duration").asLong(0) * 1000;
         if (duration == 0) {
             return null;

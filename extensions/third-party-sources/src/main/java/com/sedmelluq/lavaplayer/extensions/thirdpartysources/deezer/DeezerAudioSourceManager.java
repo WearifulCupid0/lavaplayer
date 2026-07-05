@@ -301,9 +301,19 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
     }
 
     private AudioTrack buildTrack(JsonBrowser trackInfo) {
+        List<AudioTrackAuthorInfo> artists = new ArrayList<>();
+
+        if (!trackInfo.get("contributors").isNull()) {
+            for (JsonBrowser artistInfo : trackInfo.get("contributors").values())
+                artists.add(new AudioTrackAuthorInfo(artistInfo.get("name").text(), artistInfo.get("link").text()));
+        } else {
+            JsonBrowser artistInfo = trackInfo.get("artist");
+            artists.add(new AudioTrackAuthorInfo(artistInfo.get("name").text(), artistInfo.get("link").text()));
+        }
+
         AudioTrackInfo info = new AudioTrackInfo(
                 trackInfo.get("title").safeText(),
-                trackInfo.get("artist").get("name").safeText(),
+                artists,
                 trackInfo.get("duration").asLong(0) * 1000,
                 trackInfo.get("id").text(),
                 false,
