@@ -74,6 +74,29 @@ public class AudioTrackInfo {
 
   /**
    * @param title Track title
+   * @param artists Track author, if known
+   * @param length Length of the track in milliseconds
+   * @param identifier Audio source specific track identifier
+   * @param isStream True if this track is a stream
+   * @param uri URL of the track or path to its file
+   * @param artworkUrl Thumbnail of the track
+   * @param explicit True if this track is considered explicit
+   * @param isrc International Standard Recording Code
+   */
+  public AudioTrackInfo(String title, AudioTrackAuthorInfo artist, long length, String identifier, boolean isStream, String uri, String artworkUrl, @Nullable Boolean explicit, @Nullable String isrc) {
+    this.title = title;
+    this.artists.add(artist);
+    this.length = length;
+    this.identifier = identifier;
+    this.isStream = isStream;
+    this.uri = uri;
+    this.artworkUrl = artworkUrl;
+    this.explicit = explicit;
+    this.isrc = isrc;
+  }
+
+  /**
+   * @param title Track title
    * @param author Track author, if known
    * @param length Length of the track in milliseconds
    * @param identifier Audio source specific track identifier
@@ -119,6 +142,19 @@ public class AudioTrackInfo {
    */
   public AudioTrackInfo(String title, long length, String identifier, boolean isStream, String uri, String artworkUrl) {
     this(title, new ArrayList<>(), length, identifier, isStream, uri, artworkUrl, null, null);
+  }
+
+  /**
+   * @param title Track title
+   * @param author Track author, if known
+   * @param length Length of the track in milliseconds
+   * @param identifier Audio source specific track identifier
+   * @param isStream True if this track is a stream
+   * @param uri URL of the track or path to its file
+   * @param artworkUrl URL to thumbnail of the track
+   */
+  public AudioTrackInfo(String title, AudioTrackAuthorInfo author, long length, String identifier, boolean isStream, String uri, String artworkUrl) {
+    this(title, author, length, identifier, isStream, uri, artworkUrl, null, null);
   }
 
   /**

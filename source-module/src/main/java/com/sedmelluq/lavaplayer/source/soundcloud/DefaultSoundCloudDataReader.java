@@ -2,6 +2,7 @@ package com.sedmelluq.lavaplayer.source.soundcloud;
 
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrackAuthorInfo;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,9 +29,15 @@ public class DefaultSoundCloudDataReader implements SoundCloudDataReader {
 
   @Override
   public AudioTrackInfo readTrackInfo(JsonBrowser trackData, String identifier) {
+    AudioTrackAuthorInfo authorInfo =
+            new AudioTrackAuthorInfo(
+                    trackData.get("user").get("username").safeText(),
+                    trackData.get("user").get("permalink_url").text()
+            );
+
     return new AudioTrackInfo(
         trackData.get("title").safeText(),
-        trackData.get("user").get("username").safeText(),
+        authorInfo,
         trackData.get("full_duration").as(Integer.class),
         identifier,
         false,
