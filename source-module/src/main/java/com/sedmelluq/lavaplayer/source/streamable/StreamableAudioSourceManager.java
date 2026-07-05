@@ -104,6 +104,11 @@ public class StreamableAudioSourceManager implements AudioSourceManager, HttpCon
 
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
 
+            String artworkUrl = json.get("thumbnail_url").text();
+
+            if (artworkUrl != null && !artworkUrl.isBlank() && !artworkUrl.startsWith("https:"))
+                artworkUrl = "https:" + artworkUrl;
+
             AudioTrackInfo trackInfo = new AudioTrackInfo(
                 json.get("title").text(),
                 "Unknown author",
@@ -111,7 +116,7 @@ public class StreamableAudioSourceManager implements AudioSourceManager, HttpCon
                 id,
                 false,
                 STREAMABLE_URL + id,
-                json.get("thumbnail_url").text()
+                artworkUrl
             );
 
             return new StreamableAudioTrack(trackInfo, this);
