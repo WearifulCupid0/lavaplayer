@@ -3,7 +3,11 @@ package com.sedmelluq.discord.lavaplayer.track.info;
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.SeekableInputStream;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrackAuthorInfo;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN;
 
@@ -15,7 +19,7 @@ public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
   private static final String UNKNOWN_ARTIST = "Unknown artist";
 
   private String title;
-  private String author;
+  private List<AudioTrackAuthorInfo> artists = new ArrayList<>();
   private Long length;
   private String identifier;
   private String uri;
@@ -35,8 +39,10 @@ public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
 
   @Override
   public String getAuthor() {
-    return author;
+    return artists.get(0).name;
   }
+
+  public List<AudioTrackAuthorInfo> getArtists() { return artists; }
 
   @Override
   public Long getLength() {
@@ -67,7 +73,13 @@ public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
   }
 
   public AudioTrackInfoBuilder setAuthor(String value) {
-    author = DataFormatTools.defaultOnNull(value, author);
+    artists.add(new AudioTrackAuthorInfo(DataFormatTools.defaultOnNull(value, getAuthor())));
+    return this;
+  }
+
+  public AudioTrackInfoBuilder setArtists(List<AudioTrackAuthorInfo> artists) {
+    this.artists.clear();
+    this.artists.addAll(artists);
     return this;
   }
 
@@ -133,7 +145,7 @@ public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
 
     return new AudioTrackInfo(
         title,
-        author,
+        artists,
         finalLength,
         identifier,
         DataFormatTools.defaultOnNull(isStream, finalLength == DURATION_MS_UNKNOWN),
@@ -177,7 +189,7 @@ public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
   public static AudioTrackInfoBuilder create(AudioTrackInfo trackInfo) {
     return new AudioTrackInfoBuilder()
             .setTitle(trackInfo.title)
-            .setAuthor(trackInfo.author)
+            .setArtists(trackInfo.artists)
             .setLength(trackInfo.length)
             .setIdentifier(trackInfo.identifier)
             .setIsStream(trackInfo.isStream)

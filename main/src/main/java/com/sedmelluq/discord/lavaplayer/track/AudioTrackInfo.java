@@ -2,6 +2,9 @@ package com.sedmelluq.discord.lavaplayer.track;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Meta info for an audio track
  */
@@ -13,7 +16,7 @@ public class AudioTrackInfo {
   /**
    * Track author, if known
    */
-  public final String author;
+  public final List<AudioTrackAuthorInfo> artists = new ArrayList<>();
   /**
    * Length of the track in milliseconds, UnitConstants.DURATION_MS_UNKNOWN for streams
    */
@@ -46,6 +49,28 @@ public class AudioTrackInfo {
   @Nullable
   public String isrc;
 
+  /**
+   * @param title Track title
+   * @param artists Track author, if known
+   * @param length Length of the track in milliseconds
+   * @param identifier Audio source specific track identifier
+   * @param isStream True if this track is a stream
+   * @param uri URL of the track or path to its file
+   * @param artworkUrl Thumbnail of the track
+   * @param explicit True if this track is considered explicit
+   * @param isrc International Standard Recording Code
+   */
+  public AudioTrackInfo(String title, List<AudioTrackAuthorInfo> artists, long length, String identifier, boolean isStream, String uri, String artworkUrl, @Nullable Boolean explicit, @Nullable String isrc) {
+    this.title = title;
+    this.artists.addAll(artists);
+    this.length = length;
+    this.identifier = identifier;
+    this.isStream = isStream;
+    this.uri = uri;
+    this.artworkUrl = artworkUrl;
+    this.explicit = explicit;
+    this.isrc = isrc;
+  }
 
   /**
    * @param title Track title
@@ -60,7 +85,7 @@ public class AudioTrackInfo {
    */
   public AudioTrackInfo(String title, String author, long length, String identifier, boolean isStream, String uri, String artworkUrl, @Nullable Boolean explicit, @Nullable String isrc) {
     this.title = title;
-    this.author = author;
+    this.artists.add(new AudioTrackAuthorInfo(author));
     this.length = length;
     this.identifier = identifier;
     this.isStream = isStream;

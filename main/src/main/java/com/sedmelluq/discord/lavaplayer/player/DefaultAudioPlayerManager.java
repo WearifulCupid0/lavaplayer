@@ -13,14 +13,7 @@ import com.sedmelluq.discord.lavaplayer.tools.OrderedExecutor;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.MessageInput;
 import com.sedmelluq.discord.lavaplayer.tools.io.MessageOutput;
-import com.sedmelluq.discord.lavaplayer.track.AudioItem;
-import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
-import com.sedmelluq.discord.lavaplayer.track.AudioReference;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
-import com.sedmelluq.discord.lavaplayer.track.DecodedTrackHolder;
-import com.sedmelluq.discord.lavaplayer.track.InternalAudioTrack;
-import com.sedmelluq.discord.lavaplayer.track.TrackStateListener;
+import com.sedmelluq.discord.lavaplayer.track.*;
 import com.sedmelluq.discord.lavaplayer.track.playback.AudioTrackExecutor;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
 import com.sedmelluq.lava.common.tools.DaemonThreadFactory;
@@ -288,7 +281,11 @@ public class DefaultAudioPlayerManager implements AudioPlayerManager {
 
     AudioTrackInfo trackInfo = track.getInfo();
     output.writeUTF(trackInfo.title);
-    output.writeUTF(trackInfo.author);
+    output.writeInt(trackInfo.artists.size());
+    for (AudioTrackAuthorInfo authorInfo : trackInfo.artists) {
+      output.writeUTF(authorInfo.name);
+      DataFormatTools.writeNullableText(output, authorInfo.uri);
+    }
     output.writeLong(trackInfo.length);
     output.writeUTF(trackInfo.identifier);
     output.writeBoolean(trackInfo.isStream);
@@ -311,7 +308,13 @@ public class DefaultAudioPlayerManager implements AudioPlayerManager {
 
     int version = (stream.getMessageFlags() & TRACK_INFO_VERSIONED) != 0 ? (input.readByte() & 0xFF) : 1;
 
-    AudioTrackInfo trackInfo = new AudioTrackInfo(input.readUTF(), input.readUTF(), input.readLong(), input.readUTF(),
+    String title = input.readUTF();
+
+    List<AudioTrackAuthorInfo> artists = new ArrayList<>();
+    for (int i = 0; i < input.readInt(); i++)
+      artists.add(new AudioTrackAuthorInfo(input.readUTF(), DataFormatTools.readNullableText(input)));
+
+    AudioTrackInfo trackInfo = new AudioTrackInfo(title, artists, input.readLong(), input.readUTF(),
             input.readBoolean(), version >= 2 ? DataFormatTools.readNullableText(input) : null,
             DataFormatTools.readNullableText(input), DataFormatTools.readNullableBoolean(input), DataFormatTools.readNullableText(input));
     AudioTrack track = decodeTrackDetails(trackInfo, input);
