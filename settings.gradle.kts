@@ -1,8 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
 import org.gradle.api.initialization.dsl.VersionCatalogBuilder
-import org.gradle.kotlin.dsl.plugin
-import org.gradle.kotlin.dsl.version
 
 rootProject.name = "lavaplayer"
 

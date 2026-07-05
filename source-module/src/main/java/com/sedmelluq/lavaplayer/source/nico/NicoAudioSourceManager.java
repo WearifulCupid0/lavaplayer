@@ -101,11 +101,14 @@ public class NicoAudioSourceManager implements AudioSourceManager, HttpConfigura
         return null;
     }
 
-    private AudioPlaylist loadSearch(String query) {
+    private AudioItem loadSearch(String query) {
         try (HttpInterface httpInterface = getHttpInterface()) {
             HttpGet get = new HttpGet(buildSearchURI(query));
             get.addHeader("user-agent", USER_AGENT);
             try (CloseableHttpResponse response = httpInterface.execute(get)) {
+                if (response.getStatusLine().getStatusCode() == 404)
+                    return AudioReference.NO_TRACK;
+
                 HttpClientTools.assertSuccessWithContent(response, "search api response");
 
                 JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
