@@ -43,8 +43,8 @@ public class ThirdPartyAudioTrack extends DelegatedAudioTrack {
 
 	private String getTrackTitle() {
 		String query = this.trackInfo.title;
-		if(!this.trackInfo.author.startsWith("Unknown")) {
-			query += " - " + this.trackInfo.author;
+		if(!this.trackInfo.artists.isEmpty()) {
+			query += " - " + this.trackInfo.artists.get(0).name;
 		}
 		return query;
 	}
@@ -92,7 +92,7 @@ public class ThirdPartyAudioTrack extends DelegatedAudioTrack {
 						for (AudioTrack t : tracks) {
 							AudioTrackInfo info = t.getInfo();
 							if (info.title.toLowerCase().contains(this.trackInfo.title.toLowerCase()) &&
-								info.author.toLowerCase().contains(this.trackInfo.author.toLowerCase())) {
+								info.artists.get(0).name.toLowerCase().contains(this.trackInfo.artists.get(0).name.toLowerCase())) {
 									track = t;
 									break;
 							}

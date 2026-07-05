@@ -5,11 +5,15 @@ import com.sedmelluq.discord.lavaplayer.format.OpusAudioDataFormat;
 import com.sedmelluq.discord.lavaplayer.format.Pcm16AudioDataFormat;
 import com.sedmelluq.discord.lavaplayer.format.StandardAudioDataFormats;
 import com.sedmelluq.discord.lavaplayer.player.AudioConfiguration;
+import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrackAuthorInfo;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Codec for track start message.
@@ -51,7 +55,11 @@ public class TrackStartRequestCodec implements RemoteMessageCodec<TrackStartRequ
 
     out.writeLong(message.executorId);
     out.writeUTF(message.trackInfo.title);
-    out.writeUTF(message.trackInfo.author);
+    out.writeInt(message.trackInfo.artists.size());
+    for (AudioTrackAuthorInfo authorInfo : message.trackInfo.artists) {
+      out.writeUTF(authorInfo.name);
+      DataFormatTools.writeNullableText(out, authorInfo.uri);
+    }
     out.writeLong(message.trackInfo.length);
     out.writeUTF(message.trackInfo.identifier);
     out.writeBoolean(message.trackInfo.isStream);
@@ -77,7 +85,14 @@ public class TrackStartRequestCodec implements RemoteMessageCodec<TrackStartRequ
   @Override
   public TrackStartRequestMessage decode(DataInput in, int version) throws IOException {
     long executorId = in.readLong();
-    AudioTrackInfo trackInfo = new AudioTrackInfo(in.readUTF(), in.readUTF(), in.readLong(), in.readUTF(), in.readBoolean(), null, null);
+
+    String title = in.readUTF();
+    List<AudioTrackAuthorInfo> artists = new ArrayList<>();
+
+    for (int i = 0; i < in.readInt(); i++)
+      artists.add(new AudioTrackAuthorInfo(in.readUTF(), DataFormatTools.readNullableText(in)));
+
+    AudioTrackInfo trackInfo = new AudioTrackInfo(title, artists, in.readLong(), in.readUTF(), in.readBoolean(), null, null);
 
     byte[] encodedTrack = new byte[in.readInt()];
     in.readFully(encodedTrack);
