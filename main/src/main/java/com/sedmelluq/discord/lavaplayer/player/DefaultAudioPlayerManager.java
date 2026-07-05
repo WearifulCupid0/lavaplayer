@@ -315,9 +315,17 @@ public class DefaultAudioPlayerManager implements AudioPlayerManager {
     for (int i = 0; i < input.readInt(); i++)
       artists.add(new AudioTrackAuthorInfo(input.readUTF(), DataFormatTools.readNullableText(input)));
 
-    AudioTrackInfo trackInfo = new AudioTrackInfo(title, artists, input.readLong(), input.readUTF(),
-            input.readBoolean(), version >= 2 ? DataFormatTools.readNullableText(input) : null,
-            DataFormatTools.readNullableText(input), DataFormatTools.readNullableBoolean(input), DataFormatTools.readNullableText(input));
+    AudioTrackInfo trackInfo = new AudioTrackInfo(
+            title,
+            artists,
+            input.readLong(),
+            input.readUTF(),
+            input.readBoolean(),
+            DataFormatTools.readNullableText(input),
+            DataFormatTools.readNullableText(input),
+            DataFormatTools.readNullableBoolean(input),
+            DataFormatTools.readNullableText(input)
+    );
     AudioTrack track = decodeTrackDetails(trackInfo, input);
     long position = input.readLong();
 
