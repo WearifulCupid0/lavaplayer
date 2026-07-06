@@ -23,18 +23,35 @@ public class DeezerAudioTrack extends DelegatedAudioTrack {
 
     @Override
     public void process(LocalAudioTrackExecutor executor) throws Exception {
-        try (HttpInterface httpInterface = this.sourceManager.getHttpInterface()) {
+        try (HttpInterface httpInterface = this.sourceManager.getHttpInterface(true)) {
             if (this.sourceManager.canPlayNative()) {
-                try (DeezerPersistentHttpStream stream = new DeezerPersistentHttpStream(httpInterface, this.sourceManager.getMediaURL(this.trackInfo.identifier), this.trackInfo.length, this.getTrackDecryptionKey())) {
+                this.sourceManager.setupDeezerHttpInterface(httpInterface);
+
+                DeezerAudioSourceManager.DeezerMediaSource source =
+                        this.sourceManager.getMediaSource(httpInterface, this.trackInfo.identifier);
+
+                try (DeezerPersistentHttpStream stream = new DeezerPersistentHttpStream(
+                        httpInterface,
+                        source.getUrl(),
+                        source.getContentLength(),
+                        this.getTrackDecryptionKey(source.getTrackId())
+                )) {
                     processDelegate(new Mp3AudioTrack(this.trackInfo, stream), executor);
                 }
+
+                return;
             }
+
             processDelegate(new ThirdPartyAudioTrack(trackInfo, this.sourceManager), executor);
         }
     }
 
-    private byte[] getTrackDecryptionKey() throws NoSuchAlgorithmException {
-        char[] md5 = Hex.encodeHex(MessageDigest.getInstance("MD5").digest(this.trackInfo.identifier.getBytes()), true);
+    private byte[] getTrackDecryptionKey(String trackId) throws NoSuchAlgorithmException {
+        char[] md5 = Hex.encodeHex(
+                MessageDigest.getInstance("MD5").digest(trackId.getBytes()),
+                true
+        );
+
         byte[] key = new byte[16];
 
         for (int i = 0; i < 16; i++) {
