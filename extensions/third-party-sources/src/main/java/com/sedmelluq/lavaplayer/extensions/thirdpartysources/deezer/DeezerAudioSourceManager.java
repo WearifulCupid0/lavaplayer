@@ -465,10 +465,31 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
     }
 
     private boolean isCredentialsBlank() {
-        return SourceTools.isBlank(this.licenseToken) ||
-                SourceTools.isBlank(this.apiToken) ||
-                SourceTools.isBlank(this.sessionId) ||
-                SourceTools.isBlank(this.uniqueId);
+        return isBlankToken(this.licenseToken) ||
+                isBlankToken(this.apiToken) ||
+                isBlankToken(this.sessionId) ||
+                isBlankToken(this.uniqueId);
+    }
+
+    private boolean isBlankToken(String value) {
+        return SourceTools.isBlank(value) || "null".equalsIgnoreCase(value);
+    }
+
+    private boolean isInvalidCsrfResponse(JsonBrowser json) {
+        JsonBrowser error = json.get("error");
+
+        if (error.isNull()) {
+            return false;
+        }
+
+        return !error.get("VALID_TOKEN_REQUIRED").isNull();
+    }
+
+    private void clearDeezerSessionCredentials() {
+        this.apiToken = null;
+        this.licenseToken = null;
+        this.sessionId = null;
+        this.uniqueId = null;
     }
 
     private DeezerCredentials getCredentials(HttpInterface httpInterface) throws IOException {
@@ -631,6 +652,20 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
 
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
 
+            if (isInvalidCsrfResponse(json)) {
+                if (secondTime) {
+                    throw new IOException("Failed to get Deezer track token: invalid CSRF token after retry.");
+                }
+
+                log.debug("Deezer api token is invalid, refreshing credentials and retrying.");
+
+                clearDeezerSessionCredentials();
+
+                DeezerCredentials newCredentials = getCredentials(httpInterface);
+
+                return getTrackToken(httpInterface, songId, newCredentials, true);
+            }
+
             checkResponse(json, "Failed to get Deezer track token");
 
             JsonBrowser results = json.get("results");
@@ -649,21 +684,18 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
 
             String trackToken = results.get("TRACK_TOKEN").text();
 
-            if (SourceTools.isBlank(trackToken) && !secondTime) {
-                log.debug("Deezer track token is null, retrying with new credentials.");
+            if (isBlankToken(trackToken)) {
+                if (secondTime) {
+                    throw new IOException("Failed to load new Deezer track token.");
+                }
 
-                this.apiToken = null;
-                this.licenseToken = null;
-                this.sessionId = null;
-                this.uniqueId = null;
+                log.debug("Deezer track token is blank, refreshing credentials and retrying.");
+
+                clearDeezerSessionCredentials();
 
                 DeezerCredentials newCredentials = getCredentials(httpInterface);
 
-                return this.getTrackToken(httpInterface, songId, newCredentials, true);
-            }
-
-            if (SourceTools.isBlank(trackToken)) {
-                throw new IOException("Failed to load new Deezer track token.");
+                return getTrackToken(httpInterface, songId, newCredentials, true);
             }
 
             log.debug("Deezer track token for song {} loaded.", songId);
