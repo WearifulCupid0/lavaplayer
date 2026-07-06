@@ -21,78 +21,186 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 public class DeezerPersistentHttpStream extends PersistentHttpStream {
-
     private final byte[] keyMaterial;
 
-    public DeezerPersistentHttpStream(HttpInterface httpInterface, URI contentUrl, Long contentLength, byte[] keyMaterial) {
+    public DeezerPersistentHttpStream(
+            HttpInterface httpInterface,
+            URI contentUrl,
+            Long contentLength,
+            byte[] keyMaterial
+    ) {
         super(httpInterface, contentUrl, contentLength);
         this.keyMaterial = keyMaterial;
     }
 
+    /**
+     * O decrypt do Deezer depende de blocos de 2048 bytes.
+     *
+     * Se uma reconexão usar Range no meio de um bloco, a contagem dos blocos
+     * pode ficar desalinhada e o MP3 resultante pode quebrar no meio.
+     *
+     * Então, para ficar parecido com o código TypeScript que funciona,
+     * não usamos Range. Quando o PersistentHttpStream reconectar, ele abre
+     * do começo e o DecryptingInputStream descarta os bytes já lidos.
+     */
+    @Override
+    protected boolean useHeadersForRange() {
+        return false;
+    }
+
+    @Override
     public InputStream createContentInputStream(HttpResponse response) throws IOException {
-        return new DecryptingInputStream(response.getEntity().getContent(), this.keyMaterial, this.position);
+        return new DecryptingInputStream(
+                response.getEntity().getContent(),
+                this.keyMaterial,
+                this.position
+        );
     }
 
     private static class DecryptingInputStream extends InputStream {
-
         private static final int BLOCK_SIZE = 2048;
-        private static final byte[] iv = new byte[]{0, 1, 2, 3, 4, 5, 6, 7};
+        private static final byte[] IV = new byte[]{0, 1, 2, 3, 4, 5, 6, 7};
 
-        private final InputStream in;
-        private final ByteBuffer buff;
-        private final InputStream out;
-        private final Cipher cipher;
-        private long i;
-        private boolean filled;
+        private final InputStream input;
+        private final ByteBuffer buffer;
+        private final InputStream bufferInput;
+        private final byte[] keyMaterial;
 
-        public DecryptingInputStream(InputStream in, byte[] keyMaterial, long position) throws IOException {
-            this.in = new BufferedInputStream(in);
-            this.buff = ByteBuffer.allocate(BLOCK_SIZE);
-            this.out = new ByteBufferInputStream(this.buff);
+        private long blockIndex;
+        private boolean hasBufferedData;
 
-            try {
-                cipher = Cipher.getInstance("Blowfish/CBC/NoPadding");
-                cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(keyMaterial, "Blowfish"), new IvParameterSpec(iv));
-            } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException |
-                     InvalidAlgorithmParameterException e) {
-                throw new IOException(e);
-            }
+        public DecryptingInputStream(
+                InputStream input,
+                byte[] keyMaterial,
+                long position
+        ) throws IOException {
+            this.input = new BufferedInputStream(input);
+            this.buffer = ByteBuffer.allocate(BLOCK_SIZE);
+            this.bufferInput = new ByteBufferInputStream(this.buffer);
+            this.keyMaterial = keyMaterial;
 
-            i = Math.max(0, position / BLOCK_SIZE);
-            long remainingBytesInChunk = ((i + 1) * BLOCK_SIZE) - position;
-            if (remainingBytesInChunk < 2048) {
-                in.skip(remainingBytesInChunk);
-                i++;
+            this.blockIndex = 0;
+            this.hasBufferedData = false;
+
+            if (position > 0) {
+                discardDecryptedBytes(position);
             }
         }
 
         @Override
         public int read() throws IOException {
-            if (this.filled && this.out.available() > 0) {
-                return this.out.read();
-            }
-
-            byte[] chunk = this.in.readNBytes(BLOCK_SIZE);
-            this.buff.clear();
-            this.filled = true;
-
-            if (this.i % 3 > 0 || chunk.length < BLOCK_SIZE) {
-                this.buff.put(chunk);
-            } else {
-                byte[] decryptedChunk;
-                try {
-                    decryptedChunk = this.cipher.doFinal(chunk);
-                } catch (IllegalBlockSizeException | BadPaddingException e) {
-                    throw new RuntimeException(e);
+            if (!hasBufferedData || bufferInput.available() <= 0) {
+                if (!fillNextBlock()) {
+                    return -1;
                 }
-                this.buff.put(decryptedChunk);
             }
 
-            i++;
-            this.buff.flip();
-            return this.out.read();
+            return bufferInput.read();
         }
 
-    }
+        @Override
+        public int read(byte[] bytes, int offset, int length) throws IOException {
+            if (length == 0) {
+                return 0;
+            }
 
+            int totalRead = 0;
+
+            while (length > 0) {
+                if (!hasBufferedData || bufferInput.available() <= 0) {
+                    if (!fillNextBlock()) {
+                        return totalRead > 0 ? totalRead : -1;
+                    }
+                }
+
+                int read = bufferInput.read(bytes, offset, length);
+
+                if (read < 0) {
+                    return totalRead > 0 ? totalRead : -1;
+                }
+
+                totalRead += read;
+                offset += read;
+                length -= read;
+            }
+
+            return totalRead;
+        }
+
+        @Override
+        public void close() throws IOException {
+            input.close();
+        }
+
+        private boolean fillNextBlock() throws IOException {
+            byte[] chunk = input.readNBytes(BLOCK_SIZE);
+
+            if (chunk.length == 0) {
+                return false;
+            }
+
+            buffer.clear();
+            hasBufferedData = true;
+
+            if (blockIndex % 3 > 0 || chunk.length < BLOCK_SIZE) {
+                buffer.put(chunk);
+            } else {
+                buffer.put(decryptBlock(chunk));
+            }
+
+            blockIndex++;
+            buffer.flip();
+
+            return true;
+        }
+
+        private byte[] decryptBlock(byte[] chunk) throws IOException {
+            try {
+                /*
+                 * Igual ao TypeScript:
+                 * createDecipheriv(...) é chamado para cada bloco criptografado.
+                 *
+                 * Isso garante que o IV seja resetado em cada bloco de 2048 bytes.
+                 */
+                Cipher cipher = Cipher.getInstance("Blowfish/CBC/NoPadding");
+
+                cipher.init(
+                        Cipher.DECRYPT_MODE,
+                        new SecretKeySpec(keyMaterial, "Blowfish"),
+                        new IvParameterSpec(IV)
+                );
+
+                return cipher.doFinal(chunk);
+            } catch (
+                    NoSuchAlgorithmException |
+                    NoSuchPaddingException |
+                    InvalidKeyException |
+                    InvalidAlgorithmParameterException |
+                    IllegalBlockSizeException |
+                    BadPaddingException exception
+            ) {
+                throw new IOException("Failed to decrypt Deezer block.", exception);
+            }
+        }
+
+        private void discardDecryptedBytes(long bytesToDiscard) throws IOException {
+            byte[] discardBuffer = new byte[8192];
+
+            long remaining = bytesToDiscard;
+
+            while (remaining > 0) {
+                int read = read(
+                        discardBuffer,
+                        0,
+                        (int) Math.min(discardBuffer.length, remaining)
+                );
+
+                if (read < 0) {
+                    throw new IOException("Unexpected EOF while discarding Deezer stream.");
+                }
+
+                remaining -= read;
+            }
+        }
+    }
 }
