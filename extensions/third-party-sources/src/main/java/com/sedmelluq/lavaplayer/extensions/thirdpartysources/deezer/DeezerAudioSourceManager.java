@@ -67,7 +67,7 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
         this.deezerArl = SourceTools.firstNonBlank(deezerArl, SourceTools.getPropertyOrEnv("DEEZER_ARL"));
         this.masterKey = SourceTools.firstNonBlank(masterKey, SourceTools.getPropertyOrEnv("DEEZER_MASTER_KEY"));
         this.allowSearch = allowSearch;
-        this.httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
+        this.httpInterfaceManager = HttpClientTools.createCookielessThreadLocalManager();
     }
 
     public boolean canPlayNative() {
