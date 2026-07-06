@@ -33,16 +33,6 @@ public class DeezerPersistentHttpStream extends PersistentHttpStream {
         this.keyMaterial = keyMaterial;
     }
 
-    /**
-     * O decrypt do Deezer depende de blocos de 2048 bytes.
-     *
-     * Se uma reconexão usar Range no meio de um bloco, a contagem dos blocos
-     * pode ficar desalinhada e o MP3 resultante pode quebrar no meio.
-     *
-     * Então, para ficar parecido com o código TypeScript que funciona,
-     * não usamos Range. Quando o PersistentHttpStream reconectar, ele abre
-     * do começo e o DecryptingInputStream descarta os bytes já lidos.
-     */
     @Override
     protected boolean useHeadersForRange() {
         return false;
@@ -113,7 +103,10 @@ public class DeezerPersistentHttpStream extends PersistentHttpStream {
                     }
                 }
 
-                int read = bufferInput.read(bytes, offset, length);
+                int available = bufferInput.available();
+                int toRead = Math.min(length, available);
+
+                int read = bufferInput.read(bytes, offset, toRead);
 
                 if (read < 0) {
                     return totalRead > 0 ? totalRead : -1;
@@ -156,12 +149,6 @@ public class DeezerPersistentHttpStream extends PersistentHttpStream {
 
         private byte[] decryptBlock(byte[] chunk) throws IOException {
             try {
-                /*
-                 * Igual ao TypeScript:
-                 * createDecipheriv(...) é chamado para cada bloco criptografado.
-                 *
-                 * Isso garante que o IV seja resetado em cada bloco de 2048 bytes.
-                 */
                 Cipher cipher = Cipher.getInstance("Blowfish/CBC/NoPadding");
 
                 cipher.init(
