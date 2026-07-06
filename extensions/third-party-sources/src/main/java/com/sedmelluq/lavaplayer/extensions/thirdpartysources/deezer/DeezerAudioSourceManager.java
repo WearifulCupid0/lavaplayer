@@ -626,12 +626,12 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
                 cookieValue = cookieValue.substring(0, separatorIndex);
             }
 
-            if (name.equals("arl") || name.equals("sid") || name.equals("dzr_unique_id")) {
+            if (name.equals("arl") || name.equals("sid") || name.equals("dzr_uniq_id")) {
                 putDeezerCookie(name, cookieValue);
 
                 if (name.equals("sid")) {
                     this.sessionId = cookieValue;
-                } else if (name.equals("dzr_unique_id")) {
+                } else if (name.equals("dzr_uniq_id")) {
                     this.uniqueId = cookieValue;
                 }
             }
@@ -640,7 +640,7 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
         for (Cookie cookie : deezerCookieStore.getCookies()) {
             if (cookie.getName().equals("sid")) {
                 this.sessionId = cookie.getValue();
-            } else if (cookie.getName().equals("dzr_unique_id")) {
+            } else if (cookie.getName().equals("dzr_uniq_id")) {
                 this.uniqueId = cookie.getValue();
             }
         }
