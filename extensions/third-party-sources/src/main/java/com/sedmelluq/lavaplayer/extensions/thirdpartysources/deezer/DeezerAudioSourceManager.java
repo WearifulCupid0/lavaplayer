@@ -538,6 +538,10 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
                 }
 
                 log.debug("Deezer api token updated.");
+                log.debug("apiToken: {}", this.apiToken);
+                log.debug("licenseToken: {}", this.licenseToken);
+                log.debug("sessionId: {}", this.sessionId);
+                log.debug("uniqueId: {}", this.uniqueId);
 
                 return new DeezerCredentials(apiToken, licenseToken);
             }
@@ -652,7 +656,7 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
 
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
 
-            if (isInvalidCsrfResponse(json)) {
+            /*if (isInvalidCsrfResponse(json)) {
                 if (secondTime) {
                     throw new IOException("Failed to get Deezer track token: invalid CSRF token after retry.");
                 }
@@ -664,7 +668,7 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
                 DeezerCredentials newCredentials = getCredentials(httpInterface);
 
                 return getTrackToken(httpInterface, songId, newCredentials, true);
-            }
+            }*/
 
             checkResponse(json, "Failed to get Deezer track token");
 
