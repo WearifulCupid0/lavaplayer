@@ -8,16 +8,19 @@ import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.track.*;
-import org.apache.commons.io.IOUtils;
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.cookie.BasicClientCookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +51,7 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
     private String licenseToken;
     private String sessionId;
     private String apiToken;
+    private String uniqueId;
 
     public final String masterKey;
     public final String deezerArl;
@@ -70,7 +74,7 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
                         .setConnectTimeout(10_000)
                         .setSocketTimeout(20_000)
                         .setConnectionRequestTimeout(10_000)
-                        .setCookieSpec(CookieSpecs.IGNORE_COOKIES)
+                        .setCookieSpec(CookieSpecs.STANDARD)
                         .build()
         );
     }
@@ -348,18 +352,41 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
 
     private void getCredentials() throws IOException {
         HttpPost post = new HttpPost(DeezerConstants.AJAX_URL + "?method=deezer.getUserData&api_token=&input=3&api_version=1.0");
-        post.addHeader("Cookie", "arl=" + deezerArl);
         HttpInterface httpInterface = this.getHttpInterface();
+
+        CookieStore cookieStore = new BasicCookieStore();
+        httpInterface.getContext().setCookieStore(cookieStore);
+        httpInterface.getContext().setRequestConfig(
+                RequestConfig.copy(httpInterface.getContext().getRequestConfig())
+                        .setCookieSpec(CookieSpecs.STANDARD)
+                        .build()
+        );
+
+        BasicClientCookie cookieClient = new BasicClientCookie("arl", deezerArl);
+        cookieClient.setPath("/");
+        cookieClient.setSecure(true);
+        cookieClient.setDomain("deezer.com");
+        cookieClient.setAttribute("domain", ".deezer.com");
+        cookieStore.addCookie(cookieClient);
+
         log.debug("Fetching new Deezer credentials...");
 
         try (CloseableHttpResponse response = httpInterface.execute(post)) {
             HttpClientTools.assertSuccessWithContent(response, "deezer credentials");
 
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
-            this.sessionId = json.get("results").get("SESSION_ID").text();
             this.apiToken = json.get("results").get("checkForm").text();
             this.licenseToken = json.get("results").get("USER").get("OPTIONS").get("license_token").text();
-            if (SourceTools.isBlank(this.apiToken) || SourceTools.isBlank(this.licenseToken) || SourceTools.isBlank(this.sessionId)) {
+
+            for (Cookie cookie : cookieStore.getCookies()) {
+                if (cookie.getName().equals("dzr_unique_id")) {
+                    this.uniqueId = cookie.getValue();
+                } else if (cookie.getName().equals("sid")) {
+                    this.sessionId = cookie.getValue();
+                }
+            }
+
+            if (SourceTools.isBlank(this.apiToken) || SourceTools.isBlank(this.licenseToken) || SourceTools.isBlank(this.sessionId) || SourceTools.isBlank(this.uniqueId)) {
                 throw new IOException("Failed to fetch new credentials");
             } else {
                 log.debug("Deezer api token updated {}", this.apiToken);
@@ -397,9 +424,13 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
             String trackToken = json.get("results").get("TRACK_TOKEN").text();
 
-            /*if (SourceTools.isBlank(trackToken)) {
+            if (SourceTools.isBlank(trackToken) && !secondTime) {
+                log.debug("Deezer track token is null, re-trying with new credentials credentials");
+                this.getCredentials();
+                return this.getTrackToken(songId, true);
+            } else if (SourceTools.isBlank(trackToken) && secondTime) {
                 throw new IOException("Failed to load new deezer track token.");
-            }*/
+            }
 
             log.debug("Deezer track token for song {} is {}", songId, trackToken);
             return trackToken;
