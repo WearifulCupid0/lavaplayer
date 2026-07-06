@@ -392,9 +392,7 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
     }
 
     private boolean isTokenInvalid(JsonBrowser response) {
-        if (response.get("error").isList()) return false;
+        if (response.get("error").isList() && !response.get("error").values().isEmpty()) return false;
         return !response.get("error").get("VALID_TOKEN_REQUIRED").isNull();
     }
-
-
 }
