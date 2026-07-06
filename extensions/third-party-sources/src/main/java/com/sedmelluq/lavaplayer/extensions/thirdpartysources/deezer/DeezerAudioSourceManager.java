@@ -8,13 +8,17 @@ import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.track.*;
+import org.apache.http.Header;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.cookie.ClientCookie;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -48,6 +52,10 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
     private static final String ISRC_PREFIX = "dzisrc:";
     private final HttpInterfaceManager httpInterfaceManager;
     private final boolean allowSearch;
+
+    private final CookieStore deezerCookieStore = new BasicCookieStore();
+    private final Object credentialLock = new Object();
+
     private String licenseToken;
     private String sessionId;
     private String apiToken;
@@ -181,7 +189,76 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
     }
 
     public HttpInterface getHttpInterface() {
-        return this.httpInterfaceManager.getInterface();
+        HttpInterface httpInterface = this.getHttpInterface();
+
+        httpInterface.getContext().setCookieStore(deezerCookieStore);
+
+        RequestConfig currentConfig = httpInterface.getContext().getRequestConfig();
+
+        RequestConfig requestConfig = RequestConfig.copy(
+                        currentConfig != null ? currentConfig : RequestConfig.DEFAULT
+                )
+                .setCookieSpec(CookieSpecs.STANDARD)
+                .build();
+
+        httpInterface.getContext().setRequestConfig(requestConfig);
+
+        return httpInterface;
+    }
+
+    private void putDeezerCookie(String name, String value) {
+        if (SourceTools.isBlank(value)) {
+            return;
+        }
+
+        BasicClientCookie cookie = new BasicClientCookie(name, value);
+
+        cookie.setDomain(".deezer.com");
+        cookie.setPath("/");
+        cookie.setSecure(true);
+
+        cookie.setAttribute(ClientCookie.DOMAIN_ATTR, ".deezer.com");
+        cookie.setAttribute(ClientCookie.PATH_ATTR, "/");
+
+        deezerCookieStore.addCookie(cookie);
+    }
+
+    private void ensureArlCookie() {
+        putDeezerCookie("arl", deezerArl);
+    }
+
+    private String buildCookieHeader() {
+        StringBuilder builder = new StringBuilder();
+
+        for (Cookie cookie : deezerCookieStore.getCookies()) {
+            if (builder.length() > 0) {
+                builder.append("; ");
+            }
+
+            builder.append(cookie.getName())
+                    .append("=")
+                    .append(cookie.getValue());
+        }
+
+        return builder.toString();
+    }
+
+    private void applyDeezerHeaders(HttpUriRequest request) {
+        request.setHeader("User-Agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+                        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+
+        request.setHeader("Accept", "application/json, text/plain, */*");
+        request.setHeader("Accept-Language", "en-US,en;q=0.9,pt-BR;q=0.8,pt;q=0.7");
+        request.setHeader("Origin", "https://www.deezer.com");
+        request.setHeader("Referer", "https://www.deezer.com/");
+        request.setHeader("X-Requested-With", "XMLHttpRequest");
+
+        String cookieHeader = buildCookieHeader();
+
+        if (!SourceTools.isBlank(cookieHeader)) {
+            request.setHeader("Cookie", cookieHeader);
+        }
     }
 
     private AudioItem loadTrackISRC(String isrc) {
@@ -342,89 +419,217 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
     }
 
     private void getCredentials() throws IOException {
-        HttpPost post = new HttpPost(DeezerConstants.AJAX_URL + "?method=deezer.getUserData&api_token=&input=3&api_version=1.0");
-        HttpInterface httpInterface = this.getHttpInterface();
+        synchronized (credentialLock) {
+            ensureArlCookie();
 
-        CookieStore cookieStore = new BasicCookieStore();
-        httpInterface.getContext().setCookieStore(cookieStore);
-        httpInterface.getContext().setRequestConfig(
-                RequestConfig.copy(httpInterface.getContext().getRequestConfig())
-                        .setCookieSpec(CookieSpecs.STANDARD)
-                        .build()
-        );
+            HttpPost post = new HttpPost(
+                    DeezerConstants.AJAX_URL +
+                            "?method=deezer.getUserData&api_token=&input=3&api_version=1.0"
+            );
 
-        BasicClientCookie cookieClient = new BasicClientCookie("arl", deezerArl);
-        cookieClient.setPath("/");
-        cookieClient.setSecure(true);
-        cookieClient.setDomain("deezer.com");
-        cookieClient.setAttribute("domain", ".deezer.com");
-        cookieStore.addCookie(cookieClient);
+            applyDeezerHeaders(post);
 
-        log.debug("Fetching new Deezer credentials...");
+            log.debug("Fetching new Deezer credentials...");
 
-        try (CloseableHttpResponse response = httpInterface.execute(post)) {
-            HttpClientTools.assertSuccessWithContent(response, "deezer credentials");
+            try (
+                    HttpInterface httpInterface = this.getHttpInterface();
+                    CloseableHttpResponse response = httpInterface.execute(post)
+            ) {
+                captureDeezerCookies(response);
 
-            JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
-            this.apiToken = json.get("results").get("checkForm").text();
-            this.licenseToken = json.get("results").get("USER").get("OPTIONS").get("license_token").text();
+                HttpClientTools.assertSuccessWithContent(response, "deezer credentials");
 
-            for (Cookie cookie : cookieStore.getCookies()) {
-                if (cookie.getName().equals("dzr_unique_id")) {
-                    this.uniqueId = cookie.getValue();
-                } else if (cookie.getName().equals("sid")) {
-                    this.sessionId = cookie.getValue();
+                JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
+
+                this.apiToken = json.get("results").get("checkForm").text();
+                this.licenseToken = json.get("results")
+                        .get("USER")
+                        .get("OPTIONS")
+                        .get("license_token")
+                        .text();
+
+                captureDeezerCookies(response);
+
+                if (
+                        SourceTools.isBlank(this.apiToken) ||
+                                SourceTools.isBlank(this.licenseToken) ||
+                                SourceTools.isBlank(this.sessionId) ||
+                                SourceTools.isBlank(this.uniqueId)
+                ) {
+                    log.debug("Deezer cookies after credential request:");
+
+                    for (Cookie cookie : deezerCookieStore.getCookies()) {
+                        log.debug(
+                                "Cookie {} domain={} path={} secure={}",
+                                cookie.getName(),
+                                cookie.getDomain(),
+                                cookie.getPath(),
+                                cookie.isSecure()
+                        );
+                    }
+
+                    throw new IOException("Failed to fetch new credentials.");
                 }
-            }
 
-            if (SourceTools.isBlank(this.apiToken) || SourceTools.isBlank(this.licenseToken) || SourceTools.isBlank(this.sessionId) || SourceTools.isBlank(this.uniqueId)) {
-                throw new IOException("Failed to fetch new credentials");
-            } else {
-                log.debug("Deezer api token updated {}", this.apiToken);
+                log.debug("Deezer api token updated.");
             }
         }
     }
 
     public URI getMediaURL(String songId) throws Exception {
-        if (this.licenseToken == null) this.getCredentials();
-        HttpPost postMediaURL = new HttpPost(DeezerConstants.MEDIA_URL);
+        if (
+                SourceTools.isBlank(this.licenseToken) ||
+                        SourceTools.isBlank(this.apiToken) ||
+                        SourceTools.isBlank(this.sessionId) ||
+                        SourceTools.isBlank(this.uniqueId)
+        ) {
+            this.getCredentials();
+        }
+
         String token = this.getTrackToken(songId, false);
-        if (token == null) throw  new Exception("Song unavailable");
-        postMediaURL.setEntity(new StringEntity(String.format(DeezerConstants.MEDIA_PAYLOAD, this.licenseToken, token), ContentType.APPLICATION_JSON));
-        try (CloseableHttpResponse response = this.getHttpInterface().execute(postMediaURL)) {
+
+        if (SourceTools.isBlank(token)) {
+            throw new Exception("Song unavailable.");
+        }
+
+        HttpPost postMediaURL = new HttpPost(DeezerConstants.MEDIA_URL);
+
+        postMediaURL.setEntity(new StringEntity(
+                String.format(DeezerConstants.MEDIA_PAYLOAD, this.licenseToken, token),
+                ContentType.APPLICATION_JSON
+        ));
+
+        applyDeezerHeaders(postMediaURL);
+
+        try (
+                HttpInterface httpInterface = this.getHttpInterface();
+                CloseableHttpResponse response = httpInterface.execute(postMediaURL)
+        ) {
+            captureDeezerCookies(response);
+
             HttpClientTools.assertSuccessWithContent(response, "deezer media url");
 
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
+
             JsonBrowser error = json.get("data").index(0).get("errors").index(0);
+
             if (error.get("code").asLong(0) != 0) {
-                throw new FriendlyException("Error while loading track: " + error.get("message").text(), FriendlyException.Severity.COMMON, null);
+                throw new FriendlyException(
+                        "Error while loading track: " + error.get("message").text(),
+                        FriendlyException.Severity.COMMON,
+                        null
+                );
             }
-            return new URI(json.get("data").index(0).get("media").index(0).get("sources").index(0).get("url").text());
+
+            String url = json.get("data")
+                    .index(0)
+                    .get("media")
+                    .index(0)
+                    .get("sources")
+                    .index(0)
+                    .get("url")
+                    .text();
+
+            if (SourceTools.isBlank(url)) {
+                throw new IOException("Deezer media url is empty.");
+            }
+
+            return new URI(url);
         }
     }
 
     private String getTrackToken(String songId, boolean secondTime) throws IOException {
-        if (this.apiToken == null || this.sessionId == null) this.getCredentials();
-        HttpPost postSongData = new HttpPost(DeezerConstants.AJAX_URL + "?method=song.getData&input=3&api_version=1.0&api_token=" + this.apiToken);
-        postSongData.setEntity(new StringEntity("{\"sng_id\":\"" + songId + "\"}", ContentType.APPLICATION_JSON));
+        if (
+                SourceTools.isBlank(this.apiToken) ||
+                        SourceTools.isBlank(this.sessionId) ||
+                        SourceTools.isBlank(this.uniqueId)
+        ) {
+            this.getCredentials();
+        }
+
+        HttpPost postSongData = new HttpPost(
+                DeezerConstants.AJAX_URL +
+                        "?method=song.getData&input=3&api_version=1.0&api_token=" +
+                        this.apiToken
+        );
+
+        postSongData.setEntity(new StringEntity(
+                "{\"sng_id\":\"" + songId + "\"}",
+                ContentType.APPLICATION_JSON
+        ));
+
+        applyDeezerHeaders(postSongData);
+
         log.debug("Fetching Deezer track token with identifier {}", songId);
 
-        try (CloseableHttpResponse response = this.getHttpInterface().execute(postSongData)) {
+        try (
+                HttpInterface httpInterface = this.getHttpInterface();
+                CloseableHttpResponse response = httpInterface.execute(postSongData)
+        ) {
+            captureDeezerCookies(response);
+
             HttpClientTools.assertSuccessWithContent(response, "deezer track token");
 
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
+
             String trackToken = json.get("results").get("TRACK_TOKEN").text();
 
             if (SourceTools.isBlank(trackToken) && !secondTime) {
-                log.debug("Deezer track token is null, re-trying with new credentials credentials");
+                log.debug("Deezer track token is null, retrying with new credentials.");
+
+                this.apiToken = null;
+                this.licenseToken = null;
+                this.sessionId = null;
+                this.uniqueId = null;
+
                 this.getCredentials();
+
                 return this.getTrackToken(songId, true);
-            } else if (SourceTools.isBlank(trackToken) && secondTime) {
-                throw new IOException("Failed to load new deezer track token.");
+            } else if (SourceTools.isBlank(trackToken)) {
+                throw new IOException("Failed to load new Deezer track token.");
             }
 
-            log.debug("Deezer track token for song {} is {}", songId, trackToken);
+            log.debug("Deezer track token for song {} loaded.", songId);
+
             return trackToken;
+        }
+    }
+
+    private void captureDeezerCookies(HttpResponse response) {
+        for (Header header : response.getHeaders("Set-Cookie")) {
+            String value = header.getValue();
+
+            int equalsIndex = value.indexOf('=');
+            if (equalsIndex < 0) {
+                continue;
+            }
+
+            String name = value.substring(0, equalsIndex).trim();
+
+            String cookieValue = value.substring(equalsIndex + 1);
+            int separatorIndex = cookieValue.indexOf(';');
+
+            if (separatorIndex >= 0) {
+                cookieValue = cookieValue.substring(0, separatorIndex);
+            }
+
+            if (name.equals("arl") || name.equals("sid") || name.equals("dzr_unique_id")) {
+                putDeezerCookie(name, cookieValue);
+
+                if (name.equals("sid")) {
+                    this.sessionId = cookieValue;
+                } else if (name.equals("dzr_unique_id")) {
+                    this.uniqueId = cookieValue;
+                }
+            }
+        }
+
+        for (Cookie cookie : deezerCookieStore.getCookies()) {
+            if (cookie.getName().equals("sid")) {
+                this.sessionId = cookie.getValue();
+            } else if (cookie.getName().equals("dzr_unique_id")) {
+                this.uniqueId = cookie.getValue();
+            }
         }
     }
 }

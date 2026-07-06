@@ -48,7 +48,6 @@ public class LocalAudioTrackExecutor implements AudioTrackExecutor {
   private long externalSeekPosition = -1;
   private boolean interruptibleForSeek = false;
   private volatile Throwable trackException;
-  private volatile long lastRetry = -1;
   private volatile boolean allowExplicit = true;
   private  final AudioPlayer audioPlayer;
 
