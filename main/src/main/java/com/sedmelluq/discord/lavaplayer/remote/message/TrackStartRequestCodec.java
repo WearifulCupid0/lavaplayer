@@ -89,7 +89,8 @@ public class TrackStartRequestCodec implements RemoteMessageCodec<TrackStartRequ
     String title = in.readUTF();
     List<AudioTrackAuthorInfo> artists = new ArrayList<>();
 
-    for (int i = 0; i < in.readInt(); i++)
+    int size = in.readInt();
+    for (int i = 0; i < size; i++)
       artists.add(new AudioTrackAuthorInfo(in.readUTF(), DataFormatTools.readNullableText(in)));
 
     AudioTrackInfo trackInfo = new AudioTrackInfo(title, artists, in.readLong(), in.readUTF(), in.readBoolean(), null, null);

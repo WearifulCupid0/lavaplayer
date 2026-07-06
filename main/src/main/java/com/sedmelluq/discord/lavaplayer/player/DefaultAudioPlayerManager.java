@@ -54,7 +54,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
  */
 public class DefaultAudioPlayerManager implements AudioPlayerManager {
   private static final int TRACK_INFO_VERSIONED = 1;
-  private static final int TRACK_INFO_VERSION = 2;
+  private static final int TRACK_INFO_VERSION = 4;
 
   private static final int DEFAULT_FRAME_BUFFER_DURATION = (int) TimeUnit.SECONDS.toMillis(5);
   private static final int DEFAULT_CLEANUP_THRESHOLD = (int) TimeUnit.MINUTES.toMillis(1);
@@ -310,10 +310,15 @@ public class DefaultAudioPlayerManager implements AudioPlayerManager {
     int version = (stream.getMessageFlags() & TRACK_INFO_VERSIONED) != 0 ? (input.readByte() & 0xFF) : 1;
 
     String title = input.readUTF();
-
     List<AudioTrackAuthorInfo> artists = new ArrayList<>();
-    for (int i = 0; i < input.readInt(); i++)
-      artists.add(new AudioTrackAuthorInfo(input.readUTF(), DataFormatTools.readNullableText(input)));
+
+    if (version >= 4) {
+      int size = input.readInt();
+      for (int i = 0; i < size; i++)
+        artists.add(new AudioTrackAuthorInfo(input.readUTF(), DataFormatTools.readNullableText(input)));
+    } else {
+      artists.add(new AudioTrackAuthorInfo(input.readUTF()));
+    }
 
     AudioTrackInfo trackInfo = new AudioTrackInfo(
             title,
@@ -321,10 +326,10 @@ public class DefaultAudioPlayerManager implements AudioPlayerManager {
             input.readLong(),
             input.readUTF(),
             input.readBoolean(),
-            DataFormatTools.readNullableText(input),
-            DataFormatTools.readNullableText(input),
-            DataFormatTools.readNullableBoolean(input),
-            DataFormatTools.readNullableText(input)
+            version >= 2 ? DataFormatTools.readNullableText(input) : null,
+            version >= 3 ? DataFormatTools.readNullableText(input) : null,
+            version >= 4 ? DataFormatTools.readNullableBoolean(input) : null,
+            version >= 4 ? DataFormatTools.readNullableText(input) : null
     );
     AudioTrack track = decodeTrackDetails(trackInfo, input);
     long position = input.readLong();
