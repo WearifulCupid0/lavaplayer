@@ -381,18 +381,15 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
         try (CloseableHttpResponse response = this.getHttpInterface().execute(postSongData)) {
             String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             JsonBrowser json = JsonBrowser.parse(responseText);
-            if (this.isTokenInvalid(json) && !secondTime) {
+            String trackToken = json.get("results").get("TRACK_TOKEN").text();
+            if (SourceTools.isBlank(trackToken) && !secondTime) {
                 this.getCredentials();
                 return this.getTrackToken(songId, true);
-            } else if (this.isTokenInvalid(json) && secondTime) {
+            } else if (SourceTools.isBlank(trackToken) && secondTime) {
                 throw new IOException("Failed to load new deezer track token.");
             }
-            return json.get("results").get("TRACK_TOKEN").text();
-        }
-    }
 
-    private boolean isTokenInvalid(JsonBrowser response) {
-        if (response.get("error").isList() && !response.get("error").values().isEmpty()) return false;
-        return !response.get("error").get("VALID_TOKEN_REQUIRED").isNull();
+            return trackToken;
+        }
     }
 }
