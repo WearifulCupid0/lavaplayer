@@ -353,6 +353,8 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
         log.debug("Fetching new Deezer credentials...");
 
         try (CloseableHttpResponse response = httpInterface.execute(post)) {
+            HttpClientTools.assertSuccessWithContent(response, "deezer credentials");
+
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
             this.sessionId = json.get("results").get("SESSION_ID").text();
             this.apiToken = json.get("results").get("checkForm").text();
@@ -372,6 +374,8 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
         if (token == null) throw  new Exception("Song unavailable");
         postMediaURL.setEntity(new StringEntity(String.format(DeezerConstants.MEDIA_PAYLOAD, this.licenseToken, token), ContentType.APPLICATION_JSON));
         try (CloseableHttpResponse response = this.getHttpInterface().execute(postMediaURL)) {
+            HttpClientTools.assertSuccessWithContent(response, "deezer media url");
+
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
             JsonBrowser error = json.get("data").index(0).get("errors").index(0);
             if (error.get("code").asLong(0) != 0) {
@@ -386,17 +390,16 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
         HttpPost postSongData = new HttpPost(DeezerConstants.AJAX_URL + "?method=song.getData&input=3&api_version=1.0&api_token=" + this.apiToken);
         postSongData.setEntity(new StringEntity("{\"sng_id\":\"" + songId + "\"}", ContentType.APPLICATION_JSON));
         log.debug("Fetching Deezer track token with identifier {}", songId);
+
         try (CloseableHttpResponse response = this.getHttpInterface().execute(postSongData)) {
+            HttpClientTools.assertSuccessWithContent(response, "deezer track token");
+
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
             String trackToken = json.get("results").get("TRACK_TOKEN").text();
 
-            if (SourceTools.isBlank(trackToken) && !secondTime) {
-                log.debug("Deezer track token is null, re-trying with new credentials credentials");
-                this.getCredentials();
-                return this.getTrackToken(songId, true);
-            } else if (SourceTools.isBlank(trackToken) && secondTime) {
+            /*if (SourceTools.isBlank(trackToken)) {
                 throw new IOException("Failed to load new deezer track token.");
-            }
+            }*/
 
             log.debug("Deezer track token for song {} is {}", songId, trackToken);
             return trackToken;
