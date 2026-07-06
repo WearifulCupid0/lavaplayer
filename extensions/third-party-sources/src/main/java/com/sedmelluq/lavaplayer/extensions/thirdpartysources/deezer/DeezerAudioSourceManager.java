@@ -188,20 +188,24 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
         httpInterfaceManager.configureBuilder(configurator);
     }
 
-    public HttpInterface getHttpInterface() {
-        HttpInterface httpInterface = this.getHttpInterface();
+    public HttpInterface getHttpInterface() { return getHttpInterface(false); }
 
-        httpInterface.getContext().setCookieStore(deezerCookieStore);
+    public HttpInterface getHttpInterface(boolean ajaxApi) {
+        HttpInterface httpInterface = httpInterfaceManager.getInterface();
 
-        RequestConfig currentConfig = httpInterface.getContext().getRequestConfig();
+        if (ajaxApi) {
+            httpInterface.getContext().setCookieStore(deezerCookieStore);
 
-        RequestConfig requestConfig = RequestConfig.copy(
-                        currentConfig != null ? currentConfig : RequestConfig.DEFAULT
-                )
-                .setCookieSpec(CookieSpecs.STANDARD)
-                .build();
+            RequestConfig currentConfig = httpInterface.getContext().getRequestConfig();
 
-        httpInterface.getContext().setRequestConfig(requestConfig);
+            RequestConfig requestConfig = RequestConfig.copy(
+                            currentConfig != null ? currentConfig : RequestConfig.DEFAULT
+                    )
+                    .setCookieSpec(CookieSpecs.STANDARD)
+                    .build();
+
+            httpInterface.getContext().setRequestConfig(requestConfig);
+        }
 
         return httpInterface;
     }
@@ -432,7 +436,7 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
             log.debug("Fetching new Deezer credentials...");
 
             try (
-                    HttpInterface httpInterface = this.getHttpInterface();
+                    HttpInterface httpInterface = this.getHttpInterface(true);
                     CloseableHttpResponse response = httpInterface.execute(post)
             ) {
                 captureDeezerCookies(response);
@@ -563,7 +567,7 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
         log.debug("Fetching Deezer track token with identifier {}", songId);
 
         try (
-                HttpInterface httpInterface = this.getHttpInterface();
+                HttpInterface httpInterface = this.getHttpInterface(true);
                 CloseableHttpResponse response = httpInterface.execute(postSongData)
         ) {
             captureDeezerCookies(response);
