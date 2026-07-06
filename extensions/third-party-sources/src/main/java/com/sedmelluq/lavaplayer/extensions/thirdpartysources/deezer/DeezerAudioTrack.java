@@ -44,13 +44,6 @@ public class DeezerAudioTrack extends DelegatedAudioTrack {
         return key;
     }
 
-    private void checkForError(JsonBrowser json) {
-        JsonBrowser error = json.get("data").index(0).get("errors").index(0);
-        if (error.get("code").asLong(0) != 0) {
-            throw new FriendlyException("Error while loading track: " + error.get("message").text(), FriendlyException.Severity.COMMON, null);
-        }
-    }
-
     @Override
     protected AudioTrack makeShallowClone() {
         return new DeezerAudioTrack(this.trackInfo, this.sourceManager);
