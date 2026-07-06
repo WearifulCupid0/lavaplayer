@@ -46,15 +46,17 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
     private String apiToken;
 
     public final String masterKey;
+    public final String deezerArl;
 
-    public DeezerAudioSourceManager(AudioPlayerManager playerManager) { this(playerManager, null, true, true); }
-    public DeezerAudioSourceManager(AudioPlayerManager playerManager, boolean allowSearch) { this(playerManager, null, allowSearch, true); }
-    public DeezerAudioSourceManager(AudioPlayerManager playerManager, String masterKey) {
-        this(playerManager, masterKey, true, true);
+    public DeezerAudioSourceManager(AudioPlayerManager playerManager) { this(playerManager, null, null, true, true); }
+    public DeezerAudioSourceManager(AudioPlayerManager playerManager, boolean allowSearch) { this(playerManager, null, null, allowSearch, true); }
+    public DeezerAudioSourceManager(AudioPlayerManager playerManager, String masterKey, String deezerArl) {
+        this(playerManager, masterKey, deezerArl, true, true);
     }
-    public DeezerAudioSourceManager(AudioPlayerManager playerManager, String masterKey, boolean allowSearch, boolean fetchIsrc) {
+    public DeezerAudioSourceManager(AudioPlayerManager playerManager, String masterKey, String deezerArl, boolean allowSearch, boolean fetchIsrc) {
         super(playerManager, fetchIsrc);
 
+        this.deezerArl = SourceTools.firstNonBlank(masterKey, SourceTools.getPropertyOrEnv("DEEZER_ARL"));
         this.masterKey = SourceTools.firstNonBlank(masterKey, SourceTools.getPropertyOrEnv("DEEZER_MASTER_KEY"));
         this.allowSearch = allowSearch;
         this.httpInterfaceManager = new ThreadLocalHttpInterfaceManager(
@@ -342,6 +344,7 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
 
     private void getCredentials() throws IOException {
         HttpPost post = new HttpPost(DeezerConstants.AJAX_URL + "?method=deezer.getUserData&api_token=&input=3&api_version=1.0&cid=550330597");
+        post.addHeader("Cookie", "arl=" + deezerArl);
         try (CloseableHttpResponse response = this.getHttpInterface().execute(post)) {
             String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             JsonBrowser json = JsonBrowser.parse(responseText);
@@ -372,6 +375,7 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
     private String getTrackToken(String songId, boolean secondTime) throws IOException {
         if (this.apiToken == null || this.sessionId == null) this.getCredentials();
         HttpPost postSongData = new HttpPost(DeezerConstants.AJAX_URL + "?method=song.getData&input=3&api_version=1.0&cid=550330597&api_token=" + this.apiToken);
+        postSongData.addHeader("Cookie", "arl=" + deezerArl);
         postSongData.setEntity(new StringEntity("{\"SNG_ID\":\"" + songId + "\"}", ContentType.APPLICATION_JSON));
         try (CloseableHttpResponse response = this.getHttpInterface().execute(postSongData)) {
             String responseText = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
