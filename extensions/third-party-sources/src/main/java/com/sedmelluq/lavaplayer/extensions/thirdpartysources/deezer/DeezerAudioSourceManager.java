@@ -25,7 +25,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.cookie.BasicClientCookie;
-import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -444,10 +443,8 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
 
                 HttpClientTools.assertSuccessWithContent(response, "deezer credentials");
 
-                String responseBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-                log.debug("Deezer credentials response: {}", responseBody);
-
                 JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
+                log.debug("Deezer credentials response: {}", json.format());
 
                 this.apiToken = json.get("results").get("checkForm").text();
                 this.licenseToken = json.get("results")
@@ -523,10 +520,8 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
 
             HttpClientTools.assertSuccessWithContent(response, "deezer media url");
 
-            String responseBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-            log.debug("Deezer media url: {}", responseBody);
-
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
+            log.debug("Deezer media url: {}", json.format());
 
             JsonBrowser error = json.get("data").index(0).get("errors").index(0);
 
@@ -587,10 +582,8 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
 
             HttpClientTools.assertSuccessWithContent(response, "deezer track token");
 
-            String responseBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-            log.debug("Deezer track token response: {}", responseBody);
-
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
+            log.debug("Deezer track token response: {}", json.format());
 
             String trackToken = json.get("results").get("TRACK_TOKEN").text();
 
