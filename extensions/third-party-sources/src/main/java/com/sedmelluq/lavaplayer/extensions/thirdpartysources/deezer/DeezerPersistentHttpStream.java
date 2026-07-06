@@ -2,6 +2,7 @@ package com.sedmelluq.lavaplayer.extensions.thirdpartysources.deezer;
 
 import com.sedmelluq.discord.lavaplayer.tools.io.ByteBufferInputStream;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
+import com.sedmelluq.discord.lavaplayer.tools.io.PersistentHttpStream;
 import org.apache.http.HttpResponse;
 
 import javax.crypto.BadPaddingException;
@@ -70,9 +71,11 @@ public class DeezerPersistentHttpStream extends PersistentHttpStream {
             if (this.filled && this.out.available() > 0) {
                 return this.out.read();
             }
+
             byte[] chunk = this.in.readNBytes(BLOCK_SIZE);
             this.buff.clear();
             this.filled = true;
+
             if (this.i % 3 > 0 || chunk.length < BLOCK_SIZE) {
                 this.buff.put(chunk);
             } else {
@@ -84,6 +87,7 @@ public class DeezerPersistentHttpStream extends PersistentHttpStream {
                 }
                 this.buff.put(decryptedChunk);
             }
+
             i++;
             this.buff.flip();
             return this.out.read();

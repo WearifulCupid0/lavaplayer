@@ -40,7 +40,7 @@ public class PersistentHttpStream extends SeekableInputStream implements AutoClo
 
   /**
    * @param httpInterface The HTTP interface to use for requests
-   * @param contentUrl The URL of the resource
+   * @param contentUrl    The URL of the resource
    * @param contentLength The length of the resource in bytes
    */
   public PersistentHttpStream(HttpInterface httpInterface, URI contentUrl, Long contentLength) {
@@ -90,7 +90,7 @@ public class PersistentHttpStream extends SeekableInputStream implements AutoClo
     return true;
   }
 
-  private HttpGet getConnectRequest() {
+  protected HttpGet getConnectRequest() {
     HttpGet request = new HttpGet(getConnectUrl());
 
     if (position > 0 && useHeadersForRange()) {
@@ -110,6 +110,13 @@ public class PersistentHttpStream extends SeekableInputStream implements AutoClo
     }
   }
 
+  /**
+   * @return An InputStream implementation for the current http stream.
+   */
+  public InputStream createContentInputStream(HttpResponse response) throws IOException {
+    return new BufferedInputStream(response.getEntity().getContent());
+  }
+
   private boolean attemptConnect(boolean skipStatusCheck, boolean retryOnServerError) throws IOException {
     currentResponse = httpInterface.execute(getConnectRequest());
     lastStatusCode = currentResponse.getStatusLine().getStatusCode();
@@ -124,7 +131,7 @@ public class PersistentHttpStream extends SeekableInputStream implements AutoClo
       return true;
     }
 
-    currentContent = new BufferedInputStream(currentResponse.getEntity().getContent());
+    currentContent = createContentInputStream(currentResponse);
 
     if (contentLength == Units.CONTENT_LENGTH_UNKNOWN) {
       Header header = currentResponse.getFirstHeader("Content-Length");
@@ -291,8 +298,8 @@ public class PersistentHttpStream extends SeekableInputStream implements AutoClo
 
   private AudioTrackInfoProvider createIceCastHeaderProvider() {
     AudioTrackInfoBuilder builder = AudioTrackInfoBuilder.empty()
-        .setTitle(getHeaderValue(currentResponse, "icy-description"))
-        .setAuthor(getHeaderValue(currentResponse, "icy-name"));
+            .setTitle(getHeaderValue(currentResponse, "icy-description"))
+            .setAuthor(getHeaderValue(currentResponse, "icy-name"));
 
     if (builder.getTitle() == null) {
       builder.setTitle(getHeaderValue(currentResponse, "icy-url"));
