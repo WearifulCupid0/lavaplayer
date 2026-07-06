@@ -444,7 +444,6 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
                 HttpClientTools.assertSuccessWithContent(response, "deezer credentials");
 
                 JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
-                log.debug("Deezer credentials response: {}", json.format());
 
                 this.apiToken = json.get("results").get("checkForm").text();
                 this.licenseToken = json.get("results")
@@ -513,7 +512,7 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
         applyDeezerHeaders(postMediaURL);
 
         try (
-                HttpInterface httpInterface = this.getHttpInterface();
+                HttpInterface httpInterface = this.getHttpInterface(true);
                 CloseableHttpResponse response = httpInterface.execute(postMediaURL)
         ) {
             captureDeezerCookies(response);
@@ -583,7 +582,6 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
             HttpClientTools.assertSuccessWithContent(response, "deezer track token");
 
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
-            log.debug("Deezer track token response: {}", json.format());
 
             String trackToken = json.get("results").get("TRACK_TOKEN").text();
 
