@@ -25,6 +25,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.cookie.BasicClientCookie;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -443,6 +444,9 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
 
                 HttpClientTools.assertSuccessWithContent(response, "deezer credentials");
 
+                String responseBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+                log.debug("Deezer credentials response: {}", responseBody);
+
                 JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
 
                 this.apiToken = json.get("results").get("checkForm").text();
@@ -471,6 +475,12 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
                                 cookie.isSecure()
                         );
                     }
+
+                    log.debug("Missing Deezer credentials:");
+                    log.debug("apiToken blank: {}", SourceTools.isBlank(this.apiToken));
+                    log.debug("licenseToken blank: {}", SourceTools.isBlank(this.licenseToken));
+                    log.debug("sessionId blank: {}", SourceTools.isBlank(this.sessionId));
+                    log.debug("uniqueId blank: {}", SourceTools.isBlank(this.uniqueId));
 
                     throw new IOException("Failed to fetch new credentials.");
                 }
@@ -512,6 +522,9 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
             captureDeezerCookies(response);
 
             HttpClientTools.assertSuccessWithContent(response, "deezer media url");
+
+            String responseBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+            log.debug("Deezer media url: {}", responseBody);
 
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
 
@@ -573,6 +586,9 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
             captureDeezerCookies(response);
 
             HttpClientTools.assertSuccessWithContent(response, "deezer track token");
+
+            String responseBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+            log.debug("Deezer track token response: {}", responseBody);
 
             JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
 
