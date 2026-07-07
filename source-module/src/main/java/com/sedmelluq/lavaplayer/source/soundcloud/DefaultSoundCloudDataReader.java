@@ -42,7 +42,8 @@ public class DefaultSoundCloudDataReader implements SoundCloudDataReader {
         identifier,
         false,
         trackData.get("permalink_url").text(),
-        PBJUtils.getSoundCloudThumbnail(trackData)
+        PBJUtils.getSoundCloudThumbnail(trackData),
+        trackData.get("publisher_metadata").get("isrc").text()
     );
   }
 

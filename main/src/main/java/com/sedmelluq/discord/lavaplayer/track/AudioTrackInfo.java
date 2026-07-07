@@ -134,6 +134,20 @@ public class AudioTrackInfo {
 
   /**
    * @param title Track title
+   * @param artist Track author, if known
+   * @param length Length of the track in milliseconds
+   * @param identifier Audio source specific track identifier
+   * @param isStream True if this track is a stream
+   * @param uri URL of the track or path to its file
+   * @param artworkUrl Thumbnail of the track
+   * @param isrc International Standard Recording Code
+   */
+  public AudioTrackInfo(String title, AudioTrackAuthorInfo artist, long length, String identifier, boolean isStream, String uri, String artworkUrl, @Nullable String isrc) {
+    this(title, artist, length, identifier, isStream, uri, artworkUrl, null, isrc);
+  }
+
+  /**
+   * @param title Track title
    * @param length Length of the track in milliseconds
    * @param identifier Audio source specific track identifier
    * @param isStream True if this track is a stream
