@@ -184,7 +184,7 @@ public class DeezerSeekableInputStream extends SeekableInputStream {
                         contentLength = Long.parseLong(value.substring(slashIndex + 1));
                         return;
                     } catch (NumberFormatException ignored) {
-                        // fallback abaixo
+                        // fallback below
                     }
                 }
             }
@@ -208,14 +208,43 @@ public class DeezerSeekableInputStream extends SeekableInputStream {
             throw exception;
         }
 
-        closeCurrentResponse();
+        closeCurrentResponseQuietly();
+
+        long alignedStart = alignToBlock(position);
 
         log.debug(
-                "Encountered retriable exception on Deezer url {} at position {}.",
-                contentUrl,
+                "Deezer stream connection reset/retry at position {}, reconnecting with Range bytes={}-.",
+                position,
+                alignedStart
+        );
+
+        log.trace(
+                "Full Deezer reconnect stack trace at position {}.",
                 position,
                 exception
         );
+    }
+
+    private void closeCurrentResponseQuietly() {
+        if (currentContent != null) {
+            try {
+                currentContent.close();
+            } catch (IOException ignored) {
+                // Ignored on purpose: we are already trying to recover the connection.
+            }
+
+            currentContent = null;
+        }
+
+        if (currentResponse != null) {
+            try {
+                currentResponse.close();
+            } catch (IOException ignored) {
+                // Ignored on purpose: we are already trying to recover the connection.
+            }
+
+            currentResponse = null;
+        }
     }
 
     private int internalRead(boolean attemptReconnect) throws IOException {
