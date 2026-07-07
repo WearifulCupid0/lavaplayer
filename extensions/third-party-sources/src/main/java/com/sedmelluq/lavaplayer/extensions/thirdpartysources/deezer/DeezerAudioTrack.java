@@ -131,7 +131,7 @@ public class DeezerAudioTrack extends DelegatedAudioTrack {
             Tokens tokens = this.getTokens(httpInterface);
             SourceWithFormat source = this.getSource(httpInterface, tokens.api, tokens.license);
             String trackId = source.getFallbackId() != null ? source.getFallbackId() : this.trackInfo.identifier;
-            try (SeekableInputStream stream = new DeezerPersistentHttpStream(
+            try (SeekableInputStream stream = new DeezerSeekableInputStream(
                     httpInterface,
                     source.getUrl(),
                     source.getContentLength(),

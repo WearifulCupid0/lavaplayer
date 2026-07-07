@@ -21,8 +21,8 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 
-public class DeezerPersistentHttpStream extends SeekableInputStream {
-    private static final Logger log = LoggerFactory.getLogger(DeezerPersistentHttpStream.class);
+public class DeezerSeekableInputStream extends SeekableInputStream {
+    private static final Logger log = LoggerFactory.getLogger(DeezerSeekableInputStream.class);
 
     public static final int BLOCK_SIZE = 2048;
     public static final long MAX_SKIP_DISTANCE = 512L * 1024L;
@@ -37,7 +37,7 @@ public class DeezerPersistentHttpStream extends SeekableInputStream {
     private InputStream currentContent;
     private int lastStatusCode;
 
-    public DeezerPersistentHttpStream(
+    public DeezerSeekableInputStream(
             HttpInterface httpInterface,
             URI contentUrl,
             Long contentLength,

@@ -34,7 +34,7 @@ public class DeezerDecryptingInputStream extends InputStream {
             long bytesToDiscard
     ) throws IOException {
         this.input = new BufferedInputStream(input);
-        this.buffer = ByteBuffer.allocate(DeezerPersistentHttpStream.BLOCK_SIZE);
+        this.buffer = ByteBuffer.allocate(DeezerSeekableInputStream.BLOCK_SIZE);
         this.bufferInput = new ByteBufferInputStream(this.buffer);
         this.keyMaterial = keyMaterial;
 
@@ -134,7 +134,7 @@ public class DeezerDecryptingInputStream extends InputStream {
     }
 
     private boolean fillNextBlock() throws IOException {
-        byte[] chunk = input.readNBytes(DeezerPersistentHttpStream.BLOCK_SIZE);
+        byte[] chunk = input.readNBytes(DeezerSeekableInputStream.BLOCK_SIZE);
 
         if (chunk.length == 0) {
             return false;
@@ -143,7 +143,7 @@ public class DeezerDecryptingInputStream extends InputStream {
         buffer.clear();
         hasBufferedData = true;
 
-        if (blockIndex % 3 > 0 || chunk.length < DeezerPersistentHttpStream.BLOCK_SIZE) {
+        if (blockIndex % 3 > 0 || chunk.length < DeezerSeekableInputStream.BLOCK_SIZE) {
             buffer.put(chunk);
         } else {
             buffer.put(decryptBlock(chunk));
