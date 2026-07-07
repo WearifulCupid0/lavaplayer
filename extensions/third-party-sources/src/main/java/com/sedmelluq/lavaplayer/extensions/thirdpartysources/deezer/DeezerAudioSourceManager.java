@@ -1,13 +1,12 @@
 package com.sedmelluq.lavaplayer.extensions.thirdpartysources.deezer;
 
+import com.sedmelluq.discord.lavaplayer.container.*;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
+import com.sedmelluq.discord.lavaplayer.tools.Units;
+import com.sedmelluq.discord.lavaplayer.tools.io.*;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.SourceTools;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.track.AudioItem;
@@ -45,12 +44,14 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager implements HttpConfigurable {
     private static final Logger log = LoggerFactory.getLogger(DeezerAudioSourceManager.class);
 
-    private static final String DEEZER_URL_REGEX = "^(?:https://|http://|)(?:www\\.|)deezer\\.com/(?:[a-zA-Z]{2}/|)(track|album|playlist|artist)/(\\d+)";
+    private static final String DEEZER_URL_REGEX = "^(?:https://|http://|)(?:www\\.|)deezer\\.com/(?:[a-zA-Z]{2}/|)(track|album|playlist|artist|episode|show)/(\\d+)";
     private static final String SHARE_URL = "https://deezer.page.link/";
     private static final String NEW_SHARE_URL = "https://link.deezer.com/";
     private static final Pattern deezerUrlPattern = Pattern.compile(DEEZER_URL_REGEX);
     private static final String SEARCH_PREFIX = "dzsearch:";
     private static final String ISRC_PREFIX = "dzisrc:";
+
+    private final MediaContainerRegistry containerRegistry = MediaContainerRegistry.DEFAULT_REGISTRY;
 
     private final HttpInterfaceManager httpInterfaceManager;
     private final boolean allowSearch;
@@ -216,11 +217,18 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
 
     @Override
     public void encodeTrack(AudioTrack track, DataOutput output) throws IOException {
-        // Sem estado extra por enquanto.
+        boolean podcast = track instanceof DeezerPodcastAudioTrack;
+
+        output.writeBoolean(podcast);
     }
 
     @Override
     public AudioTrack decodeTrack(AudioTrackInfo trackInfo, DataInput input) throws IOException {
+        boolean podcast = input.readBoolean();
+
+        if (podcast)
+            return new DeezerPodcastAudioTrack(trackInfo, this);
+
         return new DeezerAudioTrack(trackInfo, this);
     }
 
@@ -255,6 +263,46 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
         }
 
         return buildTrack(track);
+    }
+
+    private AudioItem loadEpisode(String id) {
+        JsonBrowser episode = this.requestApi(DeezerConstants.API_URL + "/episode/" + id);
+
+        if (episode == null || episode.get("id").isNull()) {
+            return AudioReference.NO_TRACK;
+        }
+
+        return buildEpisode(episode, episode.get("podcast"));
+    }
+
+    private AudioItem loadPodcast(String id) {
+        JsonBrowser podcast = this.requestApi(DeezerConstants.API_URL + "/podcast/" + id);
+
+        if (podcast == null || podcast.get("id").isNull()) {
+            return AudioReference.NO_TRACK;
+        }
+
+        JsonBrowser episodes = this.requestApi(DeezerConstants.API_URL + "/podcast/" + id + "/episodes");
+
+        if (episodes == null || episodes.get("data").isNull()) {
+            return AudioReference.NO_TRACK;
+        }
+
+        List<AudioTrack> tracks = new ArrayList<>();
+        for (JsonBrowser episode : episodes.get("data").values())
+            tracks.add(buildEpisode(episode, podcast));
+
+
+        return new BasicAudioPlaylist(
+                podcast.get("title").safeText(),
+                null,
+                podcast.get("picture_xl").text(),
+                podcast.get("link").text(),
+                "podcast",
+                tracks,
+                null,
+                false
+        );
     }
 
     private AudioItem loadArtist(String id) {
@@ -428,6 +476,26 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
         return new DeezerAudioTrack(info, this);
     }
 
+    private AudioTrack buildEpisode(JsonBrowser episodeInfo, JsonBrowser showInfo) {
+        String title = episodeInfo.get("title").safeText();
+        String identifier = episodeInfo.get("id").text();
+
+        AudioTrackInfo info = new AudioTrackInfo(
+                title,
+                new AudioTrackAuthorInfo(
+                        showInfo.get("title").text(),
+                        showInfo.get("link").text()
+                ),
+                episodeInfo.get("duration").asLong(0) * 1000,
+                identifier,
+                false,
+                "https://www.deezer.com/episode/" + identifier,
+                episodeInfo.get("picture").text().replace("180x180-", "1000x1000-")
+        );
+
+        return new DeezerPodcastAudioTrack(info, this);
+    }
+
     private JsonBrowser requestApi(String uri) {
         return this.requestApi(URI.create(uri));
     }
@@ -447,15 +515,119 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
         }
     }
 
-    public DeezerAudioTrack.TrackFormat[] getFormats() {
-        return this.formats;
+    public MediaContainerDescriptor detectPodcastContainer(
+            String mediaUri,
+            String title
+    ) {
+        return detectPodcastContainer(URI.create(mediaUri), title);
     }
 
-    public void setFormats(DeezerAudioTrack.TrackFormat[] formats) {
-        if (formats.length == 0) {
-            throw new IllegalArgumentException("Deezer track formats must not be empty");
+    public MediaContainerDescriptor detectPodcastContainer(
+            URI mediaUri,
+            String title
+    ) {
+        AudioReference reference = new AudioReference(mediaUri.toString(), title);
+
+        try (HttpInterface httpInterface = getHttpInterface()) {
+            try (PersistentHttpStream inputStream = new PersistentHttpStream(
+                    httpInterface,
+                    mediaUri,
+                    Units.CONTENT_LENGTH_UNKNOWN
+            )) {
+                int statusCode = inputStream.checkStatusCode();
+
+                String redirectUrl = HttpClientTools.getRedirectLocation(
+                        mediaUri.toString(),
+                        inputStream.getCurrentResponse()
+                );
+
+                if (redirectUrl != null) {
+                    return detectPodcastContainer(URI.create(redirectUrl), title);
+                }
+
+                if (statusCode == HttpStatus.SC_NOT_FOUND) {
+                    throw new FriendlyException(
+                            "Deezer podcast media URL was not found.",
+                            FriendlyException.Severity.COMMON,
+                            null
+                    );
+                }
+
+                if (!HttpClientTools.isSuccessWithContent(statusCode)) {
+                    throw new FriendlyException(
+                            "Deezer podcast media URL is not playable.",
+                            FriendlyException.Severity.COMMON,
+                            new IllegalStateException("Status code " + statusCode)
+                    );
+                }
+
+                String contentType = HttpClientTools.getHeaderValue(
+                        inputStream.getCurrentResponse(),
+                        "Content-Type"
+                );
+
+                String extension = extractExtension(mediaUri);
+
+                MediaContainerHints hints = MediaContainerHints.from(
+                        contentType,
+                        extension
+                );
+
+                MediaContainerDetectionResult result = new MediaContainerDetection(
+                        containerRegistry,
+                        reference,
+                        inputStream,
+                        hints
+                ).detectContainer();
+
+                if (result == null || !result.isContainerDetected()) {
+                    throw new FriendlyException(
+                            "Unknown Deezer podcast file format.",
+                            FriendlyException.Severity.COMMON,
+                            null
+                    );
+                }
+
+                if (!result.isSupportedFile()) {
+                    throw new FriendlyException(
+                            result.getUnsupportedReason(),
+                            FriendlyException.Severity.COMMON,
+                            null
+                    );
+                }
+
+                return result.getContainerDescriptor();
+            }
+        } catch (IOException exception) {
+            throw new FriendlyException(
+                    "Failed to detect Deezer podcast media format.",
+                    FriendlyException.Severity.SUSPICIOUS,
+                    exception
+            );
         }
-        this.formats = formats;
+    }
+
+    private static String extractExtension(URI uri) {
+        String path = uri.getPath();
+
+        if (path == null) {
+            return null;
+        }
+
+        int slash = path.lastIndexOf('/');
+        String fileName = slash >= 0 ? path.substring(slash + 1) : path;
+
+        int dot = fileName.lastIndexOf('.');
+
+        if (dot < 0 || dot + 1 >= fileName.length()) {
+            return null;
+        }
+
+        return fileName.substring(dot + 1).toLowerCase();
+    }
+
+    public DeezerAudioTrack.TrackFormat[] getFormats() {
+        return this.formats;
     }
 
     public DeezerTokenTracker getTokenTracker() {
