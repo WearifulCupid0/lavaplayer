@@ -74,7 +74,7 @@ public class AudioTrackInfo {
 
   /**
    * @param title Track title
-   * @param artists Track author, if known
+   * @param artist Track author, if known
    * @param length Length of the track in milliseconds
    * @param identifier Audio source specific track identifier
    * @param isStream True if this track is a stream
