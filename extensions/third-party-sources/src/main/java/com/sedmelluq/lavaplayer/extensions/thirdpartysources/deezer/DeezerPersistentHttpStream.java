@@ -1,27 +1,41 @@
 package com.sedmelluq.lavaplayer.extensions.thirdpartysources.deezer;
 
-import com.sedmelluq.discord.lavaplayer.tools.io.ByteBufferInputStream;
+import com.sedmelluq.discord.lavaplayer.tools.Units;
+import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
-import com.sedmelluq.discord.lavaplayer.tools.io.PersistentHttpStream;
+import com.sedmelluq.discord.lavaplayer.tools.io.SeekableInputStream;
+import com.sedmelluq.discord.lavaplayer.track.info.AudioTrackInfoProvider;
+import org.apache.http.Header;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.ByteBuffer;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
+import java.util.List;
 
-public class DeezerPersistentHttpStream extends PersistentHttpStream {
+public class DeezerPersistentHttpStream extends SeekableInputStream {
+    private static final Logger log = LoggerFactory.getLogger(DeezerPersistentHttpStream.class);
+
+    public static final int BLOCK_SIZE = 2048;
+    public static final long MAX_SKIP_DISTANCE = 512L * 1024L;
+
+    private final HttpInterface httpInterface;
+    private final URI contentUrl;
     private final byte[] keyMaterial;
+
+    private long position;
+
+    private CloseableHttpResponse currentResponse;
+    private InputStream currentContent;
+    private int lastStatusCode;
 
     public DeezerPersistentHttpStream(
             HttpInterface httpInterface,
@@ -29,165 +43,348 @@ public class DeezerPersistentHttpStream extends PersistentHttpStream {
             Long contentLength,
             byte[] keyMaterial
     ) {
-        super(httpInterface, contentUrl, contentLength);
+        super(contentLength == null ? Units.CONTENT_LENGTH_UNKNOWN : contentLength, MAX_SKIP_DISTANCE);
+
+        this.httpInterface = httpInterface;
+        this.contentUrl = contentUrl;
         this.keyMaterial = keyMaterial;
+        this.position = 0L;
+    }
+
+    public int checkStatusCode() throws IOException {
+        connect(true);
+        return lastStatusCode;
     }
 
     @Override
-    protected boolean useHeadersForRange() {
+    public long getPosition() {
+        return position;
+    }
+
+    public HttpResponse getCurrentResponse() {
+        return currentResponse;
+    }
+
+    private void connect(boolean skipStatusCheck) throws IOException {
+        if (currentResponse != null) {
+            return;
+        }
+
+        IOException lastException = null;
+
+        for (int attempt = 0; attempt < 2; attempt++) {
+            boolean retryOnServerError = attempt == 0;
+
+            try {
+                if (attemptConnect(skipStatusCheck, retryOnServerError)) {
+                    return;
+                }
+            } catch (IOException exception) {
+                closeCurrentResponse();
+
+                lastException = exception;
+
+                if (!HttpClientTools.isRetriableNetworkException(exception) || attempt == 1) {
+                    throw exception;
+                }
+
+                log.debug(
+                        "Retriable exception while connecting Deezer stream {} at position {}. Retrying.",
+                        contentUrl,
+                        position,
+                        exception
+                );
+            }
+        }
+
+        if (lastException != null) {
+            throw lastException;
+        }
+
+        throw new IOException("Failed to connect Deezer stream.");
+    }
+
+    private boolean attemptConnect(boolean skipStatusCheck, boolean retryOnServerError) throws IOException {
+        long alignedStart = alignToBlock(position);
+
+        HttpGet request = new HttpGet(contentUrl);
+
+        if (alignedStart > 0) {
+            request.setHeader(HttpHeaders.RANGE, "bytes=" + alignedStart + "-");
+        }
+
+        currentResponse = httpInterface.execute(request);
+        lastStatusCode = currentResponse.getStatusLine().getStatusCode();
+
+        if (retryOnServerError && lastStatusCode >= HttpStatus.SC_INTERNAL_SERVER_ERROR) {
+            closeCurrentResponse();
+            return false;
+        }
+
+        if (!skipStatusCheck) {
+            validateStatusCode(currentResponse);
+        }
+
+        if (currentResponse.getEntity() == null) {
+            currentContent = new ByteArrayInputStream(new byte[0]);
+            contentLength = 0;
+            return true;
+        }
+
+        boolean acceptedRange = alignedStart > 0 && lastStatusCode == HttpStatus.SC_PARTIAL_CONTENT;
+
+        long streamStart = acceptedRange ? alignedStart : 0;
+        long bytesToDiscard = position - streamStart;
+        long startBlockIndex = streamStart / BLOCK_SIZE;
+
+        currentContent = new DeezerDecryptingInputStream(
+                currentResponse.getEntity().getContent(),
+                keyMaterial,
+                startBlockIndex,
+                bytesToDiscard
+        );
+
+        updateContentLength(currentResponse, acceptedRange);
+
+        return true;
+    }
+
+    private static void validateStatusCode(HttpResponse response) throws IOException {
+        int statusCode = response.getStatusLine().getStatusCode();
+
+        boolean successWithContent =
+                statusCode >= 200 &&
+                        statusCode < 300 &&
+                        statusCode != HttpStatus.SC_NO_CONTENT &&
+                        statusCode != HttpStatus.SC_RESET_CONTENT;
+
+        if (!successWithContent) {
+            throw new IOException("Not success status code from Deezer CDN: " + statusCode);
+        }
+    }
+
+    private static long alignToBlock(long position) {
+        return (position / BLOCK_SIZE) * BLOCK_SIZE;
+    }
+
+    private void updateContentLength(HttpResponse response, boolean partialContent) {
+        if (contentLength != Units.CONTENT_LENGTH_UNKNOWN) {
+            return;
+        }
+
+        if (partialContent) {
+            Header contentRange = response.getFirstHeader("Content-Range");
+
+            if (contentRange != null) {
+                String value = contentRange.getValue();
+                int slashIndex = value.lastIndexOf('/');
+
+                if (slashIndex >= 0 && slashIndex + 1 < value.length()) {
+                    try {
+                        contentLength = Long.parseLong(value.substring(slashIndex + 1));
+                        return;
+                    } catch (NumberFormatException ignored) {
+                        // fallback abaixo
+                    }
+                }
+            }
+
+            return;
+        }
+
+        Header contentLengthHeader = response.getFirstHeader("Content-Length");
+
+        if (contentLengthHeader != null) {
+            try {
+                contentLength = Long.parseLong(contentLengthHeader.getValue());
+            } catch (NumberFormatException ignored) {
+                contentLength = Units.CONTENT_LENGTH_UNKNOWN;
+            }
+        }
+    }
+
+    private void handleNetworkException(IOException exception, boolean attemptReconnect) throws IOException {
+        if (!attemptReconnect || !HttpClientTools.isRetriableNetworkException(exception)) {
+            throw exception;
+        }
+
+        closeCurrentResponse();
+
+        log.debug(
+                "Encountered retriable exception on Deezer url {} at position {}.",
+                contentUrl,
+                position,
+                exception
+        );
+    }
+
+    private int internalRead(boolean attemptReconnect) throws IOException {
+        try {
+            connect(false);
+
+            int result = currentContent.read();
+
+            if (result >= 0) {
+                position++;
+            }
+
+            return result;
+        } catch (IOException exception) {
+            handleNetworkException(exception, attemptReconnect);
+            return internalRead(false);
+        }
+    }
+
+    @Override
+    public int read() throws IOException {
+        return internalRead(true);
+    }
+
+    private int internalRead(byte[] bytes, int offset, int length, boolean attemptReconnect) throws IOException {
+        if (bytes == null) {
+            throw new NullPointerException("bytes");
+        }
+
+        if (offset < 0 || length < 0 || length > bytes.length - offset) {
+            throw new IndexOutOfBoundsException();
+        }
+
+        if (length == 0) {
+            return 0;
+        }
+
+        try {
+            connect(false);
+
+            int result = currentContent.read(bytes, offset, length);
+
+            if (result > 0) {
+                position += result;
+            }
+
+            return result;
+        } catch (IOException exception) {
+            handleNetworkException(exception, attemptReconnect);
+            return internalRead(bytes, offset, length, false);
+        }
+    }
+
+    @Override
+    public int read(byte[] bytes, int offset, int length) throws IOException {
+        return internalRead(bytes, offset, length, true);
+    }
+
+    private long internalSkip(long amount, boolean attemptReconnect) throws IOException {
+        if (amount <= 0) {
+            return 0;
+        }
+
+        try {
+            connect(false);
+
+            long result = currentContent.skip(amount);
+
+            if (result > 0) {
+                position += result;
+            }
+
+            return result;
+        } catch (IOException exception) {
+            handleNetworkException(exception, attemptReconnect);
+            return internalSkip(amount, false);
+        }
+    }
+
+    @Override
+    public long skip(long amount) throws IOException {
+        return internalSkip(amount, true);
+    }
+
+    private int internalAvailable(boolean attemptReconnect) throws IOException {
+        try {
+            connect(false);
+            return currentContent.available();
+        } catch (IOException exception) {
+            handleNetworkException(exception, attemptReconnect);
+            return internalAvailable(false);
+        }
+    }
+
+    @Override
+    public int available() throws IOException {
+        return internalAvailable(true);
+    }
+
+    @Override
+    public synchronized void reset() throws IOException {
+        throw new IOException("mark/reset not supported");
+    }
+
+    @Override
+    public boolean markSupported() {
         return false;
     }
 
     @Override
-    public InputStream createContentInputStream(HttpResponse response) throws IOException {
-        return new DecryptingInputStream(
-                response.getEntity().getContent(),
-                this.keyMaterial,
-                this.position
-        );
+    public void close() throws IOException {
+        closeCurrentResponse();
     }
 
-    private static class DecryptingInputStream extends InputStream {
-        private static final int BLOCK_SIZE = 2048;
-        private static final byte[] IV = new byte[]{0, 1, 2, 3, 4, 5, 6, 7};
-
-        private final InputStream input;
-        private final ByteBuffer buffer;
-        private final InputStream bufferInput;
-        private final byte[] keyMaterial;
-
-        private long blockIndex;
-        private boolean hasBufferedData;
-
-        public DecryptingInputStream(
-                InputStream input,
-                byte[] keyMaterial,
-                long position
-        ) throws IOException {
-            this.input = new BufferedInputStream(input);
-            this.buffer = ByteBuffer.allocate(BLOCK_SIZE);
-            this.bufferInput = new ByteBufferInputStream(this.buffer);
-            this.keyMaterial = keyMaterial;
-
-            this.blockIndex = 0;
-            this.hasBufferedData = false;
-
-            if (position > 0) {
-                discardDecryptedBytes(position);
-            }
+    public void releaseConnection() {
+        try {
+            closeCurrentResponse();
+        } catch (IOException exception) {
+            log.debug("Failed to release Deezer connection.", exception);
         }
+    }
 
-        @Override
-        public int read() throws IOException {
-            if (!hasBufferedData || bufferInput.available() <= 0) {
-                if (!fillNextBlock()) {
-                    return -1;
-                }
-            }
+    private void closeCurrentResponse() throws IOException {
+        IOException closeException = null;
 
-            return bufferInput.read();
-        }
-
-        @Override
-        public int read(byte[] bytes, int offset, int length) throws IOException {
-            if (length == 0) {
-                return 0;
-            }
-
-            int totalRead = 0;
-
-            while (length > 0) {
-                if (!hasBufferedData || bufferInput.available() <= 0) {
-                    if (!fillNextBlock()) {
-                        return totalRead > 0 ? totalRead : -1;
-                    }
-                }
-
-                int available = bufferInput.available();
-                int toRead = Math.min(length, available);
-
-                int read = bufferInput.read(bytes, offset, toRead);
-
-                if (read < 0) {
-                    return totalRead > 0 ? totalRead : -1;
-                }
-
-                totalRead += read;
-                offset += read;
-                length -= read;
-            }
-
-            return totalRead;
-        }
-
-        @Override
-        public void close() throws IOException {
-            input.close();
-        }
-
-        private boolean fillNextBlock() throws IOException {
-            byte[] chunk = input.readNBytes(BLOCK_SIZE);
-
-            if (chunk.length == 0) {
-                return false;
-            }
-
-            buffer.clear();
-            hasBufferedData = true;
-
-            if (blockIndex % 3 > 0 || chunk.length < BLOCK_SIZE) {
-                buffer.put(chunk);
-            } else {
-                buffer.put(decryptBlock(chunk));
-            }
-
-            blockIndex++;
-            buffer.flip();
-
-            return true;
-        }
-
-        private byte[] decryptBlock(byte[] chunk) throws IOException {
+        if (currentContent != null) {
             try {
-                Cipher cipher = Cipher.getInstance("Blowfish/CBC/NoPadding");
-
-                cipher.init(
-                        Cipher.DECRYPT_MODE,
-                        new SecretKeySpec(keyMaterial, "Blowfish"),
-                        new IvParameterSpec(IV)
-                );
-
-                return cipher.doFinal(chunk);
-            } catch (
-                    NoSuchAlgorithmException |
-                    NoSuchPaddingException |
-                    InvalidKeyException |
-                    InvalidAlgorithmParameterException |
-                    IllegalBlockSizeException |
-                    BadPaddingException exception
-            ) {
-                throw new IOException("Failed to decrypt Deezer block.", exception);
+                currentContent.close();
+            } catch (IOException exception) {
+                closeException = exception;
             }
+
+            currentContent = null;
         }
 
-        private void discardDecryptedBytes(long bytesToDiscard) throws IOException {
-            byte[] discardBuffer = new byte[8192];
-
-            long remaining = bytesToDiscard;
-
-            while (remaining > 0) {
-                int read = read(
-                        discardBuffer,
-                        0,
-                        (int) Math.min(discardBuffer.length, remaining)
-                );
-
-                if (read < 0) {
-                    throw new IOException("Unexpected EOF while discarding Deezer stream.");
+        if (currentResponse != null) {
+            try {
+                currentResponse.close();
+            } catch (IOException exception) {
+                if (closeException == null) {
+                    closeException = exception;
                 }
-
-                remaining -= read;
             }
+
+            currentResponse = null;
         }
+
+        if (closeException != null) {
+            throw closeException;
+        }
+    }
+
+    @Override
+    protected void seekHard(long position) throws IOException {
+        if (position < 0) {
+            throw new IOException("Cannot seek to negative position: " + position);
+        }
+
+        closeCurrentResponse();
+        this.position = position;
+    }
+
+    @Override
+    public boolean canSeekHard() {
+        return true;
+    }
+
+    @Override
+    public List<AudioTrackInfoProvider> getTrackInfoProviders() {
+        return Collections.emptyList();
     }
 }

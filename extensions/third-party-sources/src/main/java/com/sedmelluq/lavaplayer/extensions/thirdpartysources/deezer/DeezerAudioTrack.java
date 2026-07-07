@@ -7,7 +7,7 @@ import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.Units;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
-import com.sedmelluq.discord.lavaplayer.tools.io.PersistentHttpStream;
+import com.sedmelluq.discord.lavaplayer.tools.io.SeekableInputStream;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack;
@@ -131,7 +131,7 @@ public class DeezerAudioTrack extends DelegatedAudioTrack {
             Tokens tokens = this.getTokens(httpInterface);
             SourceWithFormat source = this.getSource(httpInterface, tokens.api, tokens.license);
             String trackId = source.getFallbackId() != null ? source.getFallbackId() : this.trackInfo.identifier;
-            try (PersistentHttpStream stream = new DeezerPersistentHttpStream(
+            try (SeekableInputStream stream = new DeezerPersistentHttpStream(
                     httpInterface,
                     source.getUrl(),
                     source.getContentLength(),
@@ -177,9 +177,9 @@ public class DeezerAudioTrack extends DelegatedAudioTrack {
 
         public static final TrackFormat[] DEFAULT_FORMATS = new TrackFormat[]{MP3_128, MP3_64};
         private final boolean isPremiumFormat;
-        private final BiFunction<AudioTrackInfo, PersistentHttpStream, InternalAudioTrack> trackFactory;
+        private final BiFunction<AudioTrackInfo, SeekableInputStream, InternalAudioTrack> trackFactory;
 
-        TrackFormat(boolean isPremiumFormat, BiFunction<AudioTrackInfo, PersistentHttpStream, InternalAudioTrack> trackFactory) {
+        TrackFormat(boolean isPremiumFormat, BiFunction<AudioTrackInfo, SeekableInputStream, InternalAudioTrack> trackFactory) {
             this.isPremiumFormat = isPremiumFormat;
             this.trackFactory = trackFactory;
         }
