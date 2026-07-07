@@ -202,6 +202,12 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
                 case "artist":
                     return this.loadArtist(id);
 
+                case "show":
+                    return this.loadPodcast(id);
+
+                case "episode":
+                    return this.loadEpisode(id);
+
                 default:
                     return null;
             }
