@@ -16,7 +16,6 @@ import static com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN;
  */
 public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
   private static final String UNKNOWN_TITLE = "Unknown title";
-  private static final String UNKNOWN_ARTIST = "Unknown artist";
 
   private String title;
   private List<AudioTrackAuthorInfo> artists = new ArrayList<>();
@@ -167,7 +166,6 @@ public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
    */
   public static AudioTrackInfoBuilder create(AudioReference reference, SeekableInputStream stream) {
     AudioTrackInfoBuilder builder = new AudioTrackInfoBuilder()
-        .setAuthor(UNKNOWN_ARTIST)
         .setTitle(UNKNOWN_TITLE)
         .setLength(DURATION_MS_UNKNOWN);
 

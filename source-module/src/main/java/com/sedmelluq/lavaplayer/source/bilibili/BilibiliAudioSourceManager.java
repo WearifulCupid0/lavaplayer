@@ -116,7 +116,7 @@ public class BilibiliAudioSourceManager implements AudioSourceManager, HttpConfi
                     String videoId = item.get("bvid").text();
                     tracks.add(new BilibiliAudioTrack(new AudioTrackInfo(title, uploader, duration, videoId, false, getWatchUrl(videoId), thumbnailUrl), this));
                 }
-                return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
+                return BasicAudioPlaylist.createSearchResults(query, tracks);
             }
         } catch (Exception e) {
             throw new FriendlyException("Error occurred when extracting search results.", SUSPICIOUS, e);

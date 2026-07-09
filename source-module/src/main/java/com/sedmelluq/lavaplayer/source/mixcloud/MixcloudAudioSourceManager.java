@@ -205,7 +205,7 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
                 if (track != null) tracks.add(track);
             });
 
-            return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
+            return BasicAudioPlaylist.createSearchResults(query, tracks);
         });
     }
 

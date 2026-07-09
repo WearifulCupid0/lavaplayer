@@ -69,7 +69,7 @@ public class DefaultiHeartApiHandler implements iHeartApiHandler {
                     json.get("hits").values()
                     .forEach(hit -> tracks.add(trackFactory.apply(buildRadio(hit))));
 
-                    return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
+                    return BasicAudioPlaylist.createSearchResults(query, tracks);
                 }
                 
                 return null;

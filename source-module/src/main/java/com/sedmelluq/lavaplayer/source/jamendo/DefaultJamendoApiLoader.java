@@ -152,7 +152,7 @@ public class DefaultJamendoApiLoader implements JamendoApiLoader {
                 json.get("results").values()
                 .forEach(track -> tracks.add(buildTrack(track, track.get("artist_name").text())));
 
-                return new BasicAudioPlaylist("Search results for: " + query, null, null, null, "search", tracks, null, true);
+                return BasicAudioPlaylist.createSearchResults(query, tracks);
             }
         } catch(Exception e) {
             throw ExceptionTools.wrapUnfriendlyExceptions("Failed to load Jamendo search results data.", SUSPICIOUS, e);
