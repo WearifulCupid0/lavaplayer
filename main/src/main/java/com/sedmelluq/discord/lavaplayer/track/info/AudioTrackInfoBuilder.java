@@ -73,7 +73,9 @@ public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
   }
 
   public AudioTrackInfoBuilder setAuthor(String value) {
-    artists.add(new AudioTrackAuthorInfo(DataFormatTools.defaultOnNull(value, getAuthor())));
+    String finalValue = DataFormatTools.defaultOnNull(value, getAuthor());
+    if (finalValue != null)
+      artists.add(new AudioTrackAuthorInfo(finalValue));
     return this;
   }
 
