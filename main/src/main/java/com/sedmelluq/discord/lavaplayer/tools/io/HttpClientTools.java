@@ -45,12 +45,12 @@ public class HttpClientTools {
   private static final Logger log = LoggerFactory.getLogger(HttpClientTools.class);
 
   public static final RequestConfig DEFAULT_REQUEST_CONFIG = RequestConfig.custom()
-      .setConnectTimeout(3000)
+      .setConnectTimeout(5000)
       .setCookieSpec(CookieSpecs.STANDARD)
       .build();
 
   private static final RequestConfig NO_COOKIES_REQUEST_CONFIG = RequestConfig.custom()
-      .setConnectTimeout(3000)
+      .setConnectTimeout(5000)
       .setCookieSpec(CookieSpecs.IGNORE_COOKIES)
       .build();
 
