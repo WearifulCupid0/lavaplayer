@@ -18,7 +18,7 @@ public class NonSeekableStreamInputStream extends SeekableInputStream {
     private final InputStream delegate;
     private long position;
 
-    private NonSeekableStreamInputStream(InputStream delegate) {
+    public NonSeekableStreamInputStream(InputStream delegate) {
         super(Long.MAX_VALUE, Long.MAX_VALUE);
 
         this.delegate = delegate;
