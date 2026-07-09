@@ -39,7 +39,7 @@ public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
 
   @Override
   public String getAuthor() {
-    return artists.get(0).name;
+    return artists.isEmpty() ? null : artists.get(0).name;
   }
 
   public List<AudioTrackAuthorInfo> getArtists() { return artists; }

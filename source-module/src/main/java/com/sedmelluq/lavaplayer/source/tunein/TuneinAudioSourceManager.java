@@ -126,7 +126,6 @@ public class TuneinAudioSourceManager implements AudioSourceManager, HttpConfigu
 
             AudioTrackInfo trackInfo = new AudioTrackInfo(
                 radio.get("title").safeText(),
-                "Unknown author",
                 DURATION_MS_UNKNOWN,
                 radio.get("guideId").text(),
                 true,
