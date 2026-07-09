@@ -1,6 +1,7 @@
 package com.sedmelluq.discord.lavaplayer.container.playlists;
 
 import com.sedmelluq.discord.lavaplayer.container.adts.AdtsAudioTrack;
+import com.sedmelluq.discord.lavaplayer.container.mp3.Mp3AudioTrack;
 import com.sedmelluq.discord.lavaplayer.container.mpegts.MpegTsElementaryInputStream;
 import com.sedmelluq.discord.lavaplayer.container.mpegts.PesPacketInputStream;
 import com.sedmelluq.discord.lavaplayer.source.stream.M3uStreamAudioTrack;
@@ -8,7 +9,9 @@ import com.sedmelluq.discord.lavaplayer.source.stream.M3uStreamSegmentUrlProvide
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
+import com.sedmelluq.discord.lavaplayer.tools.io.SeekableInputStream;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
+import com.sedmelluq.discord.lavaplayer.track.info.AudioTrackInfoProvider;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +19,8 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
+import java.util.List;
 
 import static com.sedmelluq.discord.lavaplayer.container.mpegts.MpegTsElementaryInputStream.ADTS_ELEMENTARY_STREAM;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.COMMON;
@@ -23,31 +28,23 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 /**
  * Audio track for HLS playlists.
  *
- * <p>
- * The old implementation forced every HLS stream to be:
- * HLS -> MPEG-TS segments -> ADTS/AAC.
- * </p>
+ * Supports:
+ * - HLS with MPEG-TS segments containing ADTS/AAC.
+ * - HLS with direct ADTS/AAC segments.
+ * - HLS with direct MP3/MPEG audio segments.
  *
- * <p>
- * That works for many streams, but some audio-only HLS streams use direct ADTS/AAC segments.
- * This implementation detects the first joined segment format and chooses the correct processing path.
- * </p>
+ * Does not support:
+ * - HLS with fragmented MP4/CMAF segments.
  */
 public class HlsStreamTrack extends M3uStreamAudioTrack {
     private static final Logger log = LoggerFactory.getLogger(HlsStreamTrack.class);
 
-    private static final int DETECTION_MARK_LIMIT = 4096;
-    private static final int DETECTION_SAMPLE_SIZE = 512;
+    private static final int DETECTION_MARK_LIMIT = 65_536;
+    private static final int DETECTION_SAMPLE_SIZE = 32_768;
 
     private final HlsStreamSegmentUrlProvider segmentUrlProvider;
     private final HttpInterfaceManager httpInterfaceManager;
 
-    /**
-     * @param trackInfo Track info
-     * @param streamUrl HLS master or media playlist URL
-     * @param httpInterfaceManager HTTP interface manager
-     * @param isInnerUrl Whether {@code streamUrl} already points to the media playlist
-     */
     public HlsStreamTrack(AudioTrackInfo trackInfo, String streamUrl, HttpInterfaceManager httpInterfaceManager, boolean isInnerUrl) {
         super(trackInfo);
 
@@ -78,7 +75,15 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
 
         if (segmentFormat == SegmentFormat.ADTS) {
             log.debug("Detected HLS stream {} as direct ADTS/AAC segments.", getIdentifier());
+
             processDelegate(new AdtsAudioTrack(trackInfo, bufferedStream), localExecutor);
+            return;
+        }
+
+        if (segmentFormat == SegmentFormat.MP3) {
+            log.debug("Detected HLS stream {} as direct MP3/MPEG audio segments.", getIdentifier());
+
+            processDelegate(new Mp3AudioTrack(trackInfo, new NonSeekableStreamInputStream(bufferedStream)), localExecutor);
             return;
         }
 
@@ -126,20 +131,58 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
             return SegmentFormat.MPEG_TS;
         }
 
+        SegmentFormat afterId3 = detectAfterOptionalId3(sample, length);
+
+        if (afterId3 != SegmentFormat.UNKNOWN) {
+            return afterId3;
+        }
+
         if (looksLikeAdts(sample, 0, length)) {
             return SegmentFormat.ADTS;
         }
 
-        if (startsWithId3(sample, length)) {
-            /*
-             * Some HLS ADTS/AAC streams have ID3 metadata before the first AAC frame.
-             * AdtsStreamReader already scans until it finds the ADTS sync word, so direct ADTS processing is still correct.
-             */
-            return SegmentFormat.ADTS;
+        if (looksLikeMp3(sample, 0, length)) {
+            return SegmentFormat.MP3;
         }
 
         if (looksLikeFragmentedMp4(sample, 0, length)) {
             return SegmentFormat.FRAGMENTED_MP4;
+        }
+
+        return SegmentFormat.UNKNOWN;
+    }
+
+    private static SegmentFormat detectAfterOptionalId3(byte[] sample, int length) {
+        if (!startsWithId3(sample, length)) {
+            return SegmentFormat.UNKNOWN;
+        }
+
+        int offset = getId3TagSize(sample, length);
+
+        if (offset <= 0 || offset >= length) {
+            return SegmentFormat.UNKNOWN;
+        }
+
+        /*
+         * Some HLS audio streams start each segment with ID3 metadata.
+         * After the ID3 tag, the real media can be ADTS/AAC or MP3.
+         */
+        for (int i = offset; i < length - 4; i++) {
+            if (looksLikeAdts(sample, i, length)) {
+                return SegmentFormat.ADTS;
+            }
+
+            if (looksLikeMp3(sample, i, length)) {
+                return SegmentFormat.MP3;
+            }
+
+            if (looksLikeMpegTs(sample, i, length)) {
+                return SegmentFormat.MPEG_TS;
+            }
+
+            if (looksLikeFragmentedMp4(sample, i, length)) {
+                return SegmentFormat.FRAGMENTED_MP4;
+            }
         }
 
         return SegmentFormat.UNKNOWN;
@@ -150,10 +193,6 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
             return false;
         }
 
-        /*
-         * MPEG-TS packets usually have 188 bytes.
-         * If we have enough bytes, validate more than one sync byte to avoid false positives.
-         */
         if (length - offset > 376) {
             return unsigned(sample[offset + 188]) == 0x47
                     && unsigned(sample[offset + 376]) == 0x47;
@@ -177,11 +216,64 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
         return first == 0xFF && (second & 0xF0) == 0xF0;
     }
 
+    private static boolean looksLikeMp3(byte[] sample, int offset, int length) {
+        if (length - offset < 4) {
+            return false;
+        }
+
+        int first = unsigned(sample[offset]);
+        int second = unsigned(sample[offset + 1]);
+        int third = unsigned(sample[offset + 2]);
+
+        /*
+         * MPEG audio frame sync:
+         * first 11 bits set.
+         */
+        if (first != 0xFF || (second & 0xE0) != 0xE0) {
+            return false;
+        }
+
+        int version = (second >> 3) & 0x03;
+        int layer = (second >> 1) & 0x03;
+        int bitrateIndex = (third >> 4) & 0x0F;
+        int sampleRateIndex = (third >> 2) & 0x03;
+
+        /*
+         * version == 01 is reserved.
+         * layer == 00 is reserved.
+         * bitrate index 0000 is free format, 1111 is invalid.
+         * sample rate index 11 is reserved.
+         */
+        return version != 0x01
+                && layer != 0x00
+                && bitrateIndex != 0x00
+                && bitrateIndex != 0x0F
+                && sampleRateIndex != 0x03;
+    }
+
     private static boolean startsWithId3(byte[] sample, int length) {
-        return length >= 3
+        return length >= 10
                 && sample[0] == 'I'
                 && sample[1] == 'D'
                 && sample[2] == '3';
+    }
+
+    private static int getId3TagSize(byte[] sample, int length) {
+        if (!startsWithId3(sample, length)) {
+            return -1;
+        }
+
+        /*
+         * ID3v2 size is stored as a 4-byte synchsafe integer.
+         * Total tag size includes 10-byte header.
+         */
+        int size =
+                ((unsigned(sample[6]) & 0x7F) << 21)
+                        | ((unsigned(sample[7]) & 0x7F) << 14)
+                        | ((unsigned(sample[8]) & 0x7F) << 7)
+                        | (unsigned(sample[9]) & 0x7F);
+
+        return 10 + size;
     }
 
     private static boolean looksLikeFragmentedMp4(byte[] sample, int offset, int length) {
@@ -215,6 +307,7 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
     private enum SegmentFormat {
         MPEG_TS,
         ADTS,
+        MP3,
         FRAGMENTED_MP4,
         UNKNOWN
     }
