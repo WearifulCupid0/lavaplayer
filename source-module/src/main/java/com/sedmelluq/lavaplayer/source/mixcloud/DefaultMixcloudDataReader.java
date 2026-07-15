@@ -3,6 +3,7 @@ package com.sedmelluq.lavaplayer.source.mixcloud;
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrackAuthorInfo;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 
 import java.util.ArrayList;
@@ -26,15 +27,20 @@ public class DefaultMixcloudDataReader implements MixcloudDataReader {
 
     @Override
     public AudioTrackInfo readTrackInfo(JsonBrowser trackData, String identifier) {
+        AudioTrackAuthorInfo artistInfo = new AudioTrackAuthorInfo(
+                trackData.get("owner").get("displayName").safeText(),
+                String.format(MixcloudConstants.ARTIST_URL, trackData.get("owner").get("displayName").safeText())
+        );
         return new AudioTrackInfo(
             trackData.get("name").safeText(),
-            trackData.get("owner").get("displayName").safeText(),
+            artistInfo,
             (long) (trackData.get("audioLength").as(Double.class) * 1000.0),
             identifier,
             false,
             trackData.get("url").text(),
             trackData.get("picture").get("url").text(),
-            !trackData.get("restrictedReason").isNull()
+            !trackData.get("restrictedReason").isNull(),
+            null
         );
     }
     
