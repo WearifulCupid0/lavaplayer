@@ -27,10 +27,6 @@ public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
   private Boolean explicit = null;
   private String isrc = null;
 
-  private AudioTrackInfoBuilder() {
-
-  }
-
   @Override
   public String getTitle() {
     return title;
@@ -81,6 +77,11 @@ public class AudioTrackInfoBuilder implements AudioTrackInfoProvider {
   public AudioTrackInfoBuilder setArtists(List<AudioTrackAuthorInfo> artists) {
     this.artists.clear();
     this.artists.addAll(artists);
+    return this;
+  }
+
+  public AudioTrackInfoBuilder addArtist(AudioTrackAuthorInfo artist) {
+    this.artists.add(artist);
     return this;
   }
 
