@@ -5,10 +5,7 @@ import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.PBJUtils;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
-import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
-import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
+import com.sedmelluq.discord.lavaplayer.track.*;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -40,7 +37,7 @@ public class DefaultJamendoApiLoader implements JamendoApiLoader {
                 }
                 JsonBrowser info = json.get("results").index(0);
 
-                return buildTrack(info, info.get("artist_name").text());
+                return buildTrack(info, info.get("artist_name").text(), info.get("artist_id").text());
             }
         } catch(Exception e) {
             throw ExceptionTools.wrapUnfriendlyExceptions("Failed to load Jamendo track data.", SUSPICIOUS, e);
@@ -91,14 +88,15 @@ public class DefaultJamendoApiLoader implements JamendoApiLoader {
                 JsonBrowser info = json.get("results").index(0);
 
                 List<AudioTrack> tracks = new ArrayList<>();
-                String author = info.get("name").text();
+                String artistName = info.get("name").text();
+                String artistId = info.get("id").text();
                 info.get("tracks").values()
-                .forEach(track -> tracks.add(buildTrack(track, author)));
+                .forEach(track -> tracks.add(buildTrack(track, artistName, artistId)));
 
                 return new BasicAudioPlaylist(
-                    author, author,
+                        artistName, artistName,
                     info.get("image").text().replace("1.200", "1.500"),
-                    ARTIST_URL + info.get("id").text(),
+                    ARTIST_URL + artistId,
                     "artist", tracks, null, false
                 );
             }
@@ -122,7 +120,7 @@ public class DefaultJamendoApiLoader implements JamendoApiLoader {
 
                 List<AudioTrack> tracks = new ArrayList<>();
                 info.get("tracks").values()
-                .forEach(track -> tracks.add(buildTrack(track, track.get("artist_name").text())));
+                .forEach(track -> tracks.add(buildTrack(track, track.get("artist_name").text(), track.get("artist_id").text())));
 
                 return new BasicAudioPlaylist(
                     info.get("name").text(),
@@ -150,7 +148,7 @@ public class DefaultJamendoApiLoader implements JamendoApiLoader {
 
                 List<AudioTrack> tracks = new ArrayList<>();
                 json.get("results").values()
-                .forEach(track -> tracks.add(buildTrack(track, track.get("artist_name").text())));
+                .forEach(track -> tracks.add(buildTrack(track, track.get("artist_name").text(), track.get("artist_id").text())));
 
                 return BasicAudioPlaylist.createSearchResults(query, tracks);
             }
@@ -159,16 +157,16 @@ public class DefaultJamendoApiLoader implements JamendoApiLoader {
         }
     }
 
-    private AudioTrack buildTrack(JsonBrowser track, String author) {
-        return buildTrack(track, author, null);
+    private AudioTrack buildTrack(JsonBrowser track, String artistName, String artistId) {
+        return buildTrack(track, artistName, artistId, null);
     }
 
-    private AudioTrack buildTrack(JsonBrowser track, String author, String albumImage) {
+    private AudioTrack buildTrack(JsonBrowser track, String artistName, String artistId, String albumImage) {
         String identifier = track.get("id").safeText();
 
         AudioTrackInfo info = new AudioTrackInfo(
             track.get("name").safeText(),
-            author,
+            new AudioTrackAuthorInfo(artistName, ARTIST_URL + artistId),
             (long) (track.get("duration").as(Double.class) * 1000.0),
             identifier,
             false,
