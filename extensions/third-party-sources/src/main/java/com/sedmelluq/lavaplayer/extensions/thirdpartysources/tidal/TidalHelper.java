@@ -117,7 +117,6 @@ public class TidalHelper {
         } catch (URISyntaxException e)  {
             return null;
         }
-
     }
 
     public static URI playlistUri(String id) {
@@ -131,7 +130,6 @@ public class TidalHelper {
         } catch (URISyntaxException e)  {
             return null;
         }
-
     }
 
     public static URI searchTracksUri(String query) {
@@ -144,10 +142,9 @@ public class TidalHelper {
         } catch (URISyntaxException e)  {
             return null;
         }
-
     }
 
-    public static URI artistTopTracksUri(String artistId) {
+    public static URI artistTracksUri(String artistId) {
         try {
             return buildUri(TidalConstants.ARTIST_API_TRACKS)
                     .addParameter("filter[id]", artistId)

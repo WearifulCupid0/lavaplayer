@@ -227,7 +227,15 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
                 return AudioReference.NO_TRACK;
             }
 
-            List<AudioTrack> tracks = loadIncludedTracks(document);
+            List<String> trackIds = new ArrayList<>();
+
+            for (JsonBrowser trackJson : data.values()) {
+                String trackId = trackJson.get("id").text();
+                if (!SourceTools.isBlank(trackId))
+                    trackIds.add(trackId);
+            }
+
+            List<AudioTrack> tracks = loadIncludedTracks(document, trackIds);
 
             if (tracks.isEmpty()) {
                 return AudioReference.NO_TRACK;
@@ -265,7 +273,15 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
                 attributes.get("name").text()
         );
 
-        List<AudioTrack> tracks = loadIncludedTracks(document);
+        List<String> trackIds = new ArrayList<>();
+
+        for (JsonBrowser itemJson : album.get("relationships").get("items").get("data").values()) {
+            String trackId = itemJson.get("id").text();
+            if (!SourceTools.isBlank(trackId))
+                trackIds.add(trackId);
+        }
+
+        List<AudioTrack> tracks = loadIncludedTracks(document, trackIds);
 
         if (tracks.isEmpty()) {
             return AudioReference.NO_TRACK;
@@ -306,7 +322,15 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
                 attributes.get("name").text()
         );
 
-        List<AudioTrack> tracks = loadIncludedTracks(document);
+        List<String> trackIds = new ArrayList<>();
+
+        for (JsonBrowser itemJson : playlist.get("relationships").get("items").get("data").values()) {
+            String trackId = itemJson.get("id").text();
+            if (!SourceTools.isBlank(trackId))
+                trackIds.add(trackId);
+        }
+
+        List<AudioTrack> tracks = loadIncludedTracks(document, trackIds);
 
         if (tracks.isEmpty()) {
             return AudioReference.NO_TRACK;
@@ -350,7 +374,7 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
     }
 
     private AudioItem loadArtistTracks(String id) {
-        JsonBrowser document = requestApi(TidalHelper.artistTopTracksUri(id));
+        JsonBrowser document = requestApi(TidalHelper.artistTracksUri(id));
         JsonBrowser artist = firstDataItem(document);
 
         if (artist.isNull()) {
@@ -389,15 +413,33 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
     }
 
     private List<AudioTrack> loadIncludedTracks(JsonBrowser document) {
+        return loadIncludedTracks(document, new ArrayList<>());
+    }
+
+    private List<AudioTrack> loadIncludedTracks(JsonBrowser document, List<String> trackIds) {
         List<AudioTrack> tracks = new ArrayList<>();
 
-        for (JsonBrowser included : document.get("included").values()) {
-            String type = included.get("type").text();
+        if (!trackIds.isEmpty()) {
+            JsonBrowser included = document;
+            if (!included.get("included").isNull())
+                included = document.get("included");
 
-            if ("tracks".equals(type) || "track".equals(type)) {
-                AudioTrack track = TidalHelper.buildTrack(included, document.get("included"), this);
+            for (String trackId : trackIds) {
+                JsonBrowser trackJson = TidalHelper.findRelationship(included, trackId, "tracks");
+                if (trackJson != null) {
+                    AudioTrack track = TidalHelper.buildTrack(trackJson, included, this);
+                    tracks.add(track);
+                }
+            }
+        } else {
+            for (JsonBrowser included : document.get("included").values()) {
+                String type = included.get("type").text();
 
-                tracks.add(track);
+                if ("tracks".equals(type) || "track".equals(type)) {
+                    AudioTrack track = TidalHelper.buildTrack(included, document.get("included"), this);
+
+                    tracks.add(track);
+                }
             }
         }
 
