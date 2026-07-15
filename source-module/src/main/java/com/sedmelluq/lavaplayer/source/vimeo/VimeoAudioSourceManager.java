@@ -109,50 +109,6 @@ public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigur
         httpInterfaceManager.configureBuilder(configurator);
     }
 
-    JsonBrowser loadConfigJsonFromPageContent(String content) throws IOException {
-        String configText = DataFormatTools.extractBetween(content, "window.vimeo.clip_page_config = ", "\n");
-
-        if (configText != null) {
-            return JsonBrowser.parse(configText);
-        }
-
-        return null;
-    }
-
-    private AudioItem loadFromTrackPage(HttpInterface httpInterface, String trackUrl) throws IOException {
-        try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(trackUrl))) {
-            int statusCode = response.getStatusLine().getStatusCode();
-
-            if (statusCode == HttpStatus.SC_NOT_FOUND) {
-                return AudioReference.NO_TRACK;
-            } else if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-                throw new FriendlyException("Server responded with an error.", SUSPICIOUS,
-                    new IllegalStateException("Response code is " + statusCode));
-            }
-
-            return loadTrackFromPageContent(trackUrl, IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8));
-        }
-    }
-
-    private AudioTrack loadTrackFromPageContent(String trackUrl, String content) throws IOException {
-        JsonBrowser config = loadConfigJsonFromPageContent(content);
-
-        if (config == null) {
-            throw new FriendlyException("Track information not found on the page.", SUSPICIOUS, null);
-        }
-
-        return new VimeoAudioTrack(new AudioTrackInfo(
-            config.get("clip").get("title").text(),
-            config.get("owner").get("display_name").text(),
-            (long) (config.get("clip").get("duration").get("raw").as(Double.class) * 1000.0),
-            trackUrl,
-            false,
-            trackUrl,
-            config.get("thumbnail").get("src").text(),
-            null
-        ), this);
-    }
-
     private AudioTrack loadVideoFromApi(HttpInterface httpInterface, String videoId) throws IOException, URISyntaxException {
         JsonBrowser videoData = getVideoFromApi(httpInterface, videoId);
 
