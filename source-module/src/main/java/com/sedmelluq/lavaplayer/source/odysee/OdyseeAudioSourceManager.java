@@ -125,7 +125,7 @@ public class OdyseeAudioSourceManager implements AudioSourceManager, HttpConfigu
 
     return new OdyseeAudioTrack(new AudioTrackInfo(
         title,
-        uploader,
+        new AudioTrackAuthorInfo(uploader, getUploaderUrl(uploader)),
         duration,
         name + "#" + claimId,
         false,
@@ -244,5 +244,9 @@ public class OdyseeAudioSourceManager implements AudioSourceManager, HttpConfigu
 
   private static String getWatchUrl(String uploader, String videoName) {
     return "https://odysee.com/" + uploader + "/" + videoName;
+  }
+
+  private static String getUploaderUrl(String uploader) {
+    return "https://odysee.com/" + uploader;
   }
 }
