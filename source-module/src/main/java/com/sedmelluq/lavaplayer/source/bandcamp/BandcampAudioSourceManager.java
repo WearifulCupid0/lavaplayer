@@ -132,10 +132,11 @@ public class BandcampAudioSourceManager implements AudioSourceManager, HttpConfi
     }
 
     String artworkUrl = e.select(".art img").attr("src");
+    String artistUrl = trackUrl.split("/track/")[0].trim();
 
     return new BandcampAudioTrack(new AudioTrackInfo(
             title,
-            artist,
+            new AudioTrackAuthorInfo(artist, artistUrl),
             Units.DURATION_MS_UNKNOWN,
             trackUrl,
             false,
@@ -189,7 +190,7 @@ public class BandcampAudioSourceManager implements AudioSourceManager, HttpConfi
 
     return new BandcampAudioTrack(new AudioTrackInfo(
         trackInfo.get("title").text(),
-        artist,
+        new AudioTrackAuthorInfo(artist, bandUrl),
         (long) (trackInfo.get("duration").as(Double.class) * 1000.0),
         bandUrl + trackInfo.get("title_link").text(),
         false,
