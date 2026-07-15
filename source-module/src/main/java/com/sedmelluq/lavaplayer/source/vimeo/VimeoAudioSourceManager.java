@@ -7,10 +7,7 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
-import com.sedmelluq.discord.lavaplayer.track.AudioItem;
-import com.sedmelluq.discord.lavaplayer.track.AudioReference;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
+import com.sedmelluq.discord.lavaplayer.track.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
@@ -111,15 +108,22 @@ public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigur
 
     private AudioTrack loadVideoFromApi(HttpInterface httpInterface, String videoId) throws IOException, URISyntaxException {
         JsonBrowser videoData = getVideoFromApi(httpInterface, videoId);
+        AudioTrackAuthorInfo uploaderInfo = null;
+        String uploaderName = videoData.get("uploader").get("name").text();
+        String uploaderUrl = videoData.get("uploader").get("link").text();
+
+        if (uploaderName != null && !uploaderName.isBlank())
+            uploaderInfo = new AudioTrackAuthorInfo(uploaderName, uploaderUrl);
 
         AudioTrackInfo info = new AudioTrackInfo(
             videoData.get("name").text(),
-            videoData.get("uploader").get("name").textOrDefault("Unknown artist"),
+            uploaderInfo,
             Units.secondsToMillis(videoData.get("duration").asLong(Units.DURATION_SEC_UNKNOWN)),
             videoId,
             false,
             "https://vimeo.com/" + videoId,
             videoData.get("pictures").get("base_link").text(),
+            !videoData.get("content_rating_class").safeText().equals("safe"),
             null
         );
 
@@ -132,7 +136,7 @@ public class VimeoAudioSourceManager implements AudioSourceManager, HttpConfigur
         URIBuilder builder = new URIBuilder("https://api.vimeo.com/videos/" + videoId);
         // adding `play` to the fields achieves the same thing as requesting the config_url, but with one less request.
         // maybe we should consider using that instead? Need to figure out what the difference is, if any.
-        builder.setParameter("fields", "config_url,name,uploader.name,duration,pictures");
+        builder.setParameter("fields", "config_url,name,uploader.name,uploader.link,duration,pictures,content_rating_class");
 
         HttpUriRequest request = new HttpGet(builder.build());
         request.setHeader("Authorization", "jwt " + jwt);
