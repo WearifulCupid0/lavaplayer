@@ -33,6 +33,9 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigurable {
     private static final String URL_REGEX = "^(?:http://|https://|)(?:www\\.|api\\.|audio\\.|)clyp\\.it/([a-zA-Z0-9-_]+)";
     private static final String API_URL = "https://api.clyp.it/%s/playlist";
+    private static final String EXAMPLE_URL = "https://clyp.it/example-url";
+
+    private static final String RANDOM_TRACK_PREFIX = "clyprandom";
 
     private static final Pattern urlPattern = Pattern.compile(URL_REGEX);
 
@@ -52,7 +55,14 @@ public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigura
 
     @Override
     public AudioItem loadItem(AudioPlayerManager manager, AudioReference reference) {
-        String id = getIdentifier(reference.identifier);
+        String id;
+        if (reference.identifier.equals(RANDOM_TRACK_PREFIX)) {
+            String url = getExampleUrl();
+            id = getIdentifier(url);
+        } else {
+            id = getIdentifier(reference.identifier);
+        }
+
         if (id != null) {
             JsonBrowser metadata = getMetadata(id);
             return buildTrack(metadata);
@@ -102,6 +112,18 @@ public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigura
     @Override
     public void configureBuilder(Consumer<HttpClientBuilder> configurator) {
         httpInterfaceManager.configureBuilder(configurator);
+    }
+
+    private String getExampleUrl() {
+        try(CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(EXAMPLE_URL))) {
+            HttpClientTools.assertSuccessWithContent(response, "example api response");
+
+            JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
+
+            return json.get("url").text();
+        } catch(IOException e) {
+            throw new FriendlyException("Failed to fetch Clyp example url", SUSPICIOUS, e);
+        }
     }
 
     private JsonBrowser getMetadata(String identifier) {
