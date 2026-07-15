@@ -8,11 +8,8 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
 import com.sedmelluq.discord.lavaplayer.tools.io.ThreadLocalHttpInterfaceManager;
-import com.sedmelluq.discord.lavaplayer.track.AudioItem;
-import com.sedmelluq.discord.lavaplayer.track.AudioReference;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
-import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
+import com.sedmelluq.discord.lavaplayer.track.*;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.SourceTools;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioSourceManager;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioTrack;
 import org.apache.commons.io.IOUtils;
@@ -354,7 +351,11 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
 
         String identifier = trackInfo.get("id").text();
         String title = attributes.get("name").safeText();
-        String author = attributes.get("artistName").safeText();
+        String artistName = attributes.get("artistName").safeText();
+        String artistUrl = null;
+        String artistId = trackInfo.get("relationships").get("artists").get("data").index(0).get("id").text();
+        if (!SourceTools.isBlank(artistId))
+            artistUrl = "https://music.apple.com/artist/" + artistId;
         long duration = attributes.get("durationInMillis").asLong(DURATION_MS_UNKNOWN);
         String uri = attributes.get("url").text();
         String artworkUrl = formatArtworkUrl(attributes.get("artwork"), "800", "800");
@@ -363,7 +364,7 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
 
         AudioTrackInfo info = new AudioTrackInfo(
                 title,
-                author,
+                new AudioTrackAuthorInfo(artistName, artistUrl),
                 duration,
                 identifier,
                 false,
