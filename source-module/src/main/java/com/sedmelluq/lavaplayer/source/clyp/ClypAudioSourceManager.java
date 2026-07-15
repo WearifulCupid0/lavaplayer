@@ -10,10 +10,7 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
-import com.sedmelluq.discord.lavaplayer.track.AudioItem;
-import com.sedmelluq.discord.lavaplayer.track.AudioReference;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
+import com.sedmelluq.discord.lavaplayer.track.*;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -129,7 +126,7 @@ public class ClypAudioSourceManager implements AudioSourceManager, HttpConfigura
             
             return new ClypAudioTrack(new AudioTrackInfo(
                 title,
-                author,
+                new AudioTrackAuthorInfo(author, "https://clyp.it/user/" + audioFile.get("User").get("UserId").text()),
                 (long) (audioFile.get("Duration").as(Double.class) * 1000.0),
                 identifier,
                 false,
