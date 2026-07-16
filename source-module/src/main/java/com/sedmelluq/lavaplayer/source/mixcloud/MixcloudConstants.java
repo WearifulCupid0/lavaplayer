@@ -15,5 +15,5 @@ public class MixcloudConstants {
     //Audio processing
     static final String DECRYPTION_KEY = "IFYOUWANTTHEARTISTSTOGETPAIDDONOTDOWNLOADFROMMIXCLOUD";
     //static final String MANIFEST_AUDIO_URL = "https://audio%s.mixcloud.com/secure/dash2/%s.m4a/manifest.mpd";
-    //static final String HLS_AUDIO_URL = "https://audio%s.mixcloud.com/secure/hls/%s.m4a/index.m3u8";
+    static final String HLS_AUDIO_URL = "https://audio%s.mixcloud.com/secure/hls/%s.m4a/index.m3u8";
 }

@@ -58,8 +58,8 @@ public class DefaultMixcloudFormatHandler implements MixcloudFormatHandler {
 
     private enum FormatType {
         TYPE_MPEG("progressive", "M:"),
-        TYPE_MANIFEST("segments", "S:"),
-        TYPE_HLS("hls", "H:");
+        TYPE_HLS("hls", "H:"),
+        TYPE_MANIFEST("segments", "S:");
     
         public final String protocol;
         public final String prefix;

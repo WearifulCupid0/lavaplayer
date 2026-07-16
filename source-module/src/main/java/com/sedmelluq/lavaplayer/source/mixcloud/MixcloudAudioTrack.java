@@ -2,6 +2,7 @@ package com.sedmelluq.lavaplayer.source.mixcloud;
 
 import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack;
 import com.sedmelluq.discord.lavaplayer.container.mp3.Mp3AudioTrack;
+import com.sedmelluq.discord.lavaplayer.container.playlists.HlsStreamTrack;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -57,12 +58,12 @@ public class MixcloudAudioTrack extends DelegatedAudioTrack {
       return;
     }
 
-    //String hlsPlaybackUrl = sourceManager.formatHandler.getHLSPlaybackUrl(identifier);
+    String hlsPlaybackUrl = sourceManager.formatHandler.getHLSPlaybackUrl(identifier);
 
-    //if (hlsPlaybackUrl != null) {
-      //processDelegate(new MixcloudM3uAudioTrack(trackInfo, httpInterface, hlsPlaybackUrl), localExecutor);
-      //return;
-    //}
+    if (hlsPlaybackUrl != null) {
+      loadFromHLSUrl(localExecutor, hlsPlaybackUrl);
+      return;
+    }
   }
 
   private void loadFromMpegUrl(
@@ -70,7 +71,7 @@ public class MixcloudAudioTrack extends DelegatedAudioTrack {
       HttpInterface httpInterface,
       String trackUrl
   ) throws Exception {
-    log.debug("Starting Mixcloud track from URL: {}", trackUrl);
+    log.debug("Starting Mixcloud MPEG track from URL: {}", trackUrl);
 
     try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(trackUrl), null)) {
       if (!HttpClientTools.isSuccessWithContent(stream.checkStatusCode())) {
@@ -86,7 +87,7 @@ public class MixcloudAudioTrack extends DelegatedAudioTrack {
       HttpInterface httpInterface,
       String trackUrl
   ) throws Exception {
-    log.debug("Starting Mixcloud track from URL: {}", trackUrl);
+    log.debug("Starting Mixcloud MP3 track from URL: {}", trackUrl);
 
     try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(trackUrl), null)) {
       if (!HttpClientTools.isSuccessWithContent(stream.checkStatusCode())) {
@@ -95,6 +96,20 @@ public class MixcloudAudioTrack extends DelegatedAudioTrack {
 
       processDelegate(new Mp3AudioTrack(trackInfo, stream), localExecutor);
     }
+  }
+
+  private void loadFromHLSUrl(
+          LocalAudioTrackExecutor localExecutor,
+          String trackUrl
+  ) throws Exception {
+    log.debug("Starting Mixcloud HLS track from URL: {}", trackUrl);
+
+    processDelegate(new HlsStreamTrack(
+            trackInfo,
+            trackUrl,
+            sourceManager.getInterfaceManager(),
+            false
+    ), localExecutor);
   }
 
   @Override

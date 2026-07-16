@@ -219,4 +219,8 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
         }
         return null;
     }
+
+    public HttpInterfaceManager getInterfaceManager() {
+        return httpInterfaceManager;
+    }
 }
