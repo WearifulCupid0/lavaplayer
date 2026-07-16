@@ -30,15 +30,17 @@ import org.apache.http.client.config.RequestConfig;
 import static com.sedmelluq.lavaplayer.source.mixcloud.MixcloudConstants.*;
 
 public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-    private final String TRACK_REGEX = "(?:http://|https://|)?(?:(?:www|beta|m)\\.)?mixcloud\\.com/([^/]+)/([^/]+)";
-    private final String PLAYLIST_REGEX = "(?:http://|https://|)?(?:(?:www|beta|m)\\.)?mixcloud\\.com/([^/]+)/playlists/([^/]+)";
-    private final String ARTIST_REGEX = "(?:http://|https://|)?(?:(?:www|beta|m)\\.)?mixcloud\\.com/([^/]+)";
+    private final String TRACK_REGEX = "(?:http://|https://|)?(?:(?:www|beta|m|app)\\.)?mixcloud\\.com/([^/]+)/([^/]+)";
+    private final String PLAYLIST_REGEX = "(?:http://|https://|)?(?:(?:www|beta|m|app)\\.)?mixcloud\\.com/([^/]+)/playlists/([^/]+)";
+    private final String ARTIST_REGEX = "(?:http://|https://|)?(?:(?:www|beta|m|app)\\.)?mixcloud\\.com/([^/]+)";
+    private final String LIVE_REGEX = "(?:http://|https://|)?(?:(?:www|beta|m|app)\\.)?mixcloud\\.com/live/([^/]+)";
     
     private final String SEARCH_PREFIX = "mxsearch:";
 
     private final Pattern trackPattern = Pattern.compile(TRACK_REGEX);
     private final Pattern playlistPattern = Pattern.compile(PLAYLIST_REGEX);
     private final Pattern artistPattern = Pattern.compile(ARTIST_REGEX);
+    private final Pattern livePattern = Pattern.compile(LIVE_REGEX);
 
     private final boolean allowSearch;
 
@@ -85,6 +87,10 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
 
         if((matcher = trackPattern.matcher(reference.identifier)).find()) {
             return loadTrack(matcher.group(2), matcher.group(1));
+        }
+
+        if((matcher = livePattern.matcher(reference.identifier)).find()) {
+            return loadLive(matcher.group(1));
         }
 
         if((matcher = artistPattern.matcher(reference.identifier)).find()) {
@@ -136,9 +142,15 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
     }
 
     private AudioItem loadTrack(String slug, String username) {
-        return MixcloudHelper.requestGraphql(getHttpInterface(), String.format(TRACK_PAYLOAD, slug, username), (json) -> {
-            return buildTrack(json.get("cloudcast"));
-        });
+        return MixcloudHelper.requestGraphql(getHttpInterface(), String.format(TRACK_PAYLOAD, slug, username), (json) ->
+                buildTrack(json.get("cloudcast"))
+        );
+    }
+
+    private AudioItem loadLive(String username) {
+        return MixcloudHelper.requestGraphql(getHttpInterface(), String.format(LIVE_PAYLOAD, username), (json) ->
+            buildTrack(json.get("data").get("user").get("liveStream"), true)
+        );
     }
 
     private AudioItem loadPlaylist(String slug, String username) {
@@ -210,9 +222,13 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
     }
 
     private AudioTrack buildTrack(JsonBrowser trackData) {
+        return buildTrack(trackData, false);
+    }
+
+    private AudioTrack buildTrack(JsonBrowser trackData, boolean isLive) {
         if(trackData.isNull()) return null;
         if(dataReader.isTrackPlayable(trackData)) {
-            List<MixcloudTrackFormat> formats = dataReader.readTrackFormats(getHttpInterface(), trackData);
+            List<MixcloudTrackFormat> formats = dataReader.readTrackFormats(getHttpInterface(), trackData, isLive);
             MixcloudTrackFormat bestFormat = formatHandler.chooseBestFormat(formats);
             String identifier = formatHandler.buildFormatIdentifier(bestFormat);
             if (identifier != null) return new MixcloudAudioTrack(dataReader.readTrackInfo(trackData, identifier), this);

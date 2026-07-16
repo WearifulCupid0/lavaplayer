@@ -9,6 +9,7 @@ public interface MixcloudDataReader {
     boolean isTrackPlayable(JsonBrowser trackData);
 
     AudioTrackInfo readTrackInfo(JsonBrowser trackData, String identifier);
+    AudioTrackInfo readLiveInfo(JsonBrowser liveData, String identifier);
 
-    List<MixcloudTrackFormat> readTrackFormats(HttpInterface httpInterface, JsonBrowser trackData);
+    List<MixcloudTrackFormat> readTrackFormats(HttpInterface httpInterface, JsonBrowser trackData, boolean isLive);
 }

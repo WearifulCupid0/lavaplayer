@@ -2,6 +2,7 @@ package com.sedmelluq.lavaplayer.source.mixcloud;
 
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.Units;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackAuthorInfo;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
@@ -22,14 +23,14 @@ public class DefaultMixcloudDataReader implements MixcloudDataReader {
 
     @Override
     public boolean isTrackPlayable(JsonBrowser trackData) {
-        return !trackData.get("isExclusive").asBoolean(false);
+        return !trackData.get("isExclusive").asBoolean(false) || trackData.get("streamStatus").safeText().equals("LIVE");
     }
 
     @Override
     public AudioTrackInfo readTrackInfo(JsonBrowser trackData, String identifier) {
         AudioTrackAuthorInfo artistInfo = new AudioTrackAuthorInfo(
                 trackData.get("owner").get("displayName").safeText(),
-                String.format(MixcloudConstants.ARTIST_URL, trackData.get("owner").get("displayName").safeText())
+                String.format(MixcloudConstants.ARTIST_URL, trackData.get("owner").get("username").safeText())
         );
         return new AudioTrackInfo(
             trackData.get("name").safeText(),
@@ -38,15 +39,39 @@ public class DefaultMixcloudDataReader implements MixcloudDataReader {
             identifier,
             false,
             trackData.get("url").text(),
-            trackData.get("picture").get("url").text(),
+            MixcloudConstants.CDN_URL + trackData.get("picture").get("urlRoot").text(),
             !trackData.get("restrictedReason").isNull(),
             null
         );
     }
+
+    @Override
+    public AudioTrackInfo readLiveInfo(JsonBrowser liveData, String identifier) {
+        String artistUsername = liveData.get("owner").get("username").safeText();
+        AudioTrackAuthorInfo artistInfo = new AudioTrackAuthorInfo(
+                liveData.get("owner").get("displayName").safeText(),
+                String.format(MixcloudConstants.ARTIST_URL, artistUsername)
+        );
+        return new AudioTrackInfo(
+                liveData.get("name").safeText(),
+                artistInfo,
+                Units.DURATION_MS_UNKNOWN,
+                identifier,
+                true,
+                String.format(MixcloudConstants.LIVE_URL, artistUsername),
+                MixcloudConstants.CDN_URL + liveData.get("thumbnailUrl").text(),
+                null
+        );
+    }
     
     @Override
-    public List<MixcloudTrackFormat> readTrackFormats(HttpInterface httpInterface, JsonBrowser trackData) {
+    public List<MixcloudTrackFormat> readTrackFormats(HttpInterface httpInterface, JsonBrowser trackData, boolean isLive) {
         ArrayList<MixcloudTrackFormat> formats = new ArrayList<>();
+
+        if (isLive) {
+            formats.add(new DefaultMixcloudTrackFormat("hls", trackData.get("hlsUrl").text()));
+            return formats;
+        }
 
         JsonBrowser streamInfo = trackData.get("streamInfo");
         if(!streamInfo.isNull()) {
