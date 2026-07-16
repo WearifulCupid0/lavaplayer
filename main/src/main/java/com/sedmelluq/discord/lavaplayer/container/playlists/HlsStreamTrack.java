@@ -7,41 +7,31 @@ import com.sedmelluq.discord.lavaplayer.container.mpegts.PesPacketInputStream;
 import com.sedmelluq.discord.lavaplayer.container.playlists.cmaf.CmafHlsAudioTrack;
 import com.sedmelluq.discord.lavaplayer.source.stream.M3uStreamAudioTrack;
 import com.sedmelluq.discord.lavaplayer.source.stream.M3uStreamSegmentUrlProvider;
-import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
-import com.sedmelluq.discord.lavaplayer.tools.io.SeekableInputStream;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
-import com.sedmelluq.discord.lavaplayer.track.info.AudioTrackInfoProvider;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
+import org.apache.http.client.methods.HttpGet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
-import java.util.List;
+import java.net.URI;
+import java.util.Locale;
 
 import static com.sedmelluq.discord.lavaplayer.container.mpegts.MpegTsElementaryInputStream.ADTS_ELEMENTARY_STREAM;
-import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.COMMON;
+import static com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools.fetchResponseLines;
 
 /**
  * Audio track for HLS playlists.
  *
- * <p>Supported formats:</p>
- * <ul>
- *   <li>MPEG-TS segments containing ADTS/AAC.</li>
- *   <li>Direct ADTS/AAC segments.</li>
- *   <li>Direct MP3/MPEG audio segments.</li>
- *   <li>Unencrypted audio-only fragmented MP4/CMAF segments with AAC-LC.</li>
- * </ul>
- *
- * <p>Unsupported formats:</p>
- * <ul>
- *   <li>FairPlay/SAMPLE-AES/CENC/cbcs encrypted HLS.</li>
- *   <li>Video tracks or non-AAC CMAF audio tracks.</li>
- * </ul>
+ * Supports:
+ * - HLS with MPEG-TS segments containing ADTS/AAC.
+ * - HLS with direct ADTS/AAC segments.
+ * - HLS with direct MP3/MPEG audio segments.
+ * - HLS with fragmented MP4/CMAF segments, including audio-only and video+audio variants.
  */
 public class HlsStreamTrack extends M3uStreamAudioTrack {
   private static final Logger log = LoggerFactory.getLogger(HlsStreamTrack.class);
@@ -49,20 +39,28 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
   private static final int DETECTION_MARK_LIMIT = 65_536;
   private static final int DETECTION_SAMPLE_SIZE = 32_768;
 
-  private final String streamUrl;
-  private final boolean isInnerUrl;
   private final HlsStreamSegmentUrlProvider segmentUrlProvider;
   private final HttpInterfaceManager httpInterfaceManager;
+  private final String streamUrl;
+  private final boolean isInnerUrl;
 
   public HlsStreamTrack(AudioTrackInfo trackInfo, String streamUrl, HttpInterfaceManager httpInterfaceManager, boolean isInnerUrl) {
     super(trackInfo);
-
     this.streamUrl = streamUrl;
     this.isInnerUrl = isInnerUrl;
-    this.segmentUrlProvider = isInnerUrl
-        ? new HlsStreamSegmentUrlProvider(null, streamUrl)
-        : new HlsStreamSegmentUrlProvider(streamUrl, null);
+    this.segmentUrlProvider = isInnerUrl ? new HlsStreamSegmentUrlProvider(null, streamUrl) : new HlsStreamSegmentUrlProvider(streamUrl, null);
     this.httpInterfaceManager = httpInterfaceManager;
+  }
+
+  @Override
+  public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
+    if (isLikelyCmafHls()) {
+      log.debug("Detected HLS stream {} as fragmented MP4/CMAF before joining segments.", getIdentifier());
+      processDelegate(new CmafHlsAudioTrack(trackInfo, streamUrl, httpInterfaceManager, isInnerUrl), localExecutor);
+      return;
+    }
+
+    super.process(localExecutor);
   }
 
   @Override
@@ -96,7 +94,7 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
     }
 
     if (segmentFormat == SegmentFormat.FRAGMENTED_MP4) {
-      log.debug("Detected HLS stream {} as fragmented MP4/CMAF segments.", getIdentifier());
+      log.debug("Detected HLS stream {} as fragmented MP4/CMAF from first segment.", getIdentifier());
       processDelegate(new CmafHlsAudioTrack(trackInfo, streamUrl, httpInterfaceManager, isInnerUrl), localExecutor);
       return;
     }
@@ -111,10 +109,150 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
       MpegTsElementaryInputStream elementaryInputStream = new MpegTsElementaryInputStream(bufferedStream, ADTS_ELEMENTARY_STREAM);
       PesPacketInputStream pesPacketInputStream = new PesPacketInputStream(elementaryInputStream);
       processDelegate(new AdtsAudioTrack(trackInfo, pesPacketInputStream), localExecutor);
-      return;
+    }
+  }
+
+  private boolean isLikelyCmafHls() {
+    try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
+      String[] lines = fetchResponseLines(httpInterface, new HttpGet(streamUrl), "HLS stream list");
+
+      if (containsCmafMediaTags(lines)) {
+        return true;
+      }
+
+      if (isInnerUrl) {
+        return false;
+      }
+
+      String mediaPlaylistUri = findPreferredMediaPlaylistUri(lines);
+
+      if (mediaPlaylistUri == null) {
+        return false;
+      }
+
+      String mediaPlaylistUrl = URI.create(streamUrl).resolve(mediaPlaylistUri).toString();
+      String[] mediaLines = fetchResponseLines(httpInterface, new HttpGet(mediaPlaylistUrl), "HLS media playlist");
+
+      return containsCmafMediaTags(mediaLines);
+    } catch (Exception ignored) {
+      return false;
+    }
+  }
+
+  private static boolean containsCmafMediaTags(String[] lines) {
+    for (String lineText : lines) {
+      ExtendedM3uParser.Line line = ExtendedM3uParser.parseLine(lineText);
+
+      if (line.isDirective() && "EXT-X-MAP".equals(line.directiveName)) {
+        return true;
+      }
+
+      if (line.isData()) {
+        String lower = line.lineData.toLowerCase(Locale.ROOT);
+
+        if (lower.endsWith(".m4s") || lower.contains(".m4s?") || lower.contains("/fmp4/") || lower.endsWith(".mp4")) {
+          return true;
+        }
+      }
     }
 
-    throw new FriendlyException("Unsupported HLS stream format.", COMMON, null);
+    return false;
+  }
+
+  private static String findPreferredMediaPlaylistUri(String[] lines) {
+    String audioUri = findAudioMediaPlaylistUri(lines);
+
+    if (audioUri != null) {
+      return audioUri;
+    }
+
+    return findLowestBandwidthStreamUriWithAudio(lines);
+  }
+
+  private static String findAudioMediaPlaylistUri(String[] lines) {
+    String fallback = null;
+
+    for (String lineText : lines) {
+      ExtendedM3uParser.Line line = ExtendedM3uParser.parseLine(lineText);
+
+      if (!line.isDirective() || !"EXT-X-MEDIA".equals(line.directiveName)) {
+        continue;
+      }
+
+      if (!"AUDIO".equalsIgnoreCase(argument(line, "TYPE"))) {
+        continue;
+      }
+
+      String uri = argument(line, "URI");
+
+      if (uri == null || uri.trim().isEmpty()) {
+        continue;
+      }
+
+      if (fallback == null) {
+        fallback = uri;
+      }
+
+      if ("YES".equalsIgnoreCase(argument(line, "DEFAULT"))) {
+        return uri;
+      }
+    }
+
+    return fallback;
+  }
+
+  private static String findLowestBandwidthStreamUriWithAudio(String[] lines) {
+    ExtendedM3uParser.Line streamInfoLine = null;
+    String bestUri = null;
+    long bestBandwidth = Long.MAX_VALUE;
+    String fallbackUri = null;
+    long fallbackBandwidth = Long.MAX_VALUE;
+
+    for (String lineText : lines) {
+      ExtendedM3uParser.Line line = ExtendedM3uParser.parseLine(lineText);
+
+      if (line.isDirective() && "EXT-X-STREAM-INF".equals(line.directiveName)) {
+        streamInfoLine = line;
+      } else if (line.isData() && streamInfoLine != null) {
+        long bandwidth = parseLong(argument(streamInfoLine, "BANDWIDTH"), Long.MAX_VALUE);
+        String codecs = argument(streamInfoLine, "CODECS");
+
+        if (bandwidth < fallbackBandwidth) {
+          fallbackBandwidth = bandwidth;
+          fallbackUri = line.lineData;
+        }
+
+        if (codecs == null || codecs.toLowerCase(Locale.ROOT).contains("mp4a")) {
+          if (bandwidth < bestBandwidth) {
+            bestBandwidth = bandwidth;
+            bestUri = line.lineData;
+          }
+        }
+
+        streamInfoLine = null;
+      } else if (line.isDirective()) {
+        streamInfoLine = null;
+      }
+    }
+
+    return bestUri != null ? bestUri : fallbackUri;
+  }
+
+  private static String argument(ExtendedM3uParser.Line line, String name) {
+    Object value = line.directiveArguments.get(name.toUpperCase(Locale.ROOT));
+    return value == null ? null : value.toString();
+  }
+
+  private static long parseLong(String value, long fallback) {
+    if (value == null) {
+      return fallback;
+    }
+
+    try {
+      return Long.parseLong(value.trim());
+    } catch (NumberFormatException ignored) {
+      return fallback;
+    }
   }
 
   private static SegmentFormat detectSegmentFormat(BufferedInputStream inputStream) throws IOException {
@@ -138,6 +276,7 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
     }
 
     SegmentFormat afterId3 = detectAfterOptionalId3(sample, length);
+
     if (afterId3 != SegmentFormat.UNKNOWN) {
       return afterId3;
     }
@@ -163,6 +302,7 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
     }
 
     int offset = getId3TagSize(sample, length);
+
     if (offset <= 0 || offset >= length) {
       return SegmentFormat.UNKNOWN;
     }
@@ -171,12 +311,15 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
       if (looksLikeAdts(sample, i, length)) {
         return SegmentFormat.ADTS;
       }
+
       if (looksLikeMp3(sample, i, length)) {
         return SegmentFormat.MP3;
       }
+
       if (looksLikeMpegTs(sample, i, length)) {
         return SegmentFormat.MPEG_TS;
       }
+
       if (looksLikeFragmentedMp4(sample, i, length)) {
         return SegmentFormat.FRAGMENTED_MP4;
       }
@@ -242,10 +385,10 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
       return -1;
     }
 
-    int size = ((unsigned(sample[6]) & 0x7F) << 21)
-        | ((unsigned(sample[7]) & 0x7F) << 14)
-        | ((unsigned(sample[8]) & 0x7F) << 7)
-        | (unsigned(sample[9]) & 0x7F);
+    int size = ((unsigned(sample[6]) & 0x7F) << 21) |
+        ((unsigned(sample[7]) & 0x7F) << 14) |
+        ((unsigned(sample[8]) & 0x7F) << 7) |
+        (unsigned(sample[9]) & 0x7F);
 
     return 10 + size;
   }
@@ -255,9 +398,9 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
       return false;
     }
 
-    return matchesAscii(sample, offset + 4, length, "ftyp")
-        || matchesAscii(sample, offset + 4, length, "moof")
-        || matchesAscii(sample, offset + 4, length, "styp");
+    return matchesAscii(sample, offset + 4, length, "ftyp") ||
+        matchesAscii(sample, offset + 4, length, "moof") ||
+        matchesAscii(sample, offset + 4, length, "styp");
   }
 
   private static boolean matchesAscii(byte[] sample, int offset, int length, String value) {
@@ -284,53 +427,5 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
     MP3,
     FRAGMENTED_MP4,
     UNKNOWN
-  }
-
-  private static class NonSeekableStreamInputStream extends SeekableInputStream {
-    private final InputStream inputStream;
-    private long position;
-
-    private NonSeekableStreamInputStream(InputStream inputStream) {
-      super(Long.MAX_VALUE, 0);
-      this.inputStream = inputStream;
-    }
-
-    @Override
-    public int read() throws IOException {
-      int result = inputStream.read();
-      if (result >= 0) {
-        position++;
-      }
-      return result;
-    }
-
-    @Override
-    public int read(byte[] buffer, int offset, int length) throws IOException {
-      int result = inputStream.read(buffer, offset, length);
-      if (result > 0) {
-        position += result;
-      }
-      return result;
-    }
-
-    @Override
-    public long getPosition() {
-      return position;
-    }
-
-    @Override
-    public boolean canSeekHard() {
-      return false;
-    }
-
-    @Override
-    protected void seekHard(long position) throws IOException {
-      throw new IOException("This stream is not seekable.");
-    }
-
-    @Override
-    public List<AudioTrackInfoProvider> getTrackInfoProviders() {
-      return Collections.emptyList();
-    }
   }
 }

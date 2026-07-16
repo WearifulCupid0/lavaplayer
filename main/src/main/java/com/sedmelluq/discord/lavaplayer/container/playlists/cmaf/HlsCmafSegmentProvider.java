@@ -49,6 +49,7 @@ public class HlsCmafSegmentProvider {
         }
 
         long waitLimit = Math.max(playlist.targetDurationMs, 1000L);
+
         if (System.currentTimeMillis() - startTime >= waitLimit) {
           return null;
         }
@@ -83,8 +84,9 @@ public class HlsCmafSegmentProvider {
     }
 
     String audioUri = findAudioMediaPlaylistUri(lines);
+
     if (audioUri == null) {
-      audioUri = findFirstStreamPlaylistUri(lines);
+      audioUri = findBestStreamPlaylistUri(lines);
     }
 
     if (audioUri == null) {
@@ -105,7 +107,6 @@ public class HlsCmafSegmentProvider {
     String lastByteRangeUrl = null;
     long lastByteRangeEnd = 0L;
     long mediaSequence = 0L;
-    long nextSequence;
     long nextDurationMs = 0L;
     long targetDurationMs = 4000L;
     boolean endList = false;
@@ -118,6 +119,7 @@ public class HlsCmafSegmentProvider {
           validateEncryption(line);
         } else if ("EXT-X-MAP".equals(line.directiveName)) {
           String uri = argument(line, "URI");
+
           if (isBlank(uri)) {
             throw new FriendlyException("CMAF HLS playlist contains EXT-X-MAP without URI.", COMMON, null);
           }
@@ -142,8 +144,8 @@ public class HlsCmafSegmentProvider {
 
         String segmentUrl = resolveUrl(playlistUrl, line.lineData);
         HlsByteRange segmentRange = nextByteRange;
+        long nextSequence = mediaSequence + segments.size();
 
-        nextSequence = mediaSequence + segments.size();
         segments.add(new HlsCmafSegment(nextSequence, segmentUrl, segmentRange, currentInitUrl, currentInitByteRange, nextDurationMs));
 
         if (segmentRange != null) {
@@ -181,9 +183,11 @@ public class HlsCmafSegmentProvider {
   private static boolean isMediaPlaylist(String[] lines) {
     for (String lineText : lines) {
       ExtendedM3uParser.Line line = ExtendedM3uParser.parseLine(lineText);
+
       if (line.isDirective() && "EXT-X-STREAM-INF".equals(line.directiveName)) {
         return false;
       }
+
       if (line.isDirective() && "EXT-X-MEDIA".equals(line.directiveName) && "AUDIO".equalsIgnoreCase(argument(line, "TYPE")) && !isBlank(argument(line, "URI"))) {
         return false;
       }
@@ -197,6 +201,7 @@ public class HlsCmafSegmentProvider {
 
     for (String lineText : lines) {
       ExtendedM3uParser.Line line = ExtendedM3uParser.parseLine(lineText);
+
       if (!line.isDirective() || !"EXT-X-MEDIA".equals(line.directiveName)) {
         continue;
       }
@@ -206,6 +211,7 @@ public class HlsCmafSegmentProvider {
       }
 
       String uri = argument(line, "URI");
+
       if (isBlank(uri)) {
         continue;
       }
@@ -222,22 +228,45 @@ public class HlsCmafSegmentProvider {
     return fallback;
   }
 
-  private static String findFirstStreamPlaylistUri(String[] lines) {
-    boolean nextDataIsStream = false;
+  /**
+   * Picks the cheapest variant which has AAC audio. For audio extraction from video+audio
+   * CMAF variants, this avoids downloading 720p/1080p video just to discard it.
+   */
+  private static String findBestStreamPlaylistUri(String[] lines) {
+    ExtendedM3uParser.Line streamInfoLine = null;
+    String bestUri = null;
+    long bestBandwidth = Long.MAX_VALUE;
+    String fallbackUri = null;
+    long fallbackBandwidth = Long.MAX_VALUE;
 
     for (String lineText : lines) {
       ExtendedM3uParser.Line line = ExtendedM3uParser.parseLine(lineText);
 
       if (line.isDirective() && "EXT-X-STREAM-INF".equals(line.directiveName)) {
-        nextDataIsStream = true;
-      } else if (line.isData() && nextDataIsStream) {
-        return line.lineData;
+        streamInfoLine = line;
+      } else if (line.isData() && streamInfoLine != null) {
+        long bandwidth = parseLong(argument(streamInfoLine, "BANDWIDTH"), Long.MAX_VALUE);
+        String codecs = argument(streamInfoLine, "CODECS");
+
+        if (bandwidth < fallbackBandwidth) {
+          fallbackBandwidth = bandwidth;
+          fallbackUri = line.lineData;
+        }
+
+        if (codecs == null || codecs.toLowerCase(Locale.ROOT).contains("mp4a")) {
+          if (bandwidth < bestBandwidth) {
+            bestBandwidth = bandwidth;
+            bestUri = line.lineData;
+          }
+        }
+
+        streamInfoLine = null;
       } else if (line.isDirective()) {
-        nextDataIsStream = false;
+        streamInfoLine = null;
       }
     }
 
-    return null;
+    return bestUri != null ? bestUri : fallbackUri;
   }
 
   private static HlsByteRange parseByteRange(String value, String previousUrl, long previousEnd) {
@@ -246,17 +275,20 @@ public class HlsCmafSegmentProvider {
     }
 
     String trimmed = value.trim();
+
     if (trimmed.startsWith("\"") && trimmed.endsWith("\"") && trimmed.length() > 1) {
       trimmed = trimmed.substring(1, trimmed.length() - 1);
     }
 
     String[] parts = trimmed.split("@", 2);
     long length = parseLong(parts[0], -1L);
+
     if (length < 0) {
       return null;
     }
 
     long offset;
+
     if (parts.length == 2) {
       offset = parseLong(parts[1], 0L);
     } else if (previousUrl != null) {
@@ -274,6 +306,7 @@ public class HlsCmafSegmentProvider {
     }
 
     String[] parts = value.split(",", 2);
+
     try {
       return (long) (Double.parseDouble(parts[0].trim()) * 1000.0);
     } catch (NumberFormatException ignored) {
