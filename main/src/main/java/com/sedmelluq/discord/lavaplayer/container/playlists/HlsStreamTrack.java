@@ -48,7 +48,9 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
     super(trackInfo);
     this.streamUrl = streamUrl;
     this.isInnerUrl = isInnerUrl;
-    this.segmentUrlProvider = isInnerUrl ? new HlsStreamSegmentUrlProvider(null, streamUrl) : new HlsStreamSegmentUrlProvider(streamUrl, null);
+    this.segmentUrlProvider = isInnerUrl
+            ? new HlsStreamSegmentUrlProvider(null, streamUrl, trackInfo.isStream)
+            : new HlsStreamSegmentUrlProvider(streamUrl, null, trackInfo.isStream);
     this.httpInterfaceManager = httpInterfaceManager;
   }
 

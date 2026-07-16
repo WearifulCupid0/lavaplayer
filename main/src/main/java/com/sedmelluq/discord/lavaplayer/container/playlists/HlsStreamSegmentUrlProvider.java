@@ -23,15 +23,33 @@ public class HlsStreamSegmentUrlProvider extends M3uStreamSegmentUrlProvider {
 
   private final String streamListUrl;
   private volatile String segmentPlaylistUrl;
+  private final boolean live;
 
   public HlsStreamSegmentUrlProvider(String streamListUrl, String segmentPlaylistUrl) {
+    this(streamListUrl, segmentPlaylistUrl, false);
+  }
+
+  public HlsStreamSegmentUrlProvider(String streamListUrl, String segmentPlaylistUrl, boolean live) {
     super(streamListUrl);
     this.streamListUrl = streamListUrl;
     this.segmentPlaylistUrl = segmentPlaylistUrl;
+    this.live = live;
   }
 
   @Override
   protected String getQualityFromM3uDirective(ExtendedM3uParser.Line directiveLine) {
+    Object bandwidth = directiveLine.directiveArguments.get("BANDWIDTH");
+
+    if (bandwidth != null) {
+      return bandwidth.toString();
+    }
+
+    Object resolution = directiveLine.directiveArguments.get("RESOLUTION");
+
+    if (resolution != null) {
+      return resolution.toString();
+    }
+
     return "default";
   }
 
@@ -66,7 +84,8 @@ public class HlsStreamSegmentUrlProvider extends M3uStreamSegmentUrlProvider {
       throw new IllegalStateException("No streams listed in HLS stream list.");
     }
 
-    ChannelStreamInfo stream = streams.get(0);
+    ChannelStreamInfo stream = chooseLowestBandwidthStream(streams);
+
     log.debug("Chose stream with quality {} and url {}", stream.quality, stream.url);
 
     segmentPlaylistUrl = stream.url;
@@ -86,7 +105,46 @@ public class HlsStreamSegmentUrlProvider extends M3uStreamSegmentUrlProvider {
     }
 
     List<ChannelStreamInfo> streams = new HlsStreamSegmentUrlProvider(null, null).loadChannelStreamsList(lines);
-    return streams.isEmpty() ? null : streams.get(0).url;
+
+    return streams.isEmpty() ? null : chooseLowestBandwidthStream(streams).url;
+  }
+
+  @Override
+  protected boolean shouldStartNearLiveEdge() {
+    return live;
+  }
+
+  @Override
+  protected int liveEdgeDelaySegments() {
+    return 2;
+  }
+
+  private static ChannelStreamInfo chooseLowestBandwidthStream(List<ChannelStreamInfo> streams) {
+    ChannelStreamInfo selected = streams.get(0);
+    long selectedBandwidth = parseBandwidth(selected.quality);
+
+    for (ChannelStreamInfo stream : streams) {
+      long bandwidth = parseBandwidth(stream.quality);
+
+      if (bandwidth < selectedBandwidth) {
+        selected = stream;
+        selectedBandwidth = bandwidth;
+      }
+    }
+
+    return selected;
+  }
+
+  private static long parseBandwidth(String value) {
+    if (value == null) {
+      return Long.MAX_VALUE;
+    }
+
+    try {
+      return Long.parseLong(value);
+    } catch (NumberFormatException ignored) {
+      return Long.MAX_VALUE;
+    }
   }
 
   private boolean isMasterPlaylistDirective(String lineText) {

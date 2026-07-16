@@ -212,18 +212,47 @@ public abstract class M3uStreamSegmentUrlProvider {
     }
 
     protected SegmentInfo chooseNextSegment(List<SegmentInfo> segments, SegmentInfo lastSegment) {
+        if (segments.isEmpty()) {
+            return null;
+        }
+
+        if (shouldStartNearLiveEdge() && lastSegment == null) {
+            return chooseLiveEdgeSegment(segments);
+        }
+
         SegmentInfo selected = null;
+        boolean foundLastSegment = lastSegment == null;
 
         for (int i = segments.size() - 1; i >= 0; i--) {
             SegmentInfo current = segments.get(i);
+
             if (lastSegment != null && current.url.equals(lastSegment.url)) {
+                foundLastSegment = true;
                 break;
             }
 
             selected = current;
         }
 
+        if (lastSegment != null && !foundLastSegment && shouldStartNearLiveEdge()) {
+            return chooseLiveEdgeSegment(segments);
+        }
+
         return selected;
+    }
+
+    protected boolean shouldStartNearLiveEdge() {
+        return false;
+    }
+
+    protected int liveEdgeDelaySegments() {
+        return 2;
+    }
+
+    private SegmentInfo chooseLiveEdgeSegment(List<SegmentInfo> segments) {
+        int index = Math.max(0, segments.size() - 1 - liveEdgeDelaySegments());
+
+        return segments.get(index);
     }
 
     private boolean shouldWaitForSegment(long startTime, List<SegmentInfo> segments) {
