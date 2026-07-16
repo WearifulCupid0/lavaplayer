@@ -85,12 +85,12 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
             return loadPlaylist(matcher.group(2), matcher.group(1));
         }
 
-        if((matcher = trackPattern.matcher(reference.identifier)).find()) {
-            return loadTrack(matcher.group(2), matcher.group(1));
-        }
-
         if((matcher = livePattern.matcher(reference.identifier)).find()) {
             return loadLive(matcher.group(1));
+        }
+
+        if((matcher = trackPattern.matcher(reference.identifier)).find()) {
+            return loadTrack(matcher.group(2), matcher.group(1));
         }
 
         if((matcher = artistPattern.matcher(reference.identifier)).find()) {
