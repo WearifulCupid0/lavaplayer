@@ -1,7 +1,10 @@
 package com.sedmelluq.discord.lavaplayer.container.playlists;
 
 import com.sedmelluq.discord.lavaplayer.container.adts.AdtsAudioTrack;
+import com.sedmelluq.discord.lavaplayer.container.latm.LatmAudioTrack;
 import com.sedmelluq.discord.lavaplayer.container.mp3.Mp3AudioTrack;
+import com.sedmelluq.discord.lavaplayer.container.mpegts.MpegTsAudioStreamType;
+import com.sedmelluq.discord.lavaplayer.container.mpegts.MpegTsAudioStreamTypeDetector;
 import com.sedmelluq.discord.lavaplayer.container.mpegts.MpegTsElementaryInputStream;
 import com.sedmelluq.discord.lavaplayer.container.mpegts.PesPacketInputStream;
 import com.sedmelluq.discord.lavaplayer.container.playlists.cmaf.CmafHlsAudioTrack;
@@ -9,7 +12,9 @@ import com.sedmelluq.discord.lavaplayer.source.stream.M3uStreamAudioTrack;
 import com.sedmelluq.discord.lavaplayer.source.stream.M3uStreamSegmentUrlProvider;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
+import com.sedmelluq.discord.lavaplayer.tools.io.SeekableInputStream;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
+import com.sedmelluq.discord.lavaplayer.track.info.AudioTrackInfoProvider;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
 import org.apache.http.client.methods.HttpGet;
 import org.slf4j.Logger;
@@ -19,19 +24,16 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 
 import static com.sedmelluq.discord.lavaplayer.container.mpegts.MpegTsElementaryInputStream.ADTS_ELEMENTARY_STREAM;
+import static com.sedmelluq.discord.lavaplayer.container.mpegts.MpegTsElementaryInputStream.LATM_ELEMENTARY_STREAM;
 import static com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools.fetchResponseLines;
 
 /**
  * Audio track for HLS playlists.
- *
- * Supports:
- * - HLS with MPEG-TS segments containing ADTS/AAC.
- * - HLS with direct ADTS/AAC segments.
- * - HLS with direct MP3/MPEG audio segments.
- * - HLS with fragmented MP4/CMAF segments, including audio-only and video+audio variants.
  */
 public class HlsStreamTrack extends M3uStreamAudioTrack {
   private static final Logger log = LoggerFactory.getLogger(HlsStreamTrack.class);
@@ -49,8 +51,8 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
     this.streamUrl = streamUrl;
     this.isInnerUrl = isInnerUrl;
     this.segmentUrlProvider = isInnerUrl
-            ? new HlsStreamSegmentUrlProvider(null, streamUrl, trackInfo.isStream)
-            : new HlsStreamSegmentUrlProvider(streamUrl, null, trackInfo.isStream);
+        ? new HlsStreamSegmentUrlProvider(null, streamUrl, trackInfo.isStream)
+        : new HlsStreamSegmentUrlProvider(streamUrl, null, trackInfo.isStream);
     this.httpInterfaceManager = httpInterfaceManager;
   }
 
@@ -103,15 +105,35 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
 
     if (segmentFormat == SegmentFormat.MPEG_TS || segmentFormat == SegmentFormat.UNKNOWN) {
       if (segmentFormat == SegmentFormat.UNKNOWN) {
-        log.debug("Could not detect HLS segment format for {}, falling back to MPEG-TS ADTS processing.", getIdentifier());
+        log.debug("Could not detect HLS segment format for {}, falling back to MPEG-TS AAC processing.", getIdentifier());
       } else {
-        log.debug("Detected HLS stream {} as MPEG-TS ADTS segments.", getIdentifier());
+        log.debug("Detected HLS stream {} as MPEG-TS segments.", getIdentifier());
       }
 
-      MpegTsElementaryInputStream elementaryInputStream = new MpegTsElementaryInputStream(bufferedStream, ADTS_ELEMENTARY_STREAM);
-      PesPacketInputStream pesPacketInputStream = new PesPacketInputStream(elementaryInputStream);
-      processDelegate(new AdtsAudioTrack(trackInfo, pesPacketInputStream), localExecutor);
+      processMpegTsStream(localExecutor, bufferedStream);
     }
+  }
+
+  private void processMpegTsStream(LocalAudioTrackExecutor localExecutor, BufferedInputStream bufferedStream) throws Exception {
+    MpegTsAudioStreamType streamType = MpegTsAudioStreamTypeDetector.detect(bufferedStream);
+
+    if (streamType == MpegTsAudioStreamType.LATM_AAC) {
+      log.debug("Detected HLS MPEG-TS stream {} as LATM/LOAS AAC.", getIdentifier());
+      MpegTsElementaryInputStream elementaryInputStream = new MpegTsElementaryInputStream(bufferedStream, LATM_ELEMENTARY_STREAM);
+      PesPacketInputStream pesPacketInputStream = new PesPacketInputStream(elementaryInputStream);
+      processDelegate(new LatmAudioTrack(trackInfo, pesPacketInputStream), localExecutor);
+      return;
+    }
+
+    if (streamType == MpegTsAudioStreamType.UNKNOWN) {
+      log.debug("Could not detect MPEG-TS AAC stream type for {}, trying ADTS AAC fallback.", getIdentifier());
+    } else {
+      log.debug("Detected HLS MPEG-TS stream {} as ADTS AAC.", getIdentifier());
+    }
+
+    MpegTsElementaryInputStream elementaryInputStream = new MpegTsElementaryInputStream(bufferedStream, ADTS_ELEMENTARY_STREAM);
+    PesPacketInputStream pesPacketInputStream = new PesPacketInputStream(elementaryInputStream);
+    processDelegate(new AdtsAudioTrack(trackInfo, pesPacketInputStream), localExecutor);
   }
 
   private boolean isLikelyCmafHls() {
@@ -287,6 +309,10 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
       return SegmentFormat.ADTS;
     }
 
+    if (looksLikeLoas(sample, 0, length)) {
+      return SegmentFormat.LATM;
+    }
+
     if (looksLikeMp3(sample, 0, length)) {
       return SegmentFormat.MP3;
     }
@@ -312,6 +338,10 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
     for (int i = offset; i < length - 4; i++) {
       if (looksLikeAdts(sample, i, length)) {
         return SegmentFormat.ADTS;
+      }
+
+      if (looksLikeLoas(sample, i, length)) {
+        return SegmentFormat.LATM;
       }
 
       if (looksLikeMp3(sample, i, length)) {
@@ -357,6 +387,14 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
     return first == 0xFF && (second & 0xF0) == 0xF0;
   }
 
+  private static boolean looksLikeLoas(byte[] sample, int offset, int length) {
+    if (length - offset < 3) {
+      return false;
+    }
+
+    return unsigned(sample[offset]) == 0x56 && (unsigned(sample[offset + 1]) & 0xE0) == 0xE0;
+  }
+
   private static boolean looksLikeMp3(byte[] sample, int offset, int length) {
     if (length - offset < 4) {
       return false;
@@ -387,10 +425,10 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
       return -1;
     }
 
-    int size = ((unsigned(sample[6]) & 0x7F) << 21) |
-        ((unsigned(sample[7]) & 0x7F) << 14) |
-        ((unsigned(sample[8]) & 0x7F) << 7) |
-        (unsigned(sample[9]) & 0x7F);
+    int size = ((unsigned(sample[6]) & 0x7F) << 21)
+        | ((unsigned(sample[7]) & 0x7F) << 14)
+        | ((unsigned(sample[8]) & 0x7F) << 7)
+        | (unsigned(sample[9]) & 0x7F);
 
     return 10 + size;
   }
@@ -400,9 +438,9 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
       return false;
     }
 
-    return matchesAscii(sample, offset + 4, length, "ftyp") ||
-        matchesAscii(sample, offset + 4, length, "moof") ||
-        matchesAscii(sample, offset + 4, length, "styp");
+    return matchesAscii(sample, offset + 4, length, "ftyp")
+        || matchesAscii(sample, offset + 4, length, "moof")
+        || matchesAscii(sample, offset + 4, length, "styp");
   }
 
   private static boolean matchesAscii(byte[] sample, int offset, int length, String value) {
@@ -426,8 +464,61 @@ public class HlsStreamTrack extends M3uStreamAudioTrack {
   private enum SegmentFormat {
     MPEG_TS,
     ADTS,
+    LATM,
     MP3,
     FRAGMENTED_MP4,
     UNKNOWN
+  }
+
+  private static class NonSeekableStreamInputStream extends SeekableInputStream {
+    private final InputStream inputStream;
+    private long position;
+
+    private NonSeekableStreamInputStream(InputStream inputStream) {
+      super(Long.MAX_VALUE, Long.MAX_VALUE);
+      this.inputStream = inputStream;
+    }
+
+    @Override
+    public int read() throws IOException {
+      int value = inputStream.read();
+
+      if (value != -1) {
+        position++;
+      }
+
+      return value;
+    }
+
+    @Override
+    public int read(byte[] buffer, int offset, int length) throws IOException {
+      int read = inputStream.read(buffer, offset, length);
+
+      if (read > 0) {
+        position += read;
+      }
+
+      return read;
+    }
+
+    @Override
+    public long getPosition() {
+      return position;
+    }
+
+    @Override
+    protected void seekHard(long position) throws IOException {
+      throw new IOException("Cannot seek in an HLS segment stream.");
+    }
+
+    @Override
+    public boolean canSeekHard() {
+      return false;
+    }
+
+    @Override
+    public List<AudioTrackInfoProvider> getTrackInfoProviders() {
+      return Collections.emptyList();
+    }
   }
 }
