@@ -1,6 +1,7 @@
 package com.sedmelluq.lavaplayer.source.rumble;
 
 import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack;
+import com.sedmelluq.discord.lavaplayer.container.playlists.HlsStreamTrack;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
@@ -37,33 +38,14 @@ public class RumbleAudioTrack extends DelegatedAudioTrack {
 
     @Override
     public void process(LocalAudioTrackExecutor executor) throws Exception {
-        try (HttpInterface httpInterface = sourceManager.getHttpInterface()) {
-            String playbackUrl = loadPlaybackUrl(httpInterface);
+        log.debug("Starting Rumble track from URL: {}", trackInfo.identifier);
 
-            log.debug("Starting Rumble track from URL: {}", playbackUrl);
-
-            try (PersistentHttpStream stream = new PersistentHttpStream(httpInterface, new URI(playbackUrl), null)) {
-                processDelegate(new MpegAudioTrack(trackInfo, stream), executor);
-            }
-        } catch (IOException e) {
-            throw new FriendlyException("Loading track from Rumble failed.", SUSPICIOUS, e);
-        }
-    }
-
-    private String loadPlaybackUrl(HttpInterface httpInterface) throws IOException {
-        try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(String.format(VIDEO_URL, trackInfo.identifier)))) {
-            int statusCode = response.getStatusLine().getStatusCode();
-
-            if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-                throw new IOException("Unexpected status code from playback data page: " + statusCode);
-            }
-
-            JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
-
-            if (json.get("ua").get("mp4").isNull()) throw new IOException("Could not find a playable mp4 url");
-
-            return json.get("ua").get("mp4").get("360").get("url").text();
-        }
+        processDelegate(new HlsStreamTrack(
+                trackInfo,
+                trackInfo.identifier,
+                sourceManager.getInterfaceManager(),
+                false
+        ), executor);
     }
 
     @Override
