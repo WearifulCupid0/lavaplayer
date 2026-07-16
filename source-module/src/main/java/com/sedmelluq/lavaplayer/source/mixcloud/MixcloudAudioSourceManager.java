@@ -149,7 +149,7 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
 
     private AudioItem loadLive(String username) {
         return MixcloudHelper.requestGraphql(getHttpInterface(), String.format(LIVE_PAYLOAD, username), (json) ->
-            buildTrack(json.get("data").get("user").get("liveStream"), true)
+            buildTrack(json.get("user").get("liveStream"), true)
         );
     }
 
@@ -231,7 +231,12 @@ public class MixcloudAudioSourceManager implements AudioSourceManager, HttpConfi
             List<MixcloudTrackFormat> formats = dataReader.readTrackFormats(getHttpInterface(), trackData, isLive);
             MixcloudTrackFormat bestFormat = formatHandler.chooseBestFormat(formats);
             String identifier = formatHandler.buildFormatIdentifier(bestFormat);
-            if (identifier != null) return new MixcloudAudioTrack(dataReader.readTrackInfo(trackData, identifier), this);
+            if (identifier != null) return new MixcloudAudioTrack(
+                    isLive
+                            ? dataReader.readLiveInfo(trackData, identifier)
+                            : dataReader.readTrackInfo(trackData, identifier),
+                    this
+            );
         }
         return null;
     }
