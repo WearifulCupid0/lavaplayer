@@ -221,7 +221,7 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
         return new BasicAudioPlaylist(
             artist.get("name").safeText(),
             artist.get("name").safeText(),
-            artist.get("images").index(0).get("url").text(),
+            pickBestArtwork(artist.get("images").values()),
             ARTIST_URL + id,
             "artist",
             tracks,
@@ -251,7 +251,7 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
         return new BasicAudioPlaylist(
             album.get("name").text(),
             album.get("artists").index(0).get("name").text(),
-            album.get("images").index(0).get("url").text(),
+            pickBestArtwork(album.get("images").values()),
             ALBUM_URL + id,
             album.get("album_type").safeText().toLowerCase(),
             tracks,
@@ -281,7 +281,7 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
         return new BasicAudioPlaylist(
             playlist.get("name").text(),
             playlist.get("owner").get("display_name").text(),
-            playlist.get("images").index(0).get("url").text(),
+            pickBestArtwork(playlist.get("images").values()),
             PLAYLIST_URL + id,
             "playlist",
             tracks,
@@ -360,7 +360,7 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
             int sum = width + height;
             if (resolution < sum) {
                 resolution = sum;
-                url = artworkData.get("href").text();
+                url = artworkData.get("url").text();
             }
         }
 
