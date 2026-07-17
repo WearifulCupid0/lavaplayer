@@ -341,12 +341,30 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
             !trackInfo.get("is_local").asBoolean(false)
             ? TRACK_URL + identifier
             : null,
-            images.get(images.size() - 1).get("url").text(),
+            pickBestArtwork(images),
             trackInfo.get("explicit").asBoolean(false),
             isrc
         );
 
         return new ThirdPartyAudioTrack(info, this);
+    }
+
+    private String pickBestArtwork(List<JsonBrowser> artworks) {
+        int resolution = 0;
+        String url = null;
+
+        for (JsonBrowser artworkData : artworks) {
+            int width = artworkData.get("width").asInt(0);
+            int height = artworkData.get("height").asInt(0);
+
+            int sum = width + height;
+            if (resolution < sum) {
+                resolution = sum;
+                url = artworkData.get("href").text();
+            }
+        }
+
+        return url;
     }
 
     private JsonBrowser requestApi(String uri) {
