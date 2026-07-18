@@ -33,13 +33,6 @@ public class PandoraTokenTracker {
     public PandoraTokenTracker(PandoraAudioSourceManager sourceManager, String csrfToken) {
         this.sourceManager = sourceManager;
         this.csrfToken = csrfToken;
-        if (csrfToken != null && !csrfToken.isEmpty()) {
-            try {
-                this.refreshAuthToken();
-            } catch (IOException e) {
-                log.warn("Failed to pre-fetch Pandora auth token during initialization, will fetch on first request", e);
-            }
-        }
     }
 
     public void setCsrfToken(String csrfToken) {
