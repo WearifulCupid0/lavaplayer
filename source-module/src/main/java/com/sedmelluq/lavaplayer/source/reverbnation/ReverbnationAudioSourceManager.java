@@ -9,10 +9,8 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
-import com.sedmelluq.discord.lavaplayer.track.AudioItem;
-import com.sedmelluq.discord.lavaplayer.track.AudioReference;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
+import com.sedmelluq.discord.lavaplayer.track.*;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -32,7 +30,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
 public class ReverbnationAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-    private static final String REGEX = "^(?:http://|https://|)(?:www\\.|)reverbnation\\.com/(?:.*)/song/(\\d+)";
+    private static final String REGEX = "^(?:http://|https://|)(?:www\\.|)reverbnation\\.com/(.*)/song/(\\d+)";
     private static final Pattern pattern = Pattern.compile(REGEX);
 
     private final HttpInterfaceManager httpInterfaceManager;
@@ -53,7 +51,7 @@ public class ReverbnationAudioSourceManager implements AudioSourceManager, HttpC
     public AudioItem loadItem(AudioPlayerManager manager, AudioReference reference) {
         Matcher matcher = pattern.matcher(reference.identifier);
 
-        if (matcher.find()) return loadFromIdentifier(matcher.group(1));
+        if (matcher.find()) return loadFromIdentifier(matcher.group(1), matcher.group(2));
 
         return null;
     }
@@ -95,7 +93,7 @@ public class ReverbnationAudioSourceManager implements AudioSourceManager, HttpC
         httpInterfaceManager.configureBuilder(configurator);
     }
 
-    private AudioTrack loadFromIdentifier(String id) {
+    private AudioTrack loadFromIdentifier(String artistSlug, String id) {
         URI uri = URI.create("https://api.reverbnation.com/song/" + id);
         try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(uri))) {
             HttpClientTools.assertSuccessWithContent(response, "api response");
@@ -103,9 +101,11 @@ public class ReverbnationAudioSourceManager implements AudioSourceManager, HttpC
             String responseData = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
             JsonBrowser json = JsonBrowser.parse(responseData);
 
+            AudioTrackAuthorInfo authorInfo = new AudioTrackAuthorInfo(json.get("artist").get("name").safeText(), "https://www.reverbnation.com/" + artistSlug);
+
             AudioTrackInfo trackInfo = new AudioTrackInfo(
                 json.get("name").safeText(),
-                json.get("artist").get("name").safeText(),
+                authorInfo,
                 (long) (json.get("duration").as(Double.class) * 1000.0),
                 json.get("id").text(),
                 false,

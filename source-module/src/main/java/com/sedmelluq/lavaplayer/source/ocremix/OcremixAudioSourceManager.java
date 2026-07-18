@@ -8,10 +8,7 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
 import com.sedmelluq.discord.lavaplayer.tools.io.ThreadLocalHttpInterfaceManager;
-import com.sedmelluq.discord.lavaplayer.track.AudioItem;
-import com.sedmelluq.discord.lavaplayer.track.AudioReference;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
+import com.sedmelluq.discord.lavaplayer.track.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -25,6 +22,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -36,6 +35,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 public class OcremixAudioSourceManager implements AudioSourceManager, HttpConfigurable {
     private static final String OCREMIX_MAIN_URL = "https://ocremix.org";
     private static final String OCREMIX_URL = OCREMIX_MAIN_URL + "/remix/";
+    private static final String OCREMIX_ARTIST_URL = OCREMIX_MAIN_URL + "/artist/%s/%s";
 
     private static final String OCREMIX_REGEX = "(?:https?://(?:www\\.)?ocremix\\.org/remix/)?(?<id>OCR[\\d]+)(?:.*)?";
 
@@ -126,13 +126,20 @@ public class OcremixAudioSourceManager implements AudioSourceManager, HttpConfig
 
             String artworkPath = document.selectFirst("song").attr("main_image_file");
 
+            List<AudioTrackAuthorInfo> artists = new ArrayList<>();
+
+            for (Element remixer : document.selectFirst("remixers").children()) {
+                artists.add(
+                        new AudioTrackAuthorInfo(
+                                remixer.attr("name"),
+                                String.format(OCREMIX_ARTIST_URL, remixer.attr("id"), remixer.attr("urlname"))
+                        )
+                );
+            }
+
             AudioTrackInfo trackInfo = new AudioTrackInfo(
                 remix.attr("name"),
-                document.selectFirst("remixers")
-                .children()
-                .stream()
-                .map((remixer) -> remixer.attr("name"))
-                .collect(Collectors.joining(", ")),
+                artists,
                 Long.parseLong(remix.attr("track_length")) * 1000,
                 getPlaybackUrl(httpInterface, remix.attr("file_name")),
                 false,
@@ -155,10 +162,10 @@ public class OcremixAudioSourceManager implements AudioSourceManager, HttpConfig
                 int statusCode = response.getStatusLine().getStatusCode();
                 if(HttpClientTools.isSuccessWithContent(statusCode)) {
                     url = current;
-                    break; //Found track url, so we don't need to keep looking into other servers.
+                    break;
                 }
             } catch (Exception e) {
-                continue; //Go to the next one.
+                continue;
             }
         }
         if (url == null) {

@@ -8,10 +8,8 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
-import com.sedmelluq.discord.lavaplayer.track.AudioItem;
-import com.sedmelluq.discord.lavaplayer.track.AudioReference;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
+import com.sedmelluq.discord.lavaplayer.track.*;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -33,6 +31,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
  */
 public class SoundgasmAudioSourceManager implements HttpConfigurable, AudioSourceManager {
     private static final String SOUNDGASM_CLIP_URL = "https://soundgasm.net/u/%s/%s";
+    private static final String SOUNDGASM_AUTHOR_URL = "https://soundgasm.net/u/%s";
     private static final String SOUNDGASM_URL_REGEX = "^(?:http://|https://|)(?:www\\.|)soundgasm\\.net/u/([a-zA-Z0-9-_]+)/([a-zA-Z0-9-_]+)";
     private static final String SOUNDGASM_TITLE_REGEX = "<div class=\"jp-title\" aria-label=\"title\">(.*)<\\/div>";
     private static final String SOUNDGASM_IDENTIFIER_REGEX = "\"(?:http://|https://|)(?:www\\.|media\\.)soundgasm\\.net/sounds/([a-zA-Z0-9-_]+)\\.m4a\"";
@@ -99,6 +98,7 @@ public class SoundgasmAudioSourceManager implements HttpConfigurable, AudioSourc
 
     private AudioTrack extractTrackFromPage(String author, String path) {
         String url = String.format(SOUNDGASM_CLIP_URL, author, path);
+        String authorUrl = String.format(SOUNDGASM_AUTHOR_URL, author);
         try (CloseableHttpResponse response = getHttpInterface().execute(new HttpGet(url))) {
             HttpClientTools.assertSuccessWithContent(response, "audio page");
 
@@ -122,11 +122,12 @@ public class SoundgasmAudioSourceManager implements HttpConfigurable, AudioSourc
 
             AudioTrackInfo trackInfo = new AudioTrackInfo(
                 title,
-                author,
+                new AudioTrackAuthorInfo(author, authorUrl),
                 Units.DURATION_MS_UNKNOWN,
                 identifier,
                 false,
-                url
+                url,
+                null
             );
 
             return new SoundgasmAudioTrack(trackInfo, this);

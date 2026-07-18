@@ -131,7 +131,7 @@ public class NicoAudioSourceManager implements AudioSourceManager, HttpConfigura
         String id = json.get("id").text();
         AudioTrackInfo trackInfo = new AudioTrackInfo(
                 json.get("title").text(),
-                json.get("owner").get("name").text(),
+                new AudioTrackAuthorInfo(json.get("owner").get("name").text(), getUserUrl(json.get("owner").get("id").text())),
                 json.get("duration").asLong(0) * 1000,
                 id,
                 false,
@@ -144,7 +144,7 @@ public class NicoAudioSourceManager implements AudioSourceManager, HttpConfigura
 
     private AudioTrack loadTrack(String videoId) {
         try (HttpInterface httpInterface = getHttpInterface()) {
-            try (CloseableHttpResponse response = httpInterface.execute(new HttpGet("http://ext.nicovideo.jp/api/getthumbinfo/" + videoId))) {
+            try (CloseableHttpResponse response = httpInterface.execute(new HttpGet("https://ext.nicovideo.jp/api/getthumbinfo/" + videoId))) {
                 int statusCode = response.getStatusLine().getStatusCode();
                 if (!HttpClientTools.isSuccessWithContent(statusCode)) {
                     throw new IOException("Unexpected response code from video info: " + statusCode);
@@ -161,12 +161,13 @@ public class NicoAudioSourceManager implements AudioSourceManager, HttpConfigura
     private AudioTrack extractTrackFromXml(String videoId, Document document) {
         for (Element element : document.select(":root > thumb")) {
             String uploader = element.selectFirst("user_nickname").text();
+            String uploaderId = element.selectFirst("user_id").text();
             String title = element.selectFirst("title").text();
             String thumbnailUrl = element.selectFirst("thumbnail_url").text();
             long duration = DataFormatTools.durationTextToMillis(element.selectFirst("length").text());
 
             return new NicoAudioTrack(new AudioTrackInfo(title,
-                uploader,
+                new AudioTrackAuthorInfo(uploader, getUserUrl(uploaderId)),
                 duration,
                 videoId,
                 false,
@@ -254,6 +255,8 @@ public class NicoAudioSourceManager implements AudioSourceManager, HttpConfigura
     private static String getWatchUrl(String videoId) {
         return "https://www.nicovideo.jp/watch/" + videoId;
     }
+
+    private static String getUserUrl(String userId) { return "https://www.nicovideo.jp/user/" + userId; }
 
     private static String buildSearchURI(String query) {
         return String.format(SEARCH_API_URL, URLEncoder.encode(query, StandardCharsets.UTF_8));
