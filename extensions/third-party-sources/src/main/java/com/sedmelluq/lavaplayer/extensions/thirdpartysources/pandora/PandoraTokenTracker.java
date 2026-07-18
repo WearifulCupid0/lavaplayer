@@ -3,6 +3,7 @@ package com.sedmelluq.lavaplayer.extensions.thirdpartysources.pandora;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioSourceManager;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -22,7 +23,6 @@ public class PandoraTokenTracker {
 
     private static final String BASE_URL = "https://www.pandora.com";
     private static final String ANONYMOUS_LOGIN_ENDPOINT = "/api/v1/auth/anonymousLogin";
-    private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36";
     private static final long DEFAULT_TOKEN_REFRESH_INTERVAL = 24 * 60 * 60 * 1000;
 
     private final PandoraAudioSourceManager sourceManager;
@@ -94,7 +94,7 @@ public class PandoraTokenTracker {
         request.setHeader("Content-Type", "application/json");
         request.setHeader("X-CsrfToken", csrfToken);
         request.setHeader("origin", BASE_URL);
-        request.setHeader("User-Agent", USER_AGENT);
+        request.setHeader("User-Agent", ThirdPartyAudioSourceManager.USER_AGENT);
         request.setEntity(new StringEntity("", StandardCharsets.UTF_8));
 
         try (CloseableHttpResponse response = httpInterface.execute(request)) {

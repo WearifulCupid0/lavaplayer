@@ -2,6 +2,7 @@ package com.sedmelluq.lavaplayer.extensions.thirdpartysources.tidal;
 
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.SourceTools;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioSourceManager;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
@@ -132,8 +133,7 @@ public class TidalTokenTracker {
             request.setHeader("Content-Type", "application/x-www-form-urlencoded");
             request.setHeader("Origin", "https://tidal.com");
             request.setHeader("Referer", "https://tidal.com/");
-            request.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-                    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+            request.setHeader("User-Agent", ThirdPartyAudioSourceManager.USER_AGENT);
 
             List<NameValuePair> params = new ArrayList<>();
             params.add(new BasicNameValuePair("client_id", id));

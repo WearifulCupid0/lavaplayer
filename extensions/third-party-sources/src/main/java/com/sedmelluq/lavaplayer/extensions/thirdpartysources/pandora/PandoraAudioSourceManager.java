@@ -43,8 +43,6 @@ public class PandoraAudioSourceManager extends ThirdPartyAudioSourceManager impl
     private static final String ENDPOINT_PLAYLIST_TRACKS = "/api/v7/playlists/getTracks";
     private static final String ENDPOINT_ARTIST_ALL_TRACKS = "/api/v4/catalog/getAllArtistTracksWithCollaborations";
 
-    private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36";
-
     private static final Logger log = LoggerFactory.getLogger(PandoraAudioSourceManager.class);
 
     private final HttpInterfaceManager httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();

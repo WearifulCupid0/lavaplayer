@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.util.function.Function;
 
 public abstract class ThirdPartyAudioSourceManager implements AudioSourceManager {
-	public static final String USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36";
+	public static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36";
     private final AudioPlayerManager playerManager;
 
 	protected ThirdPartyAudioSourceManager(AudioPlayerManager playerManager) {
