@@ -21,11 +21,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 
 public class DeezerPodcastAudioTrack extends DelegatedAudioTrack {
     private static final Logger log = LoggerFactory.getLogger(DeezerPodcastAudioTrack.class);
+
+    private static final int MAX_REFERENCE_REDIRECTS = 8;
 
     private final DeezerAudioSourceManager sourceManager;
 
@@ -47,7 +48,7 @@ public class DeezerPodcastAudioTrack extends DelegatedAudioTrack {
         return  json.get("results").get("checkForm").text();
     }
 
-    public String getMediaUrl(HttpInterface httpInterface, String apiToken) throws IOException, URISyntaxException {
+    private String getMediaUrl(HttpInterface httpInterface, String apiToken) throws IOException, URISyntaxException {
         HttpPost getTrackToken = new HttpPost(DeezerConstants.AJAX_URL + "?method=episode.getData&input=3&api_version=1.0&api_token=" + apiToken);
         getTrackToken.setEntity(new StringEntity("{\"episode_id\":\"" + this.trackInfo.identifier + "\"}", ContentType.APPLICATION_JSON));
 
@@ -62,6 +63,39 @@ public class DeezerPodcastAudioTrack extends DelegatedAudioTrack {
             throw new IOException("Failed to get deezer podcast stream url.");
 
         return mediaUrl;
+    }
+
+    private AudioTrack loadDelegateTrack(String playbackUrl) throws IOException {
+        AudioReference reference = new AudioReference(playbackUrl, trackInfo.title);
+
+        for (int redirectCount = 0; redirectCount < MAX_REFERENCE_REDIRECTS; redirectCount++) {
+            AudioItem item = sourceManager.loadStream(reference);
+
+            if (item instanceof AudioTrack) {
+                return (AudioTrack) item;
+            }
+
+            if (item instanceof AudioReference) {
+                reference = (AudioReference) item;
+
+                if (reference.identifier == null) {
+                    throw new IOException("Deezer podcast stream resolved to an empty reference.");
+                }
+
+                log.debug("Following Deezer podcast stream reference to: {}", reference.identifier);
+                continue;
+            }
+
+            if (item == null) {
+                throw new IOException("Deezer podcast stream URL was not recognised by the HTTP source manager: " +
+                        reference.identifier);
+            }
+
+            throw new IOException("Deezer podcast stream resolved to an unsupported audio item: " +
+                    item.getClass().getName());
+        }
+
+        throw new IOException("Too many redirects while resolving Deezer podcast stream URL.");
     }
 
     @Override
@@ -100,20 +134,11 @@ public class DeezerPodcastAudioTrack extends DelegatedAudioTrack {
             cookieStore.addCookie(cookie);
 
             String apiToken = getToken(httpInterface);
-            URI mediaURI = URI.create(getMediaUrl(httpInterface, apiToken));
+            String mediaURI = getMediaUrl(httpInterface, apiToken);
 
-            MediaContainerDescriptor containerDescriptor = sourceManager.detectPodcastContainer(mediaURI, trackInfo.title);
+            AudioTrack delegateTrack = loadDelegateTrack(mediaURI);
 
-            try (PersistentHttpStream stream = new PersistentHttpStream(
-                    httpInterface,
-                    mediaURI,
-                    Units.CONTENT_LENGTH_UNKNOWN
-            )) {
-                processDelegate(
-                        (InternalAudioTrack) containerDescriptor.createTrack(trackInfo, stream),
-                        executor
-                );
-            }
+            processDelegate((InternalAudioTrack) delegateTrack, executor);
         }
     }
 

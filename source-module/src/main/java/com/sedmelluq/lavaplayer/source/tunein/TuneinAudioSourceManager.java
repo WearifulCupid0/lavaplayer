@@ -44,7 +44,7 @@ public class TuneinAudioSourceManager implements AudioSourceManager, HttpConfigu
     private final HttpAudioSourceManager streamSourceManager;
 
     public TuneinAudioSourceManager() {
-        this(new HttpAudioSourceManager(MediaContainerRegistry.DEFAULT_REGISTRY));
+        this(new HttpAudioSourceManager());
     }
 
     public TuneinAudioSourceManager(HttpAudioSourceManager streamSourceManager) {

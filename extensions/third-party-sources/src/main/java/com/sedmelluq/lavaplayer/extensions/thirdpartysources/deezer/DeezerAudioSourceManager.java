@@ -2,10 +2,10 @@ package com.sedmelluq.lavaplayer.extensions.thirdpartysources.deezer;
 
 import com.sedmelluq.discord.lavaplayer.container.*;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
+import com.sedmelluq.discord.lavaplayer.source.http.HttpAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
-import com.sedmelluq.discord.lavaplayer.tools.Units;
 import com.sedmelluq.discord.lavaplayer.tools.io.*;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.SourceTools;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioSourceManager;
@@ -15,7 +15,6 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackAuthorInfo;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -51,7 +50,7 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
     private static final String SEARCH_PREFIX = "dzsearch:";
     private static final String ISRC_PREFIX = "dzisrc:";
 
-    private final MediaContainerRegistry containerRegistry = MediaContainerRegistry.DEFAULT_REGISTRY;
+    private final HttpAudioSourceManager streamSourceManager;
 
     private final HttpInterfaceManager httpInterfaceManager;
     private final boolean allowSearch;
@@ -62,22 +61,27 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
     public final String masterKey;
 
     public DeezerAudioSourceManager(AudioPlayerManager playerManager) {
-        this(playerManager, null, null, true);
+        this(playerManager, null, null, new HttpAudioSourceManager());
     }
 
     public DeezerAudioSourceManager(AudioPlayerManager playerManager, boolean allowSearch) {
-        this(playerManager, null, null, allowSearch);
+        this(playerManager, null, null, allowSearch, new HttpAudioSourceManager());
     }
 
     public DeezerAudioSourceManager(AudioPlayerManager playerManager, String masterKey, String deezerArl) {
-        this(playerManager, masterKey, deezerArl, true);
+        this(playerManager, masterKey, deezerArl, true, new HttpAudioSourceManager());
+    }
+
+    public DeezerAudioSourceManager(AudioPlayerManager playerManager, String masterKey, String deezerArl, HttpAudioSourceManager streamSourceManager) {
+        this(playerManager, masterKey, deezerArl, true, streamSourceManager);
     }
 
     public DeezerAudioSourceManager(
             AudioPlayerManager playerManager,
             String masterKey,
             String deezerArl,
-            boolean allowSearch
+            boolean allowSearch,
+            HttpAudioSourceManager streamSourceManager
     ) {
         super(playerManager);
 
@@ -86,6 +90,7 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
         this.allowSearch = allowSearch;
 
         this.httpInterfaceManager = HttpClientTools.createCookielessThreadLocalManager();
+        this.streamSourceManager = streamSourceManager;
 
         this.tokenTracker = new DeezerTokenTracker(this, deezerArl);
         this.formats = formats != null && formats.length > 0 ? formats : DeezerAudioTrack.TrackFormat.DEFAULT_FORMATS;
@@ -245,11 +250,17 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
     @Override
     public void configureRequests(Function<RequestConfig, RequestConfig> configurator) {
         httpInterfaceManager.configureRequests(configurator);
+        streamSourceManager.configureRequests(configurator);
     }
 
     @Override
     public void configureBuilder(Consumer<HttpClientBuilder> configurator) {
         httpInterfaceManager.configureBuilder(configurator);
+        streamSourceManager.configureBuilder(configurator);
+    }
+
+    public AudioItem loadStream(AudioReference reference) {
+        return streamSourceManager.loadItem(null, reference);
     }
 
     public HttpInterface getHttpInterface() {
@@ -518,117 +529,6 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
                     e
             );
         }
-    }
-
-    public MediaContainerDescriptor detectPodcastContainer(
-            String mediaUri,
-            String title
-    ) {
-        return detectPodcastContainer(URI.create(mediaUri), title);
-    }
-
-    public MediaContainerDescriptor detectPodcastContainer(
-            URI mediaUri,
-            String title
-    ) {
-        AudioReference reference = new AudioReference(mediaUri.toString(), title);
-
-        try (HttpInterface httpInterface = getHttpInterface()) {
-            try (PersistentHttpStream inputStream = new PersistentHttpStream(
-                    httpInterface,
-                    mediaUri,
-                    Units.CONTENT_LENGTH_UNKNOWN
-            )) {
-                int statusCode = inputStream.checkStatusCode();
-
-                String redirectUrl = HttpClientTools.getRedirectLocation(
-                        mediaUri.toString(),
-                        inputStream.getCurrentResponse()
-                );
-
-                if (redirectUrl != null) {
-                    return detectPodcastContainer(URI.create(redirectUrl), title);
-                }
-
-                if (statusCode == HttpStatus.SC_NOT_FOUND) {
-                    throw new FriendlyException(
-                            "Deezer podcast media URL was not found.",
-                            FriendlyException.Severity.COMMON,
-                            null
-                    );
-                }
-
-                if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-                    throw new FriendlyException(
-                            "Deezer podcast media URL is not playable.",
-                            FriendlyException.Severity.COMMON,
-                            new IllegalStateException("Status code " + statusCode)
-                    );
-                }
-
-                String contentType = HttpClientTools.getHeaderValue(
-                        inputStream.getCurrentResponse(),
-                        "Content-Type"
-                );
-
-                String extension = extractExtension(mediaUri);
-
-                MediaContainerHints hints = MediaContainerHints.from(
-                        contentType,
-                        extension
-                );
-
-                MediaContainerDetectionResult result = new MediaContainerDetection(
-                        containerRegistry,
-                        reference,
-                        inputStream,
-                        hints
-                ).detectContainer();
-
-                if (result == null || !result.isContainerDetected()) {
-                    throw new FriendlyException(
-                            "Unknown Deezer podcast file format.",
-                            FriendlyException.Severity.COMMON,
-                            null
-                    );
-                }
-
-                if (!result.isSupportedFile()) {
-                    throw new FriendlyException(
-                            result.getUnsupportedReason(),
-                            FriendlyException.Severity.COMMON,
-                            null
-                    );
-                }
-
-                return result.getContainerDescriptor();
-            }
-        } catch (IOException exception) {
-            throw new FriendlyException(
-                    "Failed to detect Deezer podcast media format.",
-                    FriendlyException.Severity.SUSPICIOUS,
-                    exception
-            );
-        }
-    }
-
-    private static String extractExtension(URI uri) {
-        String path = uri.getPath();
-
-        if (path == null) {
-            return null;
-        }
-
-        int slash = path.lastIndexOf('/');
-        String fileName = slash >= 0 ? path.substring(slash + 1) : path;
-
-        int dot = fileName.lastIndexOf('.');
-
-        if (dot < 0 || dot + 1 >= fileName.length()) {
-            return null;
-        }
-
-        return fileName.substring(dot + 1).toLowerCase();
     }
 
     public DeezerAudioTrack.TrackFormat[] getFormats() {
