@@ -37,6 +37,10 @@ public class AudioReference implements AudioItem, AudioTrackInfoProvider {
     this(identifier, title, 5, 0, "US");
   }
 
+  public AudioReference(String identifier, String title, MediaContainerDescriptor containerDescriptor) {
+    this(identifier, title, 5, 0, "US", containerDescriptor);
+  }
+
   public AudioReference(String identifier, String title, int playlistLoadLimit, int playlistOffset, String countryCode) {
     this(identifier, title, playlistLoadLimit, playlistOffset, countryCode, null);
   }

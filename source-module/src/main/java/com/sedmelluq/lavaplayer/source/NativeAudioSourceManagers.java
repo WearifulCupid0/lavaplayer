@@ -2,6 +2,7 @@ package com.sedmelluq.lavaplayer.source;
 
 import com.sedmelluq.discord.lavaplayer.container.MediaContainerRegistry;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
+import com.sedmelluq.lavaplayer.source.audiomack.AudiomackAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.bandcamp.BandcampAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.bilibili.BilibiliAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.clyp.ClypAudioSourceManager;
@@ -39,6 +40,7 @@ public class NativeAudioSourceManagers {
    * @param containerRegistry Media container registry to be used by any probing sources.
    */
   public static void registerNativeSources(AudioPlayerManager playerManager, MediaContainerRegistry containerRegistry) {
+    playerManager.registerSourceManager(new AudiomackAudioSourceManager(true));
     playerManager.registerSourceManager(new JamendoAudioSourceManager(true));
     playerManager.registerSourceManager(new MixcloudAudioSourceManager(true));
     playerManager.registerSourceManager(new OdyseeAudioSourceManager(true));

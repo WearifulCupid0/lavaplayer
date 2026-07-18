@@ -4,6 +4,7 @@ import com.sedmelluq.discord.lavaplayer.container.MediaContainerRegistry;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
+import com.sedmelluq.lavaplayer.source.audiomack.AudiomackAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.bandcamp.BandcampAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.bilibili.BilibiliAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.clyp.ClypAudioSourceManager;
@@ -39,8 +40,11 @@ public class SourceManagerHealthCheck {
     public static void main(String[] args) {
         List<Case> cases = new ArrayList<>();
 
-        cases.add(new Case("soundcloud", SoundCloudAudioSourceManager::createDefault,
-                "https://soundcloud.com/caypo63/we-never-dated-slowed-1"));
+        //cases.add(new Case("soundcloud", SoundCloudAudioSourceManager::createDefault,
+        //        "https://soundcloud.com/caypo63/we-never-dated-slowed-1"));
+
+        cases.add(new Case("audiomack", AudiomackAudioSourceManager::new,
+                "https://audiomack.com/audiomack-brasil/playlist/rap-nacional"));
 
         cases.add(new Case("bandcamp", BandcampAudioSourceManager::new,
                 "https://catsystemcorp.bandcamp.com/album/lofi"));
@@ -64,7 +68,7 @@ public class SourceManagerHealthCheck {
                 "https://www.iheart.com/podcast/105-stuff-you-should-know-26940277/"));
 
         cases.add(new Case("soundgasm", SoundgasmAudioSourceManager::new,
-                ""));
+                "https://soundgasm.net/u/wearifulcupid0/Resonance-1"));
 
         cases.add(new Case("nico", NicoAudioSourceManager::new,
                 "nvsearch:Harry Styles"));
@@ -88,7 +92,7 @@ public class SourceManagerHealthCheck {
                 "https://www.reverbnation.com/paredaodofunkoficial/song/24395949-clean-bandit-feat-jess-glynne-rather"));
 
         cases.add(new Case("rumble", RumbleAudioSourceManager::new,
-                "https://rumble.com/v6rdhsm-golden-by-harry-styles.html?e9s=src_v1_s%2Csrc_v1_s_o&sci=a05a85b2-dcf1-4966-ac6f-e315943fbf44"));
+                "https://rumble.com/v6rdhsm-golden-by-harry-styles.html"));
 
         System.out.println("| Source | Status | Details |");
         System.out.println("|---|---:|---|");
