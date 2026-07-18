@@ -12,10 +12,13 @@ public class SpotifyConstants {
     //API endpoints
     static final String API_URL = "https://api.spotify.com/v1";
 
+    static final int SPOTIFY_ITEMS_LOAD_LIMIT = 50;
+
     static final String TRACK_API_URL = API_URL + "/tracks/";
     static final String TRACKS_API_URL = API_URL + "/tracks?ids=";
     static final String ALBUM_API_URL = API_URL + "/albums/";
     static final String PLAYLIST_API_URL = API_URL + "/playlists/";
+    static final String PLAYLIST_ITEMS_API_URL = API_URL + "/playlists/%s/items?offset=%s&limit=" + SPOTIFY_ITEMS_LOAD_LIMIT;
     static final String ARTIST_API_URL = API_URL + "/artists/";
     static final String ARTIST_TRACKS_API_URL = ARTIST_API_URL + "%s/top-tracks?market=US";
     static final String SEARCH_API_URL = API_URL + "/search";

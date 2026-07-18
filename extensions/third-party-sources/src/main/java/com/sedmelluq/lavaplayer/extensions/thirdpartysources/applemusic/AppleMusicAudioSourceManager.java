@@ -38,7 +38,6 @@ import static com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN;
 
 public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager implements HttpConfigurable {
     private static final String BASE_URL = "https://api.music.apple.com";
-    private static final String DEFAULT_STOREFRONT = "us";
 
     private static final String SEARCH_PREFIX = "amsearch:";
 
@@ -97,7 +96,7 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
                 return null;
             }
 
-            return loadSearch(DEFAULT_STOREFRONT, identifier.substring(SEARCH_PREFIX.length()).trim());
+            return loadSearch(reference.countryCode, identifier.substring(SEARCH_PREFIX.length()).trim());
         }
 
         AppleMusicUrl appleMusicUrl = parseUrl(identifier);

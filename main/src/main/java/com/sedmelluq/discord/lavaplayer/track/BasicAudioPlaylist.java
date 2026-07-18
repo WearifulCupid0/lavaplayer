@@ -11,6 +11,7 @@ public class BasicAudioPlaylist implements AudioPlaylist {
   private final String image;
   private final String uri;
   private final String type;
+  private final int size;
   private final List<AudioTrack> tracks;
   private final AudioTrack selectedTrack;
   private final boolean isSearchResult;
@@ -38,11 +39,16 @@ public class BasicAudioPlaylist implements AudioPlaylist {
    * @param isSearchResult True if the playlist was created from search results
    */
   public BasicAudioPlaylist(String name, String creator, String image, String uri, String type, List<AudioTrack> tracks, AudioTrack selectedTrack, boolean isSearchResult) {
+    this(name, creator, image, uri, type, tracks.size(), tracks, selectedTrack, isSearchResult);
+  }
+
+  public BasicAudioPlaylist(String name, String creator, String image, String uri, String type, int size, List<AudioTrack> tracks, AudioTrack selectedTrack, boolean isSearchResult) {
     this.name = name;
     this.creator = creator;
     this.image = image;
     this.uri = uri;
     this.type = type;
+    this.size = size;
     this.tracks = tracks;
     this.selectedTrack = selectedTrack;
     this.isSearchResult = isSearchResult;
@@ -71,6 +77,11 @@ public class BasicAudioPlaylist implements AudioPlaylist {
   @Override
   public String getType() {
     return type;
+  }
+
+  @Override
+  public int getSize() {
+    return size;
   }
 
   @Override

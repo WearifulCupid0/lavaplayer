@@ -44,8 +44,12 @@ public class TuneinAudioSourceManager implements AudioSourceManager, HttpConfigu
     private final HttpAudioSourceManager streamSourceManager;
 
     public TuneinAudioSourceManager() {
-        httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
-        streamSourceManager = new HttpAudioSourceManager(MediaContainerRegistry.DEFAULT_REGISTRY);
+        this(new HttpAudioSourceManager(MediaContainerRegistry.DEFAULT_REGISTRY));
+    }
+
+    public TuneinAudioSourceManager(HttpAudioSourceManager streamSourceManager) {
+        this.httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
+        this.streamSourceManager = streamSourceManager;
     }
 
     @Override

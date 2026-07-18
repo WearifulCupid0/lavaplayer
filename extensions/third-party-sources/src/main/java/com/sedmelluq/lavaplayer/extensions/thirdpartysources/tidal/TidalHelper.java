@@ -93,11 +93,11 @@ public class TidalHelper {
         return new ThirdPartyAudioTrack(builder.build(), sourceManager);
     }
 
-    public static URI trackUri(String id) {
+    public static URI trackUri(String id, String countryCode) {
         try {
             return buildUri(TidalConstants.TRACK_API_URL)
                     .addParameter("filter[id]", id)
-                    .addParameter("countryCode", TidalConstants.DEFAULT_COUNTRY_CODE)
+                    .addParameter("countryCode", countryCode)
                     .addParameter("locale", TidalConstants.DEFAULT_LOCALE)
                     .addParameter("include", "albums,albums.coverArt,artists")
                     .build();
@@ -106,11 +106,11 @@ public class TidalHelper {
         }
     }
 
-    public static URI albumUri(String id) {
+    public static URI albumUri(String id, String countryCode) {
         try {
             return buildUri(TidalConstants.ALBUM_API_URL)
                     .addParameter("filter[id]", id)
-                    .addParameter("countryCode", TidalConstants.DEFAULT_COUNTRY_CODE)
+                    .addParameter("countryCode", countryCode)
                     .addParameter("locale", TidalConstants.DEFAULT_LOCALE)
                     .addParameter("include", "artists,items,coverArt,items.albums,items.artists,items.albums.coverArt")
                     .build();
@@ -119,11 +119,11 @@ public class TidalHelper {
         }
     }
 
-    public static URI playlistUri(String id) {
+    public static URI playlistUri(String id, String countryCode) {
         try {
             return buildUri(TidalConstants.PLAYLIST_API_URL)
                     .addParameter("filter[id]", id)
-                    .addParameter("countryCode", TidalConstants.DEFAULT_COUNTRY_CODE)
+                    .addParameter("countryCode", countryCode)
                     .addParameter("locale", TidalConstants.DEFAULT_LOCALE)
                     .addParameter("include", "coverArt,collaboratorProfiles,ownerProfiles,items,items.artists,items.albums,items.albums.coverArt")
                     .build();
@@ -132,10 +132,10 @@ public class TidalHelper {
         }
     }
 
-    public static URI searchTracksUri(String query) {
+    public static URI searchTracksUri(String query, String countryCode) {
         try {
             return buildUri(String.format(TidalConstants.SEARCH_API_URL, encodePathSegment(query)))
-                    .addParameter("countryCode", TidalConstants.DEFAULT_COUNTRY_CODE)
+                    .addParameter("countryCode", countryCode)
                     .addParameter("locale", TidalConstants.DEFAULT_LOCALE)
                     .addParameter("include", "tracks,tracks.albums,tracks.albums.coverArt,tracks.artists")
                     .build();
@@ -144,11 +144,11 @@ public class TidalHelper {
         }
     }
 
-    public static URI artistTracksUri(String artistId) {
+    public static URI artistTracksUri(String artistId, String countryCode) {
         try {
             return buildUri(TidalConstants.ARTIST_API_TRACKS)
                     .addParameter("filter[id]", artistId)
-                    .addParameter("countryCode", TidalConstants.DEFAULT_COUNTRY_CODE)
+                    .addParameter("countryCode", countryCode)
                     .addParameter("locale", TidalConstants.DEFAULT_LOCALE)
                     .addParameter("include", "profileArt,albums,albums.coverArt,albums.items,albums.items.albums")
                     .build();

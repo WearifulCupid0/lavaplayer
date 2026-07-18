@@ -116,7 +116,7 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
                 return null;
             }
 
-            return loadSearch(identifier.substring(SEARCH_PREFIX.length()).trim());
+            return loadSearch(identifier.substring(SEARCH_PREFIX.length()).trim(), reference.countryCode);
         }
 
         Matcher matcher = TIDAL_URL_PATTERN.matcher(identifier);
@@ -131,16 +131,16 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
         switch (type) {
             case "track":
             case "video":
-                return loadTrack(id);
+                return loadTrack(id, reference.countryCode);
 
             case "album":
-                return loadAlbum(id);
+                return loadAlbum(id, reference.countryCode);
 
             case "playlist":
-                return loadPlaylist(id);
+                return loadPlaylist(id, reference.countryCode);
 
             case "artist":
-                return loadArtistTracks(id);
+                return loadArtistTracks(id, reference.countryCode);
 
             case "mix":
                 return AudioReference.NO_TRACK;
@@ -173,13 +173,13 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
         return tokenTracker;
     }
 
-    private AudioItem loadSearch(String query) {
+    private AudioItem loadSearch(String query, String countryCode) {
         if (query == null || query.isBlank()) {
             return AudioReference.NO_TRACK;
         }
 
         try {
-            JsonBrowser document = requestApi(TidalHelper.searchTracksUri(query));
+            JsonBrowser document = requestApi(TidalHelper.searchTracksUri(query, countryCode));
             JsonBrowser data = document.get("data");
 
             if (data.index(0).isNull()) {
@@ -206,8 +206,8 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
         }
     }
 
-    private AudioItem loadTrack(String id) {
-        JsonBrowser document = requestApi(TidalHelper.trackUri(id));
+    private AudioItem loadTrack(String id, String countryCode) {
+        JsonBrowser document = requestApi(TidalHelper.trackUri(id, countryCode));
         JsonBrowser track = firstDataItem(document);
 
         if (track.isNull()) {
@@ -217,8 +217,8 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
         return TidalHelper.buildTrack(track, document.get("included"), this);
     }
 
-    private AudioItem loadAlbum(String id) {
-        JsonBrowser document = requestApi(TidalHelper.albumUri(id));
+    private AudioItem loadAlbum(String id, String countryCode) {
+        JsonBrowser document = requestApi(TidalHelper.albumUri(id, countryCode));
         JsonBrowser album = firstDataItem(document);
 
         if (album.isNull()) {
@@ -266,8 +266,8 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
         );
     }
 
-    private AudioItem loadPlaylist(String id) {
-        JsonBrowser document = requestApi(TidalHelper.playlistUri(id));
+    private AudioItem loadPlaylist(String id, String countryCode) {
+        JsonBrowser document = requestApi(TidalHelper.playlistUri(id, countryCode));
         JsonBrowser playlist = firstDataItem(document);
 
         if (playlist.isNull()) {
@@ -332,8 +332,8 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
         );
     }
 
-    private AudioItem loadArtistTracks(String id) {
-        JsonBrowser document = requestApi(TidalHelper.artistTracksUri(id));
+    private AudioItem loadArtistTracks(String id, String countryCode) {
+        JsonBrowser document = requestApi(TidalHelper.artistTracksUri(id, countryCode));
         JsonBrowser artist = firstDataItem(document);
 
         if (artist.isNull()) {

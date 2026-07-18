@@ -32,6 +32,11 @@ public interface AudioPlaylist extends AudioItem {
   String getType();
 
   /**
+   * @return Total size of the playlist
+   */
+  int getSize();
+
+  /**
    * @return List of tracks in the playlist
    */
   List<AudioTrack> getTracks();

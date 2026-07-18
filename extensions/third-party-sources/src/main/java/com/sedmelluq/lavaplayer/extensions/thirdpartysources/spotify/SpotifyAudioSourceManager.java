@@ -86,20 +86,20 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
 
         Matcher matcher;
         if ((matcher = spotifyUrlPattern.matcher(reference.identifier)).find()) {
-            return this.load(matcher.group(2), matcher.group(1));
+            return this.load(matcher.group(2), matcher.group(1), reference);
         }
         if ((matcher = spotifyUrnPattern.matcher(reference.identifier)).find()) {
-            return this.load(matcher.group(2), matcher.group(1));
+            return this.load(matcher.group(2), matcher.group(1), reference);
         }
 
         return null;
     }
 
-    private AudioItem load(String id, String type) {
+    private AudioItem load(String id, String type, AudioReference reference) {
         switch (type) {
 			case "album": return this.loadAlbum(id);
 			case "track": return this.loadTrack(id);
-			case "playlist": return this.loadPlaylist(id);
+			case "playlist": return this.loadPlaylist(id, reference);
 			case "artist": return this.loadArtist(id);
             default: return null;
 		}
@@ -237,30 +237,60 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
         );
     }
 
-    private AudioItem loadPlaylist(String id) {
-        JsonBrowser playlist = this.requestApi(PLAYLIST_API_URL + id + "?limit=100");
+    private AudioItem loadPlaylist(String id, AudioReference reference) {
+        JsonBrowser playlist = this.requestApi(PLAYLIST_API_URL + id);
         if(playlist.isNull()) {
             return AudioReference.NO_TRACK;
         }
 
+        int total = playlist.get("items").get("total").as(int.class);
         List<AudioTrack> tracks = new ArrayList<>();
-        for(JsonBrowser track : playlist.get("tracks").get("items").values()) {
-            tracks.add(buildTrack(track.get("track"), track.get("track").get("album")));
-        }
-        String next = playlist.get("tracks").get("next").text();
-        while(next != null) {
-            JsonBrowser tPage = this.requestApi(next);
-            for(JsonBrowser item : tPage.get("items").values()) {
-                if (!item.get("track").isNull()) tracks.add(buildTrack(item.get("track"), item.get("track").get("album")));
+
+        int pageOffset = Math.max(0, reference.playlistOffset);
+
+        int pageLimit = reference.playlistLoadLimit <= 0
+                ? Integer.MAX_VALUE
+                : reference.playlistLoadLimit;
+
+        int itemOffset = pageOffset * SPOTIFY_ITEMS_LOAD_LIMIT;
+
+        String next = String.format(PLAYLIST_ITEMS_API_URL, id, itemOffset);
+
+        int loadedPages = 0;
+
+        while (!SourceTools.isBlank(next) && loadedPages < pageLimit) {
+            JsonBrowser page = this.requestApi(next);
+
+            if (page.isNull()) {
+                break;
             }
-            next = tPage.get("next").text();
+
+            int tracksBefore = tracks.size();
+
+            for (JsonBrowser item : page.get("items").values()) {
+                if (!item.get("item").isNull()) tracks.add(buildTrack(item.get("item"), item.get("item").get("album")));
+            }
+
+            loadedPages++;
+
+            next = page.get("next").text();
+
+            if (next == null || next.isBlank()) {
+                break;
+            }
+
+            if (tracks.size() == tracksBefore && page.get("items").values().isEmpty()) {
+                break;
+            }
         }
+
         return new BasicAudioPlaylist(
             playlist.get("name").text(),
             playlist.get("owner").get("display_name").text(),
             pickBestArtwork(playlist.get("images").values()),
             PLAYLIST_URL + id,
             "playlist",
+            total,
             tracks,
             null,
             false
