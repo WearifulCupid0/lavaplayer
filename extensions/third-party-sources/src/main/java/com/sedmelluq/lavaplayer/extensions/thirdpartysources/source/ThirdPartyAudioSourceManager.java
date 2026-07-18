@@ -1,22 +1,22 @@
-package com.sedmelluq.lavaplayer.extensions.thirdpartysources;
+package com.sedmelluq.lavaplayer.extensions.thirdpartysources.source;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
-import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.function.Function;
 
 public abstract class ThirdPartyAudioSourceManager implements AudioSourceManager {
 	public static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36";
     private final AudioPlayerManager playerManager;
+	private final ThirdPartyAudioTrackResolver trackResolver;
 
-	protected ThirdPartyAudioSourceManager(AudioPlayerManager playerManager) {
+	protected ThirdPartyAudioSourceManager(AudioPlayerManager playerManager, ThirdPartyAudioTrackResolver trackResolver) {
 		this.playerManager = playerManager;
+		this.trackResolver = trackResolver;
 	}
 
     public AudioPlayerManager getAudioPlayerManager() {
@@ -35,6 +35,10 @@ public abstract class ThirdPartyAudioSourceManager implements AudioSourceManager
 
 	@Override
 	public AudioTrack decodeTrack(AudioTrackInfo trackInfo, DataInput input) throws IOException{
-		return new ThirdPartyAudioTrack(trackInfo, this);
+		return new ThirdPartyAudioTrack(trackInfo, trackResolver, this);
+	}
+
+	public ThirdPartyAudioTrackResolver getTrackResolver() {
+		return trackResolver;
 	}
 }

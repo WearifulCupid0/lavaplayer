@@ -2,7 +2,7 @@ package com.sedmelluq.lavaplayer.extensions.thirdpartysources.tidal;
 
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.SourceTools;
-import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioSourceManager;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.source.ThirdPartyAudioSourceManager;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;

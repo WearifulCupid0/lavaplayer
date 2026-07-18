@@ -11,30 +11,23 @@ import com.sedmelluq.discord.lavaplayer.tools.io.ThreadLocalHttpInterfaceManager
 import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.SourceTools;
-import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioSourceManager;
-import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioTrack;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.source.DefaultThirdPartyAudioTrackResolver;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.source.ThirdPartyAudioSourceManager;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.source.ThirdPartyAudioTrackResolver;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -56,28 +49,29 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
     private final HttpInterfaceManager httpInterfaceManager;
 
     public TidalAudioSourceManager(AudioPlayerManager playerManager) {
-        this(true, playerManager, null, null);
+        this(true, new DefaultThirdPartyAudioTrackResolver(), playerManager, null, null);
     }
 
-    public TidalAudioSourceManager(AudioPlayerManager playerManager, String clientId, String clientSecret) {
-        this(true, playerManager, clientId, clientSecret);
+    public TidalAudioSourceManager(ThirdPartyAudioTrackResolver trackResolver, AudioPlayerManager playerManager, String clientId, String clientSecret) {
+        this(true, trackResolver, playerManager, clientId, clientSecret);
     }
 
-    public TidalAudioSourceManager(String clientId, String clientSecret, AudioPlayerManager playerManager) {
-        this(true, playerManager, clientId, clientSecret);
+    public TidalAudioSourceManager(String clientId, String clientSecret, ThirdPartyAudioTrackResolver trackResolver, AudioPlayerManager playerManager) {
+        this(true, trackResolver, playerManager, clientId, clientSecret);
     }
 
-    public TidalAudioSourceManager(boolean allowSearch, AudioPlayerManager playerManager) {
-        this(allowSearch, playerManager, null, null);
+    public TidalAudioSourceManager(boolean allowSearch, ThirdPartyAudioTrackResolver trackResolver, AudioPlayerManager playerManager) {
+        this(allowSearch, trackResolver, playerManager, null, null);
     }
 
     public TidalAudioSourceManager(
             boolean allowSearch,
+            ThirdPartyAudioTrackResolver trackResolver,
             AudioPlayerManager playerManager,
             String clientId,
             String clientSecret
     ) {
-        super(playerManager);
+        super(playerManager, trackResolver);
 
         this.allowSearch = allowSearch;
         this.tokenTracker = new TidalTokenTracker(clientId, clientSecret);

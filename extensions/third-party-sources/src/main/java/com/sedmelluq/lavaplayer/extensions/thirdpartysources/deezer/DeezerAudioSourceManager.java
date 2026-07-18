@@ -1,6 +1,5 @@
 package com.sedmelluq.lavaplayer.extensions.thirdpartysources.deezer;
 
-import com.sedmelluq.discord.lavaplayer.container.*;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.http.HttpAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
@@ -8,7 +7,7 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.*;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.SourceTools;
-import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioSourceManager;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.source.ThirdPartyAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;

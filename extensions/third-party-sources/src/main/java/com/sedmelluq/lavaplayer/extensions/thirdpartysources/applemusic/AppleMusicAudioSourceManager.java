@@ -10,8 +10,10 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
 import com.sedmelluq.discord.lavaplayer.tools.io.ThreadLocalHttpInterfaceManager;
 import com.sedmelluq.discord.lavaplayer.track.*;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.SourceTools;
-import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioSourceManager;
-import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioTrack;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.source.DefaultThirdPartyAudioTrackResolver;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.source.ThirdPartyAudioSourceManager;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.source.ThirdPartyAudioTrack;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.source.ThirdPartyAudioTrackResolver;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -26,8 +28,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -57,11 +57,15 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
     private final HttpInterfaceManager httpInterfaceManager;
 
     public AppleMusicAudioSourceManager(AudioPlayerManager playerManager) {
-        this(true, playerManager);
+        this(true, new DefaultThirdPartyAudioTrackResolver(), playerManager);
     }
 
-    public AppleMusicAudioSourceManager(boolean allowSearch, AudioPlayerManager playerManager) {
-        super(playerManager);
+    public AppleMusicAudioSourceManager(AudioPlayerManager playerManager, ThirdPartyAudioTrackResolver trackResolver) {
+        this(true, trackResolver, playerManager);
+    }
+
+    public AppleMusicAudioSourceManager(boolean allowSearch, ThirdPartyAudioTrackResolver trackResolver, AudioPlayerManager playerManager) {
+        super(playerManager, trackResolver);
 
         this.allowSearch = allowSearch;
 

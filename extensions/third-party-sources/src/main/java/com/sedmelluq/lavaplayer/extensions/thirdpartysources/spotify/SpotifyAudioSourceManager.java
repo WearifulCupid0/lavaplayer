@@ -10,6 +10,10 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
 
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.source.DefaultThirdPartyAudioTrackResolver;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.source.ThirdPartyAudioSourceManager;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.source.ThirdPartyAudioTrack;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.source.ThirdPartyAudioTrackResolver;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -22,8 +26,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -49,15 +51,20 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
     private final HttpInterfaceManager httpInterfaceManager;
 
     public SpotifyAudioSourceManager(AudioPlayerManager playerManager) {
-        this(true, playerManager);
+        this(new DefaultThirdPartyAudioTrackResolver(), playerManager);
     }
 
-    public SpotifyAudioSourceManager(boolean allowSearch, AudioPlayerManager playerManager) {
-        this(allowSearch, null, null, playerManager);
+    public SpotifyAudioSourceManager(ThirdPartyAudioTrackResolver trackResolver, AudioPlayerManager playerManager) {
+        this(true, trackResolver, playerManager);
     }
 
-    public SpotifyAudioSourceManager(boolean allowSearch, String clientId, String clientSecret, AudioPlayerManager playerManager) {
-        super(playerManager);
+    public SpotifyAudioSourceManager(boolean allowSearch, ThirdPartyAudioTrackResolver trackResolver, AudioPlayerManager playerManager) {
+        this(allowSearch, null, null, trackResolver, playerManager);
+    }
+
+    public SpotifyAudioSourceManager(boolean allowSearch, String clientId, String clientSecret, ThirdPartyAudioTrackResolver trackResolver, AudioPlayerManager playerManager) {
+        super(playerManager, trackResolver);
+
         this.allowSearch = allowSearch;
         
         this.httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();

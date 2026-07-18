@@ -6,7 +6,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackAuthorInfo;
 import com.sedmelluq.discord.lavaplayer.track.info.AudioTrackInfoBuilder;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.SourceTools;
-import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioTrack;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.source.ThirdPartyAudioTrack;
 import org.apache.http.client.utils.URIBuilder;
 
 import java.net.URI;

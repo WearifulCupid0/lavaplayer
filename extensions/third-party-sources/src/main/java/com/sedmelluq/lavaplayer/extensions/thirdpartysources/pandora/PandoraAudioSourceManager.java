@@ -8,8 +8,10 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
 import com.sedmelluq.discord.lavaplayer.track.*;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.SourceTools;
-import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioSourceManager;
-import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioTrack;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.source.DefaultThirdPartyAudioTrackResolver;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.source.ThirdPartyAudioSourceManager;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.source.ThirdPartyAudioTrack;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.source.ThirdPartyAudioTrackResolver;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -49,11 +51,15 @@ public class PandoraAudioSourceManager extends ThirdPartyAudioSourceManager impl
     private final PandoraTokenTracker tokenTracker;
 
     public PandoraAudioSourceManager(AudioPlayerManager audioPlayerManager) {
-        this(null, audioPlayerManager);
+        this(null, new DefaultThirdPartyAudioTrackResolver(), audioPlayerManager);
     }
 
-    public PandoraAudioSourceManager(String csrfToken, AudioPlayerManager audioPlayerManager) {
-        super(audioPlayerManager);
+    public PandoraAudioSourceManager(AudioPlayerManager audioPlayerManager, ThirdPartyAudioTrackResolver trackResolver) {
+        this(null, trackResolver, audioPlayerManager);
+    }
+
+    public PandoraAudioSourceManager(String csrfToken, ThirdPartyAudioTrackResolver trackResolver, AudioPlayerManager audioPlayerManager) {
+        super(audioPlayerManager, trackResolver);
 
         csrfToken = SourceTools.getStringOrEnv(csrfToken, "PANDORA_CSRF_TOKEN");
         if (SourceTools.isBlank(csrfToken)) {

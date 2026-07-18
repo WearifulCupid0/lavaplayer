@@ -1,7 +1,7 @@
 package com.sedmelluq.lavaplayer.extensions.thirdpartysources.applemusic;
 
 import com.sedmelluq.discord.lavaplayer.tools.http.HttpContextFilter;
-import com.sedmelluq.lavaplayer.extensions.thirdpartysources.ThirdPartyAudioSourceManager;
+import com.sedmelluq.lavaplayer.extensions.thirdpartysources.source.ThirdPartyAudioSourceManager;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpUriRequest;
