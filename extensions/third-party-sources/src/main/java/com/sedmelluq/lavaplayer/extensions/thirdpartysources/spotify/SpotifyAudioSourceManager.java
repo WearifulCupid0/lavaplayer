@@ -268,7 +268,10 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
             int tracksBefore = tracks.size();
 
             for (JsonBrowser item : page.get("items").values()) {
-                if (!item.get("item").isNull()) tracks.add(buildTrack(item.get("item"), item.get("item").get("album")));
+                if (
+                        !item.get("item").isNull() &&
+                        "track".equals(item.get("item").get("type").safeText())
+                ) tracks.add(buildTrack(item.get("item"), item.get("item").get("album")));
             }
 
             loadedPages++;
