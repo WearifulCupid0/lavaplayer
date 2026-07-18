@@ -44,25 +44,20 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
     private static final String SEARCH_PREFIX = "spsearch:";
     private static final String TRACKS_PREFIX = "sptracks:";
 
-    private final Map<String, String> isrcCache = new HashMap<>();
     private final boolean allowSearch;
     private final SpotifyTokenTracker tokenTracker;
     private final HttpInterfaceManager httpInterfaceManager;
 
     public SpotifyAudioSourceManager(AudioPlayerManager playerManager) {
-        this(true, true, playerManager);
+        this(true, playerManager);
     }
 
     public SpotifyAudioSourceManager(boolean allowSearch, AudioPlayerManager playerManager) {
-        this(allowSearch, true, playerManager);
+        this(allowSearch, null, null, playerManager);
     }
 
-    public SpotifyAudioSourceManager(boolean allowSearch, boolean fetchIsrc, AudioPlayerManager playerManager) {
-        this(allowSearch, fetchIsrc, null, null, playerManager);
-    }
-
-    public SpotifyAudioSourceManager(boolean allowSearch, boolean fetchIsrc, String clientId, String clientSecret, AudioPlayerManager playerManager) {
-        super(playerManager, fetchIsrc);
+    public SpotifyAudioSourceManager(boolean allowSearch, String clientId, String clientSecret, AudioPlayerManager playerManager) {
+        super(playerManager);
         this.allowSearch = allowSearch;
         
         this.httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
@@ -118,24 +113,6 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
     @Override
     public void shutdown() {
         //nothing to shutdown
-    }
-
-    public String fetchIsrc(AudioTrack track) {
-        if (track.getInfo().uri == null) return null;
-        
-        String identifier = track.getIdentifier();
-        if (this.isrcCache.containsKey(identifier)) return this.isrcCache.get(identifier);
-        
-        JsonBrowser json = this.requestApi(TRACK_API_URL + identifier);
-        String isrc = json.get("external_ids").get("isrc").text();
-        if (isrc != null) {
-            if (!this.isrcCache.containsKey(identifier)) {
-                this.isrcCache.put(identifier, isrc);
-            }
-            return isrc;
-        }
-        
-        return null;
     }
 
     /**
@@ -320,9 +297,6 @@ public class SpotifyAudioSourceManager extends ThirdPartyAudioSourceManager impl
         List<JsonBrowser> images = albumInfo.get("images").values();
 
         String isrc = trackInfo.get("external_ids").get("isrc").text();
-        if (isrc != null && !this.isrcCache.containsKey(identifier)) {
-            this.isrcCache.put(identifier, isrc);
-        }
 
         List<AudioTrackAuthorInfo> artists = new ArrayList<>();
         for (JsonBrowser artist : trackInfo.get("artists").values()) {

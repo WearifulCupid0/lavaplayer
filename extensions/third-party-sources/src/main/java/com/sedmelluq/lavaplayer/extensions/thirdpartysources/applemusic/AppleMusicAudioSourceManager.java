@@ -53,22 +53,16 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
             Pattern.CASE_INSENSITIVE
     );
 
-    private final Map<String, String> isrcCache = new HashMap<>();
-
     private final boolean allowSearch;
     private final AppleMusicTokenTracker tokenTracker;
     private final HttpInterfaceManager httpInterfaceManager;
 
     public AppleMusicAudioSourceManager(AudioPlayerManager playerManager) {
-        this(true, true, playerManager);
+        this(true, playerManager);
     }
 
     public AppleMusicAudioSourceManager(boolean allowSearch, AudioPlayerManager playerManager) {
-        this(allowSearch, true, playerManager);
-    }
-
-    public AppleMusicAudioSourceManager(boolean allowSearch, boolean fetchIsrc, AudioPlayerManager playerManager) {
-        super(playerManager, fetchIsrc);
+        super(playerManager);
 
         this.allowSearch = allowSearch;
 
@@ -142,36 +136,6 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
     @Override
     public void shutdown() {
         // Nothing to shutdown.
-    }
-
-    @Override
-    public String fetchIsrc(AudioTrack track) {
-        if (track == null || track.getInfo() == null || track.getInfo().uri == null) {
-            return null;
-        }
-
-        String identifier = track.getIdentifier();
-
-        if (identifier == null) {
-            return null;
-        }
-
-        if (isrcCache.containsKey(identifier)) {
-            return isrcCache.get(identifier);
-        }
-
-        AppleMusicUrl appleMusicUrl = parseUrl(track.getInfo().uri);
-        String storefront = appleMusicUrl != null ? appleMusicUrl.storefront : DEFAULT_STOREFRONT;
-
-        JsonBrowser json = requestApi(trackUri(storefront, identifier));
-        String isrc = json.get("data").index(0).get("attributes").get("isrc").text();
-
-        if (isrc != null) {
-            isrcCache.put(identifier, isrc);
-            return isrc;
-        }
-
-        return null;
     }
 
     public HttpInterface getHttpInterface() {
@@ -373,10 +337,6 @@ public class AppleMusicAudioSourceManager extends ThirdPartyAudioSourceManager i
                 explicit,
                 isrc
         );
-
-        if (isrc != null && !isrc.isEmpty()) {
-            isrcCache.put(identifier, isrc);
-        }
 
         return new ThirdPartyAudioTrack(info, this);
     }

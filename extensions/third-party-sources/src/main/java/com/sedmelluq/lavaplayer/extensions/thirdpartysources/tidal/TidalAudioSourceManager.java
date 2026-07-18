@@ -51,44 +51,33 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
             Pattern.CASE_INSENSITIVE
     );
 
-    private final Map<String, String> isrcCache = new HashMap<>();
-
     private final boolean allowSearch;
     private final TidalTokenTracker tokenTracker;
     private final HttpInterfaceManager httpInterfaceManager;
 
     public TidalAudioSourceManager(AudioPlayerManager playerManager) {
-        this(true, true, playerManager, null, null);
+        this(true, playerManager, null, null);
     }
 
     public TidalAudioSourceManager(AudioPlayerManager playerManager, String clientId, String clientSecret) {
-        this(true, true, playerManager, clientId, clientSecret);
+        this(true, playerManager, clientId, clientSecret);
     }
 
     public TidalAudioSourceManager(String clientId, String clientSecret, AudioPlayerManager playerManager) {
-        this(true, true, playerManager, clientId, clientSecret);
+        this(true, playerManager, clientId, clientSecret);
     }
 
     public TidalAudioSourceManager(boolean allowSearch, AudioPlayerManager playerManager) {
-        this(allowSearch, true, playerManager, null, null);
-    }
-
-    public TidalAudioSourceManager(boolean allowSearch, AudioPlayerManager playerManager, String clientId, String clientSecret) {
-        this(allowSearch, true, playerManager, clientId, clientSecret);
-    }
-
-    public TidalAudioSourceManager(boolean allowSearch, boolean fetchIsrc, AudioPlayerManager playerManager) {
-        this(allowSearch, fetchIsrc, playerManager, null, null);
+        this(allowSearch, playerManager, null, null);
     }
 
     public TidalAudioSourceManager(
             boolean allowSearch,
-            boolean fetchIsrc,
             AudioPlayerManager playerManager,
             String clientId,
             String clientSecret
     ) {
-        super(playerManager, fetchIsrc);
+        super(playerManager);
 
         this.allowSearch = allowSearch;
         this.tokenTracker = new TidalTokenTracker(clientId, clientSecret);
@@ -164,36 +153,6 @@ public class TidalAudioSourceManager extends ThirdPartyAudioSourceManager implem
     @Override
     public void shutdown() {
         tokenTracker.shutdown();
-    }
-
-    @Override
-    public String fetchIsrc(AudioTrack track) {
-        if (track == null || track.getInfo() == null) {
-            return null;
-        }
-
-        String identifier = track.getIdentifier();
-
-        if (identifier == null || identifier.isBlank()) {
-            return null;
-        }
-
-        if (isrcCache.containsKey(identifier)) {
-            return isrcCache.get(identifier);
-        }
-
-        AudioItem item = loadTrack(identifier);
-
-        if (item instanceof AudioTrack) {
-            String isrc = isrcCache.get(((AudioTrack) item).getIdentifier());
-
-            if (isrc != null && !isrc.isBlank()) {
-                isrcCache.put(identifier, isrc);
-                return isrc;
-            }
-        }
-
-        return null;
     }
 
     public HttpInterface getHttpInterface() {

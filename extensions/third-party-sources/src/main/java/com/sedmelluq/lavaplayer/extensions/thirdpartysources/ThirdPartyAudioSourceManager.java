@@ -14,23 +14,13 @@ import java.util.function.Function;
 public abstract class ThirdPartyAudioSourceManager implements AudioSourceManager {
 	public static final String USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36";
     private final AudioPlayerManager playerManager;
-    private final boolean fetchIsrc;
 
-	protected ThirdPartyAudioSourceManager(AudioPlayerManager playerManager, boolean fetchIsrc) {
-        this.fetchIsrc = fetchIsrc;
+	protected ThirdPartyAudioSourceManager(AudioPlayerManager playerManager) {
 		this.playerManager = playerManager;
 	}
 
     public AudioPlayerManager getAudioPlayerManager() {
         return this.playerManager;
-    }
-
-    public boolean isFetchIsrcEnabled() {
-        return this.fetchIsrc;
-    }
-
-    public String fetchIsrc(AudioTrack identifier) {
-        return null;
     }
 
 	@Override

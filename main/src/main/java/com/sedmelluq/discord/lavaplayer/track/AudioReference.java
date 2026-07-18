@@ -19,7 +19,7 @@ public class AudioReference implements AudioItem, AudioTrackInfoProvider {
    */
   public final String title;
 
-  public final int playlistPageLimit;
+  public final int playlistLoadLimit;
 
   public final int playlistOffset;
 
@@ -37,18 +37,18 @@ public class AudioReference implements AudioItem, AudioTrackInfoProvider {
     this(identifier, title, 5, 0, "US");
   }
 
-  public AudioReference(String identifier, String title, int playlistPageLimit, int playlistOffset, String countryCode) {
-    this(identifier, title, playlistPageLimit, playlistOffset, countryCode, null);
+  public AudioReference(String identifier, String title, int playlistLoadLimit, int playlistOffset, String countryCode) {
+    this(identifier, title, playlistLoadLimit, playlistOffset, countryCode, null);
   }
 
   /**
    * @param identifier The identifier of the other item.
    * @param title The title of the other item, if known.
    */
-  public AudioReference(String identifier, String title, int playlistPageLimit, int playlistOffset, String countryCode, MediaContainerDescriptor containerDescriptor) {
+  public AudioReference(String identifier, String title, int playlistLoadLimit, int playlistOffset, String countryCode, MediaContainerDescriptor containerDescriptor) {
     this.identifier = identifier;
     this.title = title;
-    this.playlistPageLimit = playlistPageLimit;
+    this.playlistLoadLimit = playlistLoadLimit;
     this.playlistOffset = playlistOffset;
     this.countryCode = countryCode;
     this.containerDescriptor = containerDescriptor;

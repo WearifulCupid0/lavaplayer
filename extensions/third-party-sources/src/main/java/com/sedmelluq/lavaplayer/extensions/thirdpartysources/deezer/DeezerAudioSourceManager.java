@@ -62,25 +62,24 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
     public final String masterKey;
 
     public DeezerAudioSourceManager(AudioPlayerManager playerManager) {
-        this(playerManager, null, null, true, true);
+        this(playerManager, null, null, true);
     }
 
     public DeezerAudioSourceManager(AudioPlayerManager playerManager, boolean allowSearch) {
-        this(playerManager, null, null, allowSearch, true);
+        this(playerManager, null, null, allowSearch);
     }
 
     public DeezerAudioSourceManager(AudioPlayerManager playerManager, String masterKey, String deezerArl) {
-        this(playerManager, masterKey, deezerArl, true, true);
+        this(playerManager, masterKey, deezerArl, true);
     }
 
     public DeezerAudioSourceManager(
             AudioPlayerManager playerManager,
             String masterKey,
             String deezerArl,
-            boolean allowSearch,
-            boolean fetchIsrc
+            boolean allowSearch
     ) {
-        super(playerManager, fetchIsrc);
+        super(playerManager);
 
         deezerArl = SourceTools.firstNonBlank(deezerArl, SourceTools.getPropertyOrEnv("DEEZER_ARL"));
         this.masterKey = SourceTools.firstNonBlank(masterKey, SourceTools.getPropertyOrEnv("DEEZER_MASTER_KEY"));

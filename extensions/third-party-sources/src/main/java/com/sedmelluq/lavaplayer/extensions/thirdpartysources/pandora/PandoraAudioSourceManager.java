@@ -49,18 +49,13 @@ public class PandoraAudioSourceManager extends ThirdPartyAudioSourceManager impl
 
     private final HttpInterfaceManager httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
     private final PandoraTokenTracker tokenTracker;
-    private int searchLimit = 6;
 
     public PandoraAudioSourceManager(AudioPlayerManager audioPlayerManager) {
         this(null, audioPlayerManager);
     }
 
     public PandoraAudioSourceManager(String csrfToken, AudioPlayerManager audioPlayerManager) {
-        this(csrfToken, audioPlayerManager, 50);
-    }
-
-    public PandoraAudioSourceManager(String csrfToken, AudioPlayerManager audioPlayerManager, int searchLimit) {
-        super(audioPlayerManager, true);
+        super(audioPlayerManager);
 
         csrfToken = SourceTools.getStringOrEnv(csrfToken, "PANDORA_CSRF_TOKEN");
         if (SourceTools.isBlank(csrfToken)) {
@@ -68,7 +63,6 @@ public class PandoraAudioSourceManager extends ThirdPartyAudioSourceManager impl
         }
 
         this.tokenTracker = new PandoraTokenTracker(this, csrfToken);
-        this.searchLimit = searchLimit > 0 ? searchLimit : 6;
     }
 
     public void setCsrfToken(String csrfToken) {
@@ -92,7 +86,7 @@ public class PandoraAudioSourceManager extends ThirdPartyAudioSourceManager impl
                     throw new IllegalArgumentException("No query provided for search");
                 }
 
-                return this.getSearch(query);
+                return this.getSearch(query, reference.playlistLoadLimit);
             }
 
             if (identifier.startsWith(RECOMMENDATIONS_PREFIX)) {
@@ -494,7 +488,7 @@ public class PandoraAudioSourceManager extends ThirdPartyAudioSourceManager impl
         return JsonBrowser.NULL_BROWSER;
     }
 
-    public AudioItem getSearch(String query) throws IOException {
+    public AudioItem getSearch(String query, int searchLimit) throws IOException {
         StringBuilder request = new StringBuilder();
         request.append('{')
                 .append("\"query\":\"").append(escape(query)).append("\",")
@@ -523,7 +517,7 @@ public class PandoraAudioSourceManager extends ThirdPartyAudioSourceManager impl
             AudioTrack at = mapTrack(item, annotations);
             if (at != null) {
                 tracks.add(at);
-                if (++added >= this.searchLimit) break;
+                if (++added >= searchLimit) break;
             }
         }
 
