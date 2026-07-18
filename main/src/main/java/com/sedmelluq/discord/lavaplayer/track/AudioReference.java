@@ -8,7 +8,7 @@ import com.sedmelluq.discord.lavaplayer.track.info.AudioTrackInfoProvider;
  * which means that the item referred to in it is loaded instead.
  */
 public class AudioReference implements AudioItem, AudioTrackInfoProvider {
-  public static final AudioReference NO_TRACK = new AudioReference(null, null, null);
+  public static final AudioReference NO_TRACK = new AudioReference(null, null);
 
   /**
    * The identifier of the other item.
@@ -18,6 +18,12 @@ public class AudioReference implements AudioItem, AudioTrackInfoProvider {
    * The title of the other item, if known.
    */
   public final String title;
+
+  public final int playlistPageLimit;
+
+  public final int playlistOffset;
+
+  public final String countryCode;
   /**
    * Known probe and probe settings of the item to be loaded.
    */
@@ -28,16 +34,23 @@ public class AudioReference implements AudioItem, AudioTrackInfoProvider {
    * @param title The title of the other item, if known.
    */
   public AudioReference(String identifier, String title) {
-    this(identifier, title, null);
+    this(identifier, title, 5, 0, "US");
+  }
+
+  public AudioReference(String identifier, String title, int playlistPageLimit, int playlistOffset, String countryCode) {
+    this(identifier, title, playlistPageLimit, playlistOffset, countryCode, null);
   }
 
   /**
    * @param identifier The identifier of the other item.
    * @param title The title of the other item, if known.
    */
-  public AudioReference(String identifier, String title, MediaContainerDescriptor containerDescriptor) {
+  public AudioReference(String identifier, String title, int playlistPageLimit, int playlistOffset, String countryCode, MediaContainerDescriptor containerDescriptor) {
     this.identifier = identifier;
     this.title = title;
+    this.playlistPageLimit = playlistPageLimit;
+    this.playlistOffset = playlistOffset;
+    this.countryCode = countryCode;
     this.containerDescriptor = containerDescriptor;
   }
 
