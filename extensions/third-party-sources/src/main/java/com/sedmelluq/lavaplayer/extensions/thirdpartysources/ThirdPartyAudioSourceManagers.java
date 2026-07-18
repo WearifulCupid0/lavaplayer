@@ -4,7 +4,6 @@ import com.sedmelluq.lavaplayer.extensions.thirdpartysources.applemusic.AppleMus
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.deezer.DeezerAudioSourceManager;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.spotify.SpotifyAudioSourceManager;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.tidal.TidalAudioSourceManager;
-import com.sedmelluq.lavaplayer.extensions.thirdpartysources.yamusic.YandexMusicAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 
 /**
@@ -21,7 +20,6 @@ public class ThirdPartyAudioSourceManagers {
     playerManager.registerSourceManager(new AppleMusicAudioSourceManager(playerManager));
     playerManager.registerSourceManager(new SpotifyAudioSourceManager(playerManager));
     playerManager.registerSourceManager(new TidalAudioSourceManager(playerManager));
-    playerManager.registerSourceManager(new YandexMusicAudioSourceManager(playerManager));
     playerManager.registerSourceManager(new DeezerAudioSourceManager(playerManager));
   }
 }
