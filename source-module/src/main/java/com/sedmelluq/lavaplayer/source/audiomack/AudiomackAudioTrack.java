@@ -62,8 +62,25 @@ public class AudiomackAudioTrack extends DelegatedAudioTrack {
             if (url.isBlank())
                 throw new FriendlyException("Audiomack returned an empty stream URL.", FriendlyException.Severity.COMMON, null);
 
-            return url;
+            return normalizeStreamUrl(url);
         }
+    }
+
+    private static String normalizeStreamUrl(String body) {
+        String url = body.trim();
+        if (url.length() >= 2 && url.startsWith("\"") && url.endsWith("\"")) {
+            url = url.substring(1, url.length() - 1);
+        }
+
+        url = url
+                .replace("\\/", "/")
+                .replace("\\u0026", "&")
+                .replace("\\u003d", "=")
+                .replace("\\u003D", "=")
+                .replace("\\u003f", "?")
+                .replace("\\u003F", "?");
+
+        return url.trim();
     }
 
     private AudioTrack loadDelegateTrack(String playbackUrl) throws IOException {
