@@ -8,7 +8,6 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.applemusic.AppleMusicAudioSourceManager;
-import com.sedmelluq.lavaplayer.extensions.thirdpartysources.deezer.DeezerAudioSourceManager;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.pandora.PandoraAudioSourceManager;
 import com.sedmelluq.lavaplayer.extensions.thirdpartysources.tidal.TidalAudioSourceManager;
 import org.apache.http.client.config.RequestConfig;
@@ -31,11 +30,11 @@ public class ThirdPartySourceManagerHealthCheck {
                 "https://music.apple.com/br/album/we-never-dated/1832087626?i=1832088004&l=en-GB"
         ));
 
-        cases.add(new Case(
+        /*cases.add(new Case(
                 "deezer",
                 DeezerAudioSourceManager::new,
                 "https://link.deezer.com/s/33Jn0bxylovguAzkiM1SD"
-        ));
+        ));*/
 
         /*cases.add(new Case(
                 "spotify",

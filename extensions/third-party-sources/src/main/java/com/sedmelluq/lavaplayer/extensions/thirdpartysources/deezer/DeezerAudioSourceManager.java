@@ -1,6 +1,7 @@
 package com.sedmelluq.lavaplayer.extensions.thirdpartysources.deezer;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
+import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.http.HttpAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
@@ -39,7 +40,7 @@ import java.util.regex.Pattern;
 
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
-public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager implements HttpConfigurable {
+public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigurable {
     private static final Logger log = LoggerFactory.getLogger(DeezerAudioSourceManager.class);
 
     private static final String DEEZER_URL_REGEX = "^(?:https://|http://|)(?:www\\.|)deezer\\.com/(?:[a-zA-Z]{2}/|)(track|album|playlist|artist|episode|show)/(\\d+)";
@@ -59,30 +60,28 @@ public class DeezerAudioSourceManager extends ThirdPartyAudioSourceManager imple
 
     public final String masterKey;
 
-    public DeezerAudioSourceManager(AudioPlayerManager playerManager) {
-        this(playerManager, null, null, new HttpAudioSourceManager());
+    public DeezerAudioSourceManager() {
+        this(null, null, new HttpAudioSourceManager());
     }
 
-    public DeezerAudioSourceManager(AudioPlayerManager playerManager, boolean allowSearch) {
-        this(playerManager, null, null, allowSearch, new HttpAudioSourceManager());
+    public DeezerAudioSourceManager(boolean allowSearch) {
+        this(null, null, allowSearch, new HttpAudioSourceManager());
     }
 
-    public DeezerAudioSourceManager(AudioPlayerManager playerManager, String masterKey, String deezerArl) {
-        this(playerManager, masterKey, deezerArl, true, new HttpAudioSourceManager());
+    public DeezerAudioSourceManager(String masterKey, String deezerArl) {
+        this(masterKey, deezerArl, true, new HttpAudioSourceManager());
     }
 
-    public DeezerAudioSourceManager(AudioPlayerManager playerManager, String masterKey, String deezerArl, HttpAudioSourceManager streamSourceManager) {
-        this(playerManager, masterKey, deezerArl, true, streamSourceManager);
+    public DeezerAudioSourceManager(String masterKey, String deezerArl, HttpAudioSourceManager streamSourceManager) {
+        this(masterKey, deezerArl, true, streamSourceManager);
     }
 
     public DeezerAudioSourceManager(
-            AudioPlayerManager playerManager,
             String masterKey,
             String deezerArl,
             boolean allowSearch,
             HttpAudioSourceManager streamSourceManager
     ) {
-        super(playerManager);
 
         deezerArl = SourceTools.firstNonBlank(deezerArl, SourceTools.getPropertyOrEnv("DEEZER_ARL"));
         this.masterKey = SourceTools.firstNonBlank(masterKey, SourceTools.getPropertyOrEnv("DEEZER_MASTER_KEY"));

@@ -20,6 +20,6 @@ public class ThirdPartyAudioSourceManagers {
     playerManager.registerSourceManager(new AppleMusicAudioSourceManager(playerManager));
     playerManager.registerSourceManager(new SpotifyAudioSourceManager(playerManager));
     playerManager.registerSourceManager(new TidalAudioSourceManager(playerManager));
-    playerManager.registerSourceManager(new DeezerAudioSourceManager(playerManager));
+    playerManager.registerSourceManager(new DeezerAudioSourceManager());
   }
 }
