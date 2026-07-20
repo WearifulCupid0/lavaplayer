@@ -6,6 +6,7 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.lavaplayer.source.audiomack.AudiomackAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.bandcamp.BandcampAudioSourceManager;
+import com.sedmelluq.lavaplayer.source.bandlab.BandlabAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.bilibili.BilibiliAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.clyp.ClypAudioSourceManager;
 import com.sedmelluq.lavaplayer.source.iheart.iHeartAudioSourceManager;
@@ -45,6 +46,9 @@ public class SourceManagerHealthCheck {
 
         cases.add(new Case("audiomack", AudiomackAudioSourceManager::new,
                 "https://audiomack.com/audiomack-brasil/playlist/rap-nacional"));
+
+        cases.add(new Case("bandlab", BandlabAudioSourceManager::new,
+                "https://www.bandlab.com/huntrix14/collections/7ec0e402-1e4e-f111-8fcd-00224847aae7"));
 
         cases.add(new Case("bandcamp", BandcampAudioSourceManager::new,
                 "https://catsystemcorp.bandcamp.com/album/lofi"));

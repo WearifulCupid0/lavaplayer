@@ -118,7 +118,7 @@ public class OdyseeAudioSourceManager implements AudioSourceManager, HttpConfigu
     long duration = durationStr == null ? Units.DURATION_MS_UNKNOWN : DataFormatTools.durationTextToMillis(durationStr);
 
     String name = json.get("name").safeText();
-    String title = json.get("value").get("title").isNull() ? name : json.get("name").safeText();
+    String title = json.get("value").get("title").isNull() ? name : json.get("value").get("title").safeText();
     String claimId = json.get("claim_id").safeText();
     String uploader = json.get("signing_channel").get("name").safeText();
     String thumbnail = json.get("value").get("thumbnail").get("url").safeText();
