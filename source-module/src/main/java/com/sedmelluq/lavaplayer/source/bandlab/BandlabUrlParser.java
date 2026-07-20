@@ -31,6 +31,11 @@ public final class BandlabUrlParser {
             Pattern.CASE_INSENSITIVE
     );
 
+    public static final Pattern SONG_URL = Pattern.compile(
+            BASE_URL + "/songs/(?<id>[^/?#]+)" + END,
+            Pattern.CASE_INSENSITIVE
+    );
+
     public static final Pattern TRACK_URL = Pattern.compile(
             BASE_URL + "/track/(?<id>[^/?#]+)" + END,
             Pattern.CASE_INSENSITIVE
@@ -78,6 +83,15 @@ public final class BandlabUrlParser {
                     BandlabUrlType.PLAYLIST,
                     playlistMatcher.group("id"),
                     playlistMatcher.group("artistSlug")
+            );
+        }
+
+        Matcher songMatcher = SONG_URL.matcher(input);
+        if (songMatcher.matches()) {
+            return new BandlabUrlData(
+                    BandlabUrlType.SONG,
+                    songMatcher.group("id"),
+                    null
             );
         }
 
