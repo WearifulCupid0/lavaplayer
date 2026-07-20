@@ -382,7 +382,7 @@ public class BandlabAudioSourceManager implements AudioSourceManager, HttpConfig
                 (long) (getMixdownSample(revision).get("duration").as(Double.class) * 1000.0),
                 getPlaybackUrl(revision),
                 false,
-                String.format(BandlabConstants.TRACK_URL, revision.get("id").text()),
+                String.format(BandlabConstants.REVISION_URL, revision.get("id").text()),
                 json.get("picture").get("url").text()
         );
 

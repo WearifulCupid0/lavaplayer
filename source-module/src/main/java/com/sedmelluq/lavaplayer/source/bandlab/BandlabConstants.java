@@ -3,6 +3,7 @@ package com.sedmelluq.lavaplayer.source.bandlab;
 public class BandlabConstants {
     static final String BANDLAB_URL = "https://www.bandlab.com";
     static final String TRACK_URL = BANDLAB_URL +  "/track/%s";
+    static final String REVISION_URL = BANDLAB_URL +  "/revision/%s";
     static final String ARTIST_URL = BANDLAB_URL + "/%s";
     static final String ALBUM_URL = BANDLAB_URL + "/%s/albums/%s";
     static final String PLAYLIST_URL = BANDLAB_URL + "/%s/collections/%s";
