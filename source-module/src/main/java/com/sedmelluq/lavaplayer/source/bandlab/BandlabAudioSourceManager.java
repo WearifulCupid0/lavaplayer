@@ -173,7 +173,11 @@ public class BandlabAudioSourceManager implements AudioSourceManager, HttpConfig
 
                 List<AudioTrack> tracks = new ArrayList<>();
 
-                if (json.get("posts").isNull() || !json.get("posts").isList()) return null;
+                if (
+                        json.get("posts").isNull() ||
+                        !json.get("posts").isList() ||
+                        json.get("posts").values().isEmpty()
+                ) return null;
 
                 for (JsonBrowser trackJson : json.get("posts").values())
                     if (isPlayableTrack(trackJson.get("track")))
@@ -205,7 +209,11 @@ public class BandlabAudioSourceManager implements AudioSourceManager, HttpConfig
 
                 List<AudioTrack> tracks = new ArrayList<>();
 
-                if (json.get("posts").isNull() || !json.get("posts").isList()) return null;
+                if (
+                        json.get("posts").isNull() ||
+                        !json.get("posts").isList() ||
+                        json.get("posts").values().isEmpty()
+                ) return null;
 
                 for (JsonBrowser trackJson : json.get("posts").values())
                     if (isPlayableTrack(trackJson.get("revision")))
@@ -244,7 +252,11 @@ public class BandlabAudioSourceManager implements AudioSourceManager, HttpConfig
 
                     JsonBrowser tracksData = JsonBrowser.parse(tracksResponse.getEntity().getContent());
 
-                    if (tracksData.get("data").isNull() || !tracksData.get("data").isList()) return null;
+                    if (
+                            tracksData.get("data").isNull() ||
+                            !tracksData.get("data").isList() ||
+                            tracksData.get("data").values().isEmpty()
+                    ) return null;
 
                     List<AudioTrack> tracks = new ArrayList<>();
 
@@ -276,7 +288,11 @@ public class BandlabAudioSourceManager implements AudioSourceManager, HttpConfig
 
                 JsonBrowser json = JsonBrowser.parse(response.getEntity().getContent());
 
-                if (json.get("data").isNull() || !json.get("data").isList()) return null;
+                if (
+                        json.get("data").isNull() ||
+                        !json.get("data").isList() ||
+                        json.get("data").values().isEmpty()
+                ) return null;
 
                 List<AudioTrack> tracks = new ArrayList<>();
 
