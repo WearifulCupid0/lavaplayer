@@ -4,7 +4,7 @@ A maintained personal fork of [`sedmelluq/lavaplayer`](https://github.com/sedmel
 
 LavaPlayer loads audio from supported sources, decodes or passes through audio when possible, and provides Opus frames that can be sent to Discord voice connections.
 
-This fork is public, but it is primarily maintained for the author's own bot and use cases. API compatibility with the original LavaPlayer or with other forks is not guaranteed.
+This fork is public, but it is primarily maintained for my own bot and use cases. API compatibility with the original LavaPlayer or with other forks is not guaranteed.
 
 ## Important module note
 

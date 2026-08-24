@@ -350,7 +350,7 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
             );
         } catch (Exception e) {
             throw new FriendlyException(
-                    "Failed to load Deezer search result",
+                    "Failed to load Deezer artist result",
                     SUSPICIOUS,
                     e
             );
@@ -436,16 +436,7 @@ public class DeezerAudioSourceManager implements AudioSourceManager, HttpConfigu
                 tracks.add(buildTrack(track));
             }
 
-            return new BasicAudioPlaylist(
-                    "Search results for: " + query,
-                    null,
-                    null,
-                    null,
-                    "search",
-                    tracks,
-                    null,
-                    true
-            );
+            return BasicAudioPlaylist.createSearchResults(query, tracks);
         } catch (Exception e) {
             throw new FriendlyException(
                     "Failed to load Deezer search result",
